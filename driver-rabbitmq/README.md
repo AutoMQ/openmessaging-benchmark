@@ -12,7 +12,7 @@ This folder houses all of the assets necessary to run benchmarks for [RabbitMQ](
 In order to create the local artifacts necessary to run the RabbitMQ benchmarks in AWS, you'll need to have [Maven](https://maven.apache.org/install.html) installed. Once Maven's installed, you can create the necessary artifacts with a single Maven command:
 
 ```bash
-$ git clone https://github.com/streamlio/messaging-benchmark
+$ git clone https://github.com/confluentinc/openmessaging-benchmark
 % cd messaging-benchmark
 $ mvn install
 ```
