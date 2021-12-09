@@ -13,7 +13,7 @@ In order to create the local artifacts necessary to run the RabbitMQ benchmarks 
 
 ```bash
 $ git clone https://github.com/confluentinc/openmessaging-benchmark
-% cd messaging-benchmark
+% cd openmessaging-benchmark
 $ mvn install
 ```
 
