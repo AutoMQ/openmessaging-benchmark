@@ -31,9 +31,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import org.apache.bookkeeper.stats.StatsLogger;
 import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.DeleteTopicsResult;
+import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -83,6 +87,19 @@ public class KafkaBenchmarkDriver implements BenchmarkDriver {
         topicProperties.load(new StringReader(config.topicConfig));
 
         admin = AdminClient.create(commonProperties);
+
+        if (config.reset) {
+            // List existing topics
+            ListTopicsResult result = admin.listTopics();
+            try {
+                Set<String> topics = result.names().get();
+                // Delete all existing topics
+                DeleteTopicsResult deletes = admin.deleteTopics(topics);
+                deletes.all().get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new IOException(e);
+            }
+        }
     }
 
     @Override
@@ -126,13 +143,23 @@ public class KafkaBenchmarkDriver implements BenchmarkDriver {
         Properties properties = new Properties();
         consumerProperties.forEach((key, value) -> properties.put(key, value));
         properties.put(ConsumerConfig.GROUP_ID_CONFIG, subscriptionName);
-        KafkaConsumer<String, byte[]> consumer = new KafkaConsumer<>(properties);
+        boolean autoCommit = Boolean.parseBoolean(
+            (String) consumerProperties.getOrDefault(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false")
+        );
+
+        KafkaConsumer<String, byte[]> kafkaConsumer = new KafkaConsumer<>(properties);
         try {
-            consumer.subscribe(Arrays.asList(topic));
-            return CompletableFuture.completedFuture(
-                    new KafkaBenchmarkConsumer(consumer, consumerProperties, consumerCallback));
+            // Subscribe
+            kafkaConsumer.subscribe(Arrays.asList(topic));
+
+            // Start polling
+            BenchmarkConsumer benchmarkConsumer = new KafkaBenchmarkConsumer(kafkaConsumer, autoCommit, consumerCallback);
+
+            // Add to consumer list to close later
+            consumers.add(benchmarkConsumer);
+            return CompletableFuture.completedFuture(benchmarkConsumer);
         } catch (Throwable t) {
-            consumer.close();
+            kafkaConsumer.close();
             CompletableFuture<BenchmarkConsumer> future = new CompletableFuture<>();
             future.completeExceptionally(t);
             return future;
