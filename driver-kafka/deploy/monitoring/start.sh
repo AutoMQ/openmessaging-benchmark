@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -17,28 +18,22 @@
 # under the License.
 #
 
-<<<<<<<< HEAD:driver-redpanda/redpanda-ack-0.yaml
-name: Redpanda
-driverClass: io.openmessaging.benchmark.driver.redpanda.RedpandaBenchmarkDriver
-========
-name: Kafka
-driverClass: io.openmessaging.benchmark.driver.kafka.KafkaBenchmarkDriver
->>>>>>>> conf/master:driver-kafka/kafka-0.yaml
 
-# Kafka client-specific configuration
-replicationFactor: 3
-reset: true
+echo 'Starting Grafana...'
 
-topicConfig: |
+/run.sh "$@" &
 
-commonConfig: |
-  bootstrap.servers=localhost:9092
+AddDataSource() {
+  curl 'http://admin:admin@localhost:3000/api/datasources' \
+    -X POST \
+    -H 'Content-Type: application/json;charset=UTF-8' \
+    --data-binary \
+    "{\"name\":\"Prometheus\",\"type\":\"prometheus\",\"url\":\"$PROMETHEUS_URL\",\"access\":\"proxy\",\"isDefault\":true}"
+}
 
-producerConfig: |
-  acks=0
-  linger.ms=1
-  batch.size=131072
-
-consumerConfig: |
-  auto.offset.reset=earliest
-  enable.auto.commit=false
+until AddDataSource; do
+    echo 'Configuring Grafana...'
+    sleep 1
+done
+    echo 'Done!'
+wait
