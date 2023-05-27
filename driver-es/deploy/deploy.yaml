@@ -1,0 +1,241 @@
+- name: Format and mount disks on data nodes
+  hosts: data_node
+  connection: ssh
+  become: true
+  tasks:
+  - set_fact:
+      disks: [{
+        "path": "/mnt/data-1",
+        "src": "/dev/nvme1n1"
+      }]
+  - name: Format disks
+    filesystem:
+        fstype: xfs
+        dev: '{{ item.src }}'
+    with_items: "{{ disks }}"
+  - name: Mount disks
+    mount:
+      path: "{{ item.path }}"
+      src: "{{ item.src }}"
+      fstype: xfs
+      opts: defaults,noatime,nodiscard
+      state: mounted
+    with_items: "{{ disks }}"
+  - name: Grant ubuntu user access to mounted disk
+    file:
+      path: "{{ item.path }}"
+      owner: ubuntu
+      group: ubuntu
+      recurse: yes
+    with_items: "{{ disks }}"
+  - name: Increase hard file descriptor limit
+    pam_limits:
+      domain: '*'
+      limit_type: 'hard'
+      limit_item: nofile
+      value: 128000
+  - name: Increase soft file descriptor limit
+    pam_limits:
+      domain: '*'
+      limit_type: 'soft'
+      limit_item: nofile
+      value: 128000
+  - name: Enable pam_limits.so
+    lineinfile:
+      path: /etc/pam.d/login
+      insertafter: EOF
+      line: 'session required pam_limits.so'
+  - name: Set vm.max_map_count
+    sysctl:
+      name: vm.max_map_count
+      value: '262144'
+      state: present
+      reload: yes
+  - name: Reboot the machine with all defaults
+    reboot:
+
+- name: Setup Data Node
+  hosts: data_node
+  connection: ssh
+  tasks:
+  - name: Install Rust and Cargo
+    tags: [rust, dependencies]
+    block:
+    - name: Download Rust installer
+      get_url:
+        url: https://sh.rustup.rs
+        dest: /tmp/sh.rustup.rs
+        mode: '0755'
+        force: 'yes'
+    - name: Install Rust and Cargo
+      command: /tmp/sh.rustup.rs --verbose -y --default-toolchain nightly
+    - shell: source $HOME/.cargo/env && cargo --version
+      args:
+        executable: /bin/bash
+      register: cargo_version
+    - debug:
+        var: cargo_version.stdout
+  - name: Install dependencies
+    tags: [dependencies]
+    block:
+    - name: Update and upgrade apt packages
+      become: true
+      apt:
+        upgrade: yes
+        update_cache: yes
+        cache_valid_time: 86400
+    - name: Install apt packages
+      become: true
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - build-essential
+        - clang
+        - unzip
+    - name: Install flatc
+      become: true
+      unarchive:
+        src: https://github.com/google/flatbuffers/releases/download/v23.3.3/Linux.flatc.binary.g++-10.zip
+        dest: /usr/local/bin
+        remote_src: yes
+    - shell: flatc --version
+      register: flatc_version
+    - debug:
+        var: flatc_version.stdout
+  - name: Clone latest code from github
+    tags: [git, build]
+    git:
+      repo: https://github.com/AutoMQ/elastic-stream.git
+      dest: /home/ubuntu/elastic-stream-dn
+      version: develop
+      depth: 1
+      single_branch: true
+      force: true
+  - name: Build Data Node
+    tags: [rust, build]
+    shell: |
+      source $HOME/.cargo/env
+      cargo build --release --bin data-node
+    args:
+      chdir: /home/ubuntu/elastic-stream-dn
+      executable: /bin/bash
+
+- name: Setup Placement Manager
+  hosts: placement_manager
+  connection: ssh
+  tasks:
+  - name: Install Docker
+    tags: [docker, dependencies]
+    block:
+    - name: Download Docker installer
+      get_url:
+        url: https://get.docker.com
+        dest: /tmp/get-docker.sh
+        mode: '0755'
+        force: 'yes'
+    - name: Install Docker
+      become: true
+      command: /tmp/get-docker.sh
+    - name: Add ubuntu user to docker group
+      become: true
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
+    - shell: docker run hello-world | grep "Hello from Docker!"
+      register: docker_hello_world
+    - debug:
+        var: docker_hello_world.stdout
+  - name: Install dependencies
+    tags: [dependencies]
+    block:
+    - name: Update and upgrade apt packages
+      become: true
+      apt:
+        upgrade: yes
+        update_cache: yes
+        cache_valid_time: 86400
+    - name: Install apt packages
+      become: true
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - cmake
+  - name: Clone latest code from github
+    tags: [git, build]
+    git:
+      repo: https://github.com/AutoMQ/elastic-stream.git
+      dest: /home/ubuntu/elastic-stream-pm
+      version: develop
+      depth: 1
+      single_branch: true
+      force: true
+  - name: Build Placement Manager
+    tags: [golang, build]
+    shell: |
+      make
+    args:
+      chdir: /home/ubuntu/elastic-stream-pm/placement-manager
+
+- name: Start Placement Manager
+  tags: [golang, run]
+  hosts: placement_manager
+  connection: ssh
+  tasks:
+  - set_fact:
+      pm_name: "{{ hostvars[inventory_hostname]['tags.Name'] }}"
+      private_ip: "{{ hostvars[inventory_hostname]['private_ip'] }}"
+      pm_names: "{{ groups['placement_manager'] | map('extract', hostvars, 'tags.Name') | list }}"
+      pm_addrs: "{{ groups['placement_manager'] | map('extract', hostvars, 'private_ip') | map('regex_replace', '^(.*)$', '\\1:12380') | list }}"
+  - set_fact:
+      pm_initial_cluster: "{{ pm_names | zip(pm_addrs) | map('join', '=http://') | list | join(',') }}"
+  - name: Create config file
+    template:
+      src: templates/pm-config.yaml
+      dest: /home/ubuntu/pm-config.yaml
+  - name: Start Placement Manager
+    shell: |
+      nohup ./elastic-stream-pm/placement-manager/bin/linux_amd64/placement-manager --config ./pm-config.yaml < /dev/null > /dev/null 2>&1 &
+    args:
+      chdir: /home/ubuntu
+      executable: /bin/bash
+  - shell: sleep 2 && pgrep -f placement-manager
+    args:
+      executable: /bin/bash
+    register: pm_pid
+    failed_when: pm_pid.stdout | length == 0
+  - debug:
+      var: pm_pid.stdout
+
+- name: Start Data Node
+  tags: [rust, run]
+  hosts: data_node
+  connection: ssh
+  tasks:
+  - set_fact:
+      private_ip: "{{ hostvars[inventory_hostname]['private_ip'] }}"
+      pm_0_ip: "{{ hostvars[groups['placement_manager'][0]]['private_ip'] }}"
+  - name: Create config file
+    template:
+      src: templates/dn-config.yaml
+      dest: /home/ubuntu/dn-config.yaml
+  - name: Create log config file
+    template:
+      src: templates/dn-log-config.yaml
+      dest: /home/ubuntu/dn-log-config.yaml
+  - name: Start Data Node
+    become: true
+    shell: |
+      nohup ./elastic-stream-dn/target/release/data-node --config ./dn-config.yaml --log ./dn-log-config.yaml < /dev/null > /dev/null 2>&1 &
+    args:
+      chdir: /home/ubuntu
+      executable: /bin/bash
+  - shell: sleep 2 && pgrep -f data-node
+    args:
+      executable: /bin/bash
+    register: dn_pid
+    failed_when: dn_pid.stdout | length == 0
+  - debug:
+      var: dn_pid.stdout

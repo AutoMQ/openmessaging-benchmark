@@ -1,0 +1,43 @@
+# PM Configuration.
+
+# urls for peer traffic
+peerUrls: http://0.0.0.0:12380
+# urls for client traffic
+clientUrls: http://0.0.0.0:12379
+# advertise urls for peer traffic
+advertisePeerUrls: http://{{ private_ip }}:12380
+# advertise urls for client traffic
+advertiseClientUrls: http://{{ private_ip }}:12379
+
+# human-readable name for this PM member
+name: {{ pm_name }}
+# path to the data directory
+dataDir: /home/ubuntu/{{ pm_name }}
+# the initial cluster configuration for bootstrapping
+initialCluster: {{ pm_initial_cluster }}
+# the address of sbp server
+sbpAddr: 0.0.0.0:12378
+# advertise address of sbp server
+advertiseSbpAddr: {{ private_ip }}:12378
+# expiration time of the leader, in seconds
+leaderLease: 3
+
+log:
+  # the minimum enabled logging level
+  level: INFO
+  # whether to enable log rotation
+  enableRotation: true
+  zap:
+    # a list of URLs or file paths to write logging output to
+    outputPaths:
+      - pm.log
+    # a list of URLs to write internal logger errors to
+    errorOutputPaths:
+      - pm.log
+
+sbp:
+  server:
+    # time interval between sending heartbeats from client to server
+    heartbeatInterval: 5s
+    # number of consecutive heartbeats that the server can miss before considering the client to be unresponsive and terminating the connection
+    heartbeatMissCount: 3
