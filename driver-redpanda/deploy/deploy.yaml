@@ -29,7 +29,7 @@
         state: absent
     - name: Install packages
       package:
-        name: 
+        name:
           - mdadm
           - xfsprogs
           - iotop
@@ -44,8 +44,8 @@
         update_cache: true
     - name: Install Java Redhat
       when: ansible_os_family == 'RedHat'
-      package: 
-        name: 
+      package:
+        name:
           - java-11
         state: present
     - name: Install Java on Debian
@@ -58,10 +58,10 @@
 - name: set facts about drives
   hosts: redpanda
   tasks:
-  - set_fact: 
+  - set_fact:
       device_info: "{{ hostvars[inventory_hostname].ansible_devices }}"
-      nvme_device_ids: "{{ hostvars[inventory_hostname].ansible_devices.keys() | map('regex_search', 'nvme.*') | select('string') | list }}" 
-  - set_fact: 
+      nvme_device_ids: "{{ hostvars[inventory_hostname].ansible_devices.keys() | map('regex_search', 'nvme.*') | select('string') | list }}"
+  - set_fact:
       nvme_devices_for_raid: '{{ (nvme_devices_for_raid | default([])) + ["/dev/" + item] }}'
     loop: '{{ nvme_device_ids }}'
     when: device_info[item]["partitions"] | length == 0
@@ -69,7 +69,7 @@
 - name: Format raid drives if more then 2 drives
   hosts: redpanda
   tasks:
-  - block: 
+  - block:
     - name: define mdadm_arrays variable
       set_fact:
         mdadm_arrays:
@@ -81,7 +81,7 @@
           state: present
 
     - name: run mdadm
-      include_role: 
+      include_role:
         name: mrlesmithjr.mdadm
     when: nvme_devices_for_raid|length > 1
 
@@ -89,9 +89,9 @@
 - name: created a non raid disk
   hosts: redpanda
   tasks:
-    - block: 
+    - block:
       - name: create xfs file system
-        filesystem: 
+        filesystem:
           fstype: xfs
           dev: '{{ nvme_devices_for_raid[0] }}'
       - name: mount nvme device
@@ -99,12 +99,12 @@
           path: /mnt/vectorized
           src: '{{ nvme_devices_for_raid[0] }}'
           fstype: xfs
-          state: mounted 
+          state: mounted
       when: nvme_devices_for_raid|length == 1
 
 - name: configure the data path
   hosts: redpanda
-  tasks: 
+  tasks:
   - name: data path
     file:
       path: /mnt/vectorized/redpanda
@@ -313,7 +313,7 @@
       lineinfile:
         dest: "{{ item }}"
         regexp: "^name: Redpanda"
-        line: "name: Redpanda{{ '+SASL' if sasl_enabled | default(False) | bool == True }}{{ '+TLS' if tls_enabled | default(False)|bool == True }}+{{ groups['redpanda'] | length  }}x{{ instance_type }}"
+        line: "name: Redpanda{{ '+SASL' if sasl_enabled | default(False) | bool == True }}{{ '+TLS' if tls_enabled | default(False)|bool == True }}+{{ groups['redpanda'] | length  }}x{{ hostvars[inventory_hostname]['ansible_product_name'] }}"
       with_items: "{{ drivers_list.stdout_lines }}"
 
     - name: Configure Security Protocol
@@ -371,33 +371,33 @@
 - name: Install Node Exporter
   hosts: redpanda, client
   roles:
-  - geerlingguy.node_exporter
-  vars:
-  - node_exporter_enabled_collectors: [ntp]
-  when: ansible_architecture = "x86_64"
-  tags:
-    - node_exporter
+    - role: geerlingguy.node_exporter
+      vars:
+      - node_exporter_enabled_collectors: [ntp]
+      when: ansible_architecture == "x86_64"
+      tags:
+        - node_exporter
 
 - name: create a local tmp directory
   hosts: localhost
   become: false
   tasks:
     - name: create a local temp directory
-      tempfile: 
+      tempfile:
         state: directory
         suffix: grafana
       register: grafana_temp_dir
     - name: register temp path with redpanda host
-      set_fact: 
+      set_fact:
         grafana_dir: "{{ grafana_temp_dir.path }}"
       delegate_to: "{{ groups['redpanda'][0] }}"
       delegate_facts: True
       when: groups.redpanda is defined
     - name: register temp path with prometheus host
-      set_fact: 
+      set_fact:
         grafana_dir: "{{ grafana_temp_dir.path }}"
       delegate_to: "{{ item }}"
-      delegate_facts: True 
+      delegate_facts: True
       with_items: "{{ groups['prometheus'] }}"
       when: groups.prometheus is defined
   tags:
@@ -433,7 +433,7 @@
           - targets: "{{ groups['client'] | map('extract', hostvars, ['ansible_default_ipv4', 'address']) | map('regex_replace', '^(.*)$', '\\1:9090') | list }}"
 
 - hosts: prometheus
-  roles: 
+  roles:
   - cloudalchemy.grafana
   vars:
     grafana_version: 6.7.3
