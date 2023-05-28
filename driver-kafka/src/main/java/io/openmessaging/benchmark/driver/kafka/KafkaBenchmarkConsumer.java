@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -42,9 +41,7 @@ public class KafkaBenchmarkConsumer implements BenchmarkConsumer {
     private volatile boolean closing = false;
 
     public KafkaBenchmarkConsumer(
-            KafkaConsumer<String, byte[]> consumer,
-            boolean autoCommit,
-            ConsumerCallback callback) {
+            KafkaConsumer<String, byte[]> consumer, boolean autoCommit, ConsumerCallback callback) {
         this(consumer, autoCommit, callback, 100L);
     }
 
@@ -56,26 +53,30 @@ public class KafkaBenchmarkConsumer implements BenchmarkConsumer {
         this.consumer = consumer;
         this.executor = Executors.newSingleThreadExecutor();
 
-        this.consumerTask = this.executor.submit(() -> {
-            while (!closing) {
-                try {
-                    ConsumerRecords<String, byte[]> records = consumer.poll(Duration.ofMillis(pollTimeoutMs));
-                    Map<TopicPartition, OffsetAndMetadata> offsetMap = new HashMap<>();
-                    for (ConsumerRecord<String, byte[]> record : records) {
-                        callback.messageReceived(record.value(), record.timestamp());
-                        offsetMap.put(new TopicPartition(record.topic(), record.partition()),
-                                new OffsetAndMetadata(record.offset()));
-                    }
+        this.consumerTask =
+                this.executor.submit(
+                        () -> {
+                            while (!closing) {
+                                try {
+                                    ConsumerRecords<String, byte[]> records =
+                                            consumer.poll(Duration.ofMillis(pollTimeoutMs));
+                                    Map<TopicPartition, OffsetAndMetadata> offsetMap = new HashMap<>();
+                                    for (ConsumerRecord<String, byte[]> record : records) {
+                                        callback.messageReceived(record.value(), record.timestamp());
+                                        offsetMap.put(
+                                                new TopicPartition(record.topic(), record.partition()),
+                                                new OffsetAndMetadata(record.offset()));
+                                    }
 
-                    if (!autoCommit && !offsetMap.isEmpty()) {
-                        // Async commit all messages polled so far
-                        consumer.commitAsync(offsetMap, null);
-                    }
-                } catch (Exception e) {
-                    log.error("exception occur while consuming message", e);
-                }
-            }
-        });
+                                    if (!autoCommit && !offsetMap.isEmpty()) {
+                                        // Async commit all messages polled so far
+                                        consumer.commitAsync(offsetMap, null);
+                                    }
+                                } catch (Exception e) {
+                                    log.error("exception occur while consuming message", e);
+                                }
+                            }
+                        });
     }
 
     @Override

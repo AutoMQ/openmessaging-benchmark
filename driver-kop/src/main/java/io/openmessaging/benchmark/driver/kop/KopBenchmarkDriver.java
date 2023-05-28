@@ -173,9 +173,11 @@ public class KopBenchmarkDriver implements BenchmarkDriver {
             consumerProperties.forEach(properties::put);
             properties.put(ConsumerConfig.GROUP_ID_CONFIG, subscriptionName);
             properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-            boolean autoCommit = Boolean.parseBoolean(
-                (String) consumerProperties.getOrDefault(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false")
-            );
+            boolean autoCommit =
+                    Boolean.parseBoolean(
+                            (String)
+                                    consumerProperties.getOrDefault(
+                                            ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false"));
 
             final KafkaConsumer<String, byte[]> kafkaConsumer = new KafkaConsumer<>(properties);
             kafkaConsumer.subscribe(Collections.singleton(topic));
