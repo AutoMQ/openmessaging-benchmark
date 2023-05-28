@@ -13,7 +13,6 @@
  */
 package io.openmessaging.benchmark.driver.kafka;
 
-
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -71,17 +70,17 @@ public class KafkaBenchmarkDriver implements BenchmarkDriver {
         commonProperties.forEach((key, value) -> producerProperties.put(key, value));
         producerProperties.load(new StringReader(config.producerConfig));
         producerProperties.put(
-                ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+            ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         producerProperties.put(
-                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
+            ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
 
         consumerProperties = new Properties();
         commonProperties.forEach((key, value) -> consumerProperties.put(key, value));
         consumerProperties.load(new StringReader(config.consumerConfig));
         consumerProperties.put(
-                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         consumerProperties.put(
-                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class.getName());
+            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class.getName());
 
         topicProperties = new Properties();
         topicProperties.load(new StringReader(config.topicConfig));
@@ -117,7 +116,7 @@ public class KafkaBenchmarkDriver implements BenchmarkDriver {
         @SuppressWarnings({"unchecked", "rawtypes"})
         Map<String, String> topicConfigs = new HashMap<>((Map) topicProperties);
         KafkaTopicCreator topicCreator =
-                new KafkaTopicCreator(admin, topicConfigs, config.replicationFactor);
+            new KafkaTopicCreator(admin, topicConfigs, config.replicationFactor);
         return topicCreator.create(topicInfos);
     }
 
@@ -139,7 +138,7 @@ public class KafkaBenchmarkDriver implements BenchmarkDriver {
 
     @Override
     public CompletableFuture<BenchmarkConsumer> createConsumer(
-            String topic, String subscriptionName, ConsumerCallback consumerCallback) {
+        String topic, String subscriptionName, ConsumerCallback consumerCallback) {
         Properties properties = new Properties();
         consumerProperties.forEach((key, value) -> properties.put(key, value));
         properties.put(ConsumerConfig.GROUP_ID_CONFIG, subscriptionName);
@@ -179,6 +178,6 @@ public class KafkaBenchmarkDriver implements BenchmarkDriver {
     }
 
     private static final ObjectMapper mapper =
-            new ObjectMapper(new YAMLFactory())
-                    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        new ObjectMapper(new YAMLFactory())
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 }

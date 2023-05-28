@@ -17,13 +17,8 @@
 # under the License.
 #
 
-<<<<<<<< HEAD:driver-redpanda/redpanda-ack-0.yaml
 name: Redpanda
 driverClass: io.openmessaging.benchmark.driver.redpanda.RedpandaBenchmarkDriver
-========
-name: Kafka
-driverClass: io.openmessaging.benchmark.driver.kafka.KafkaBenchmarkDriver
->>>>>>>> conf/master:driver-kafka/kafka-0.yaml
 
 # Kafka client-specific configuration
 replicationFactor: 3

@@ -14,7 +14,7 @@
 #
 
 if [ -d "./lib" ]; then
-        CLASSPATH=$CLASSPATH:lib/*
+    CLASSPATH=$CLASSPATH:lib/*
 else
     CLASSPATH=benchmark-framework/target/classes:`cat benchmark-framework/target/classpath.txt`
 fi
