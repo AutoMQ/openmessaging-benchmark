@@ -32,7 +32,7 @@ resource "random_id" "hash" {
 }
 
 variable "key_name" {
-  default     = "kafka-benchmark-key"
+  default     = "kafka-kraft-benchmark-key"
   description = "Desired name prefix for the AWS key pair"
 }
 

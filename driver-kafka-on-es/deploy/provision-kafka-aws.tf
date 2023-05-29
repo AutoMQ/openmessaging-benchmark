@@ -4,6 +4,19 @@ provider "aws" {
 
 provider "random" {}
 
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "5.0.1"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "3.5.1"
+    }
+  }
+}
+
 variable "public_key_path" {
   description = <<DESCRIPTION
 Path to the SSH public key to be used for authentication.
@@ -29,11 +42,11 @@ variable "ami" {}
 
 variable "az" {}
 
-variable "instance_type" {
+variable "instance_types" {
   type = map(string)
 }
 
-variable "instance_cnt" {
+variable "num_instances" {
   type = map(string)
 }
 
@@ -106,11 +119,11 @@ resource "aws_key_pair" "auth" {
 
 resource "aws_instance" "placement_manager" {
   ami                    = "${var.ami}"
-  instance_type          = "${var.instance_type["placement-manager"]}"
+  instance_type          = "${var.instance_types["placement-manager"]}"
   key_name               = "${aws_key_pair.auth.id}"
   subnet_id              = "${aws_subnet.benchmark_subnet.id}"
   vpc_security_group_ids = ["${aws_security_group.benchmark_security_group.id}"]
-  count                  = "${var.instance_cnt["placement-manager"]}"
+  count                  = "${var.num_instances["placement-manager"]}"
 
   root_block_device {
     volume_size = 16
@@ -127,11 +140,11 @@ resource "aws_instance" "placement_manager" {
 
 resource "aws_instance" "data_node" {
   ami                    = "${var.ami}"
-  instance_type          = "${var.instance_type["data-node"]}"
+  instance_type          = "${var.instance_types["data-node"]}"
   key_name               = "${aws_key_pair.auth.id}"
   subnet_id              = "${aws_subnet.benchmark_subnet.id}"
   vpc_security_group_ids = ["${aws_security_group.benchmark_security_group.id}"]
-  count                  = "${var.instance_cnt["data-node"]}"
+  count                  = "${var.num_instances["data-node"]}"
 
   root_block_device {
     volume_size = 32
@@ -146,24 +159,48 @@ resource "aws_instance" "data_node" {
   }
 }
 
-resource "aws_instance" "client" {
+# create hosts for Kafka controllers
+resource "aws_instance" "controller" {
   ami                    = "${var.ami}"
-  instance_type          = "${var.instance_type["client"]}"
+  instance_type          = "${var.instance_types["controller"]}"
   key_name               = "${aws_key_pair.auth.id}"
   subnet_id              = "${aws_subnet.benchmark_subnet.id}"
   vpc_security_group_ids = ["${aws_security_group.benchmark_security_group.id}"]
-  count                  = "${var.instance_cnt["client"]}"
-
-  root_block_device {
-    volume_size = 32
-    tags = {
-      Name = "client_${count.index}"
-    }
-  }
+  count                  = "${var.num_instances["controller"]}"
 
   tags = {
-    Name      = "client_${count.index}"
-    Benchmark = "Kafka_on_ES"
+    Name      = "kafka_controller_${count.index}"
+    Benchmark = "Kafka"
+  }
+}
+
+# create hosts for Kafka brokers
+resource "aws_instance" "broker" {
+  ami                    = "${var.ami}"
+  instance_type          = "${var.instance_types["broker"]}"
+  key_name               = "${aws_key_pair.auth.id}"
+  subnet_id              = "${aws_subnet.benchmark_subnet.id}"
+  vpc_security_group_ids = ["${aws_security_group.benchmark_security_group.id}"]
+  count                  = lookup(var.num_instances, "broker", 0) # (var.num_instances["broker"]")
+
+  tags = {
+    Name      = "kafka_broker_${count.index}"
+    Benchmark = "Kafka"
+  }
+}
+
+# create hosts for Kafka clients
+resource "aws_instance" "client" {
+  ami                    = "${var.ami}"
+  instance_type          = "${var.instance_types["client"]}"
+  key_name               = "${aws_key_pair.auth.id}"
+  subnet_id              = "${aws_subnet.benchmark_subnet.id}"
+  vpc_security_group_ids = ["${aws_security_group.benchmark_security_group.id}"]
+  count                  = "${var.num_instances["client"]}"
+
+  tags = {
+    Name      = "kafka_client_${count.index}"
+    Benchmark = "Kafka"
   }
 }
 
@@ -173,4 +210,12 @@ output "pm_ssh_host" {
 
 output "dn_ssh_host" {
   value = "${aws_instance.data_node.0.public_ip}"
+}
+
+output "kafka_ssh_host" {
+  value = "${aws_instance.controller.0.public_ip}"
+}
+
+output "client_ssh_host" {
+  value = "${aws_instance.client.0.public_ip}"
 }

@@ -193,7 +193,7 @@
       pm_initial_cluster: "{{ pm_names | zip(pm_addrs) | map('join', '=http://') | list | join(',') }}"
   - name: Create config file
     template:
-      src: templates/pm-config.yaml
+      src: templates/es/pm-config.yaml
       dest: /home/ubuntu/pm-config.yaml
   - name: Start Placement Manager
     shell: |
@@ -219,11 +219,11 @@
       pm_0_ip: "{{ hostvars[groups['placement_manager'][0]]['private_ip'] }}"
   - name: Create config file
     template:
-      src: templates/dn-config.yaml
+      src: templates/es/dn-config.yaml
       dest: /home/ubuntu/dn-config.yaml
   - name: Create log config file
     template:
-      src: templates/dn-log-config.yaml
+      src: templates/es/dn-log-config.yaml
       dest: /home/ubuntu/dn-log-config.yaml
   - name: Start Data Node
     become: true

@@ -12,6 +12,19 @@
 # limitations under the License.
 #
 
+- name: Deploy a es cluster
+  ansible.builtin.import_playbook: es-deploy.yaml
+
+- name: Prepare for kafka deployment
+  hosts: [ controller, broker ]
+  connection: ssh
+  become: true
+  tasks:
+    - name: set facts for kafka
+      set_fact:
+        connect_pm_addresses: "{{ groups['placement_manager'] | map('extract', hostvars, 'private_ip') | map('regex_replace', '^(.*)$', '\\1:12378') | list }}"
+        stream_replication: 1
+
 - name: Format and mount disks for Kafka hosts
   hosts: [controller, broker]
   connection: ssh
