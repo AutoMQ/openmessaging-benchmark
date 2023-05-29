@@ -1,5 +1,5 @@
 provider "aws" {
-  region  = "${var.region}"
+  region  = var.region
 }
 
 provider "random" {}
@@ -42,11 +42,11 @@ variable "ami" {}
 
 variable "az" {}
 
-variable "instance_types" {
+variable "instance_type" {
   type = map(string)
 }
 
-variable "num_instances" {
+variable "instance_cnt" {
   type = map(string)
 }
 
@@ -62,7 +62,7 @@ resource "aws_vpc" "benchmark_vpc" {
 
 # Create an internet gateway to give our subnet access to the outside world
 resource "aws_internet_gateway" "kafka_on_es" {
-  vpc_id = "${aws_vpc.benchmark_vpc.id}"
+  vpc_id = aws_vpc.benchmark_vpc.id
 
   tags = {
     Benchmark = "Kafka_on_ES"
@@ -71,21 +71,17 @@ resource "aws_internet_gateway" "kafka_on_es" {
 
 # Grant the VPC internet access on its main route table
 resource "aws_route" "internet_access" {
-  route_table_id         = "${aws_vpc.benchmark_vpc.main_route_table_id}"
+  route_table_id         = aws_vpc.benchmark_vpc.main_route_table_id
   destination_cidr_block = "0.0.0.0/0"
-  gateway_id             = "${aws_internet_gateway.kafka_on_es.id}"
-
-  tags = {
-    Benchmark = "Kafka_on_ES"
-  }
+  gateway_id             = aws_internet_gateway.kafka_on_es.id
 }
 
 # Create a subnet to launch our instances into
 resource "aws_subnet" "benchmark_subnet" {
-  vpc_id                  = "${aws_vpc.benchmark_vpc.id}"
+  vpc_id                  = aws_vpc.benchmark_vpc.id
   cidr_block              = "10.0.0.0/24"
   map_public_ip_on_launch = true
-  availability_zone       = "${var.az}"
+  availability_zone       = var.az
 
   tags = {
     Benchmark = "Kafka_on_ES"
@@ -94,7 +90,7 @@ resource "aws_subnet" "benchmark_subnet" {
 
 resource "aws_security_group" "benchmark_security_group" {
   name   = "kafka_on_es_${random_id.hash.hex}"
-  vpc_id = "${aws_vpc.benchmark_vpc.id}"
+  vpc_id = aws_vpc.benchmark_vpc.id
 
   # SSH access from anywhere
   ingress {
@@ -128,7 +124,7 @@ resource "aws_security_group" "benchmark_security_group" {
 
 resource "aws_key_pair" "auth" {
   key_name   = "${var.key_name}-${random_id.hash.hex}"
-  public_key = "${file(var.public_key_path)}"
+  public_key = file(var.public_key_path)
 
   tags = {
     Benchmark = "Kafka_on_ES"
@@ -136,12 +132,12 @@ resource "aws_key_pair" "auth" {
 }
 
 resource "aws_instance" "placement_manager" {
-  ami                    = "${var.ami}"
-  instance_type          = "${var.instance_types["placement-manager"]}"
-  key_name               = "${aws_key_pair.auth.id}"
-  subnet_id              = "${aws_subnet.benchmark_subnet.id}"
-  vpc_security_group_ids = ["${aws_security_group.benchmark_security_group.id}"]
-  count                  = "${var.num_instances["placement-manager"]}"
+  ami                    = var.ami
+  instance_type          = var.instance_type["placement-manager"]
+  key_name               = aws_key_pair.auth.id
+  subnet_id              = aws_subnet.benchmark_subnet.id
+  vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
+  count                  = var.instance_cnt["placement-manager"]
 
   root_block_device {
     volume_size = 16
@@ -157,12 +153,12 @@ resource "aws_instance" "placement_manager" {
 }
 
 resource "aws_instance" "data_node" {
-  ami                    = "${var.ami}"
-  instance_type          = "${var.instance_types["data-node"]}"
-  key_name               = "${aws_key_pair.auth.id}"
-  subnet_id              = "${aws_subnet.benchmark_subnet.id}"
-  vpc_security_group_ids = ["${aws_security_group.benchmark_security_group.id}"]
-  count                  = "${var.num_instances["data-node"]}"
+  ami                    = var.ami
+  instance_type          = var.instance_type["data-node"]
+  key_name               = aws_key_pair.auth.id
+  subnet_id              = aws_subnet.benchmark_subnet.id
+  vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
+  count                  = var.instance_cnt["data-node"]
 
   root_block_device {
     volume_size = 32
@@ -178,12 +174,12 @@ resource "aws_instance" "data_node" {
 }
 
 resource "aws_instance" "mixed_pm_dn" {
-  ami                    = "${var.ami}"
-  instance_type          = "${var.instance_types["mixed-pm-dn"]}"
-  key_name               = "${aws_key_pair.auth.id}"
-  subnet_id              = "${aws_subnet.benchmark_subnet.id}"
-  vpc_security_group_ids = ["${aws_security_group.benchmark_security_group.id}"]
-  count                  = "${var.num_instances["mixed-pm-dn"]}"
+  ami                    = var.ami
+  instance_type          = var.instance_type["mixed-pm-dn"]
+  key_name               = aws_key_pair.auth.id
+  subnet_id              = aws_subnet.benchmark_subnet.id
+  vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
+  count                  = var.instance_cnt["mixed-pm-dn"]
 
   root_block_device {
     volume_size = 32
@@ -200,12 +196,12 @@ resource "aws_instance" "mixed_pm_dn" {
 
 # create hosts for Kafka controllers
 resource "aws_instance" "controller" {
-  ami                    = "${var.ami}"
-  instance_type          = "${var.instance_types["controller"]}"
-  key_name               = "${aws_key_pair.auth.id}"
-  subnet_id              = "${aws_subnet.benchmark_subnet.id}"
-  vpc_security_group_ids = ["${aws_security_group.benchmark_security_group.id}"]
-  count                  = "${var.num_instances["controller"]}"
+  ami                    = var.ami
+  instance_type          = var.instance_type["controller"]
+  key_name               = aws_key_pair.auth.id
+  subnet_id              = aws_subnet.benchmark_subnet.id
+  vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
+  count                  = var.instance_cnt["controller"]
 
   tags = {
     Name      = "kafka_controller_${count.index}"
@@ -215,12 +211,12 @@ resource "aws_instance" "controller" {
 
 # create hosts for Kafka brokers
 resource "aws_instance" "broker" {
-  ami                    = "${var.ami}"
-  instance_type          = "${var.instance_types["broker"]}"
-  key_name               = "${aws_key_pair.auth.id}"
-  subnet_id              = "${aws_subnet.benchmark_subnet.id}"
-  vpc_security_group_ids = ["${aws_security_group.benchmark_security_group.id}"]
-  count                  = lookup(var.num_instances, "broker", 0) # (var.num_instances["broker"]")
+  ami                    = var.ami
+  instance_type          = var.instance_type["broker"]
+  key_name               = aws_key_pair.auth.id
+  subnet_id              = aws_subnet.benchmark_subnet.id
+  vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
+  count                  = lookup(var.instance_cnt, "broker", 0) # (var.instance_cnt["broker"]")
 
   tags = {
     Name      = "kafka_broker_${count.index}"
@@ -230,12 +226,12 @@ resource "aws_instance" "broker" {
 
 # create hosts for Kafka clients
 resource "aws_instance" "client" {
-  ami                    = "${var.ami}"
-  instance_type          = "${var.instance_types["client"]}"
-  key_name               = "${aws_key_pair.auth.id}"
-  subnet_id              = "${aws_subnet.benchmark_subnet.id}"
-  vpc_security_group_ids = ["${aws_security_group.benchmark_security_group.id}"]
-  count                  = "${var.num_instances["client"]}"
+  ami                    = var.ami
+  instance_type          = var.instance_type["client"]
+  key_name               = aws_key_pair.auth.id
+  subnet_id              = aws_subnet.benchmark_subnet.id
+  vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
+  count                  = var.instance_cnt["client"]
 
   tags = {
     Name      = "kafka_client_${count.index}"
@@ -244,17 +240,17 @@ resource "aws_instance" "client" {
 }
 
 output "pm_ssh_host" {
-  value = "${aws_instance.placement_manager.0.public_ip}"
+  value = aws_instance.placement_manager[0].public_ip
 }
 
 output "dn_ssh_host" {
-  value = "${aws_instance.data_node.0.public_ip}"
+  value = aws_instance.data_node[0].public_ip
 }
 
 output "kafka_ssh_host" {
-  value = "${aws_instance.controller.0.public_ip}"
+  value = aws_instance.controller[0].public_ip
 }
 
 output "client_ssh_host" {
-  value = "${aws_instance.client.0.public_ip}"
+  value = aws_instance.client[0].public_ip
 }
