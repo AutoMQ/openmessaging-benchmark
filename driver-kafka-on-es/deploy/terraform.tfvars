@@ -1,4 +1,4 @@
-public_key_path = "~/.ssh/elasticstream_aws.pub"
+public_key_path = "~/.ssh/kafka_on_es_aws.pub"
 region          = "us-east-1"
 az              = "us-east-1c"
 ami             = "ami-053b0d53c279acc90" // Ubuntu 22.04 LTS 20230516 Release

@@ -12,19 +12,19 @@
 
 ### Generate SSH Keys
 
-Once you’re all set up with AWS and have the necessary tools installed locally, you’ll need to create both a public and a private SSH key at `~/.ssh/elasticstream_aws` (private) and `~/.ssh/elasticstream_aws.pub` (public), respectively. You can do this by running the following command:
+Once you’re all set up with AWS and have the necessary tools installed locally, you’ll need to create both a public and a private SSH key at `~/.ssh/kafka_on_es_aws` (private) and `~/.ssh/kafka_on_es_aws.pub` (public), respectively. You can do this by running the following command:
 
 ```bash
-ssh-keygen -f ~/.ssh/elasticstream_aws
+ssh-keygen -f ~/.ssh/kafka_on_es_aws
 ```
 
 When prompted to enter a passphrase, simply hit `Enter` twice. Then, make sure that the keys have been created:
 
 ```bash
-ls ~/.ssh/elasticstream_aws*
+ls ~/.ssh/kafka_on_es_aws*
 ```
 
-Note: `~/.ssh/elasticstream_aws` is the default key name used in the `terraform.tfvars` file. If you want to use a different key name, you will need to update the `terraform.tfvars` file accordingly.
+Note: `~/.ssh/kafka_on_es_aws` is the default key name used in the `terraform.tfvars` file. If you want to use a different key name, you will need to update the `terraform.tfvars` file accordingly.
 
 ### Create Resource Using Terraform
 
@@ -63,8 +63,8 @@ TF_STATE=. ansible-playbook --user ubuntu --inventory `which terraform-inventory
 You can SSH into the EC2 instances using the following command:
 
 ```bash
-ssh -i ~/.ssh/elasticstream_aws ubuntu@$(terraform output --raw pm_ssh_host)
-ssh -i ~/.ssh/elasticstream_aws ubuntu@$(terraform output --raw dn_ssh_host)
+ssh -i ~/.ssh/kafka_on_es_aws ubuntu@$(terraform output --raw pm_ssh_host)
+ssh -i ~/.ssh/kafka_on_es_aws ubuntu@$(terraform output --raw dn_ssh_host)
 ```
 
 ### Tear Down
