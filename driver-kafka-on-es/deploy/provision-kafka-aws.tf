@@ -56,12 +56,17 @@ resource "aws_vpc" "benchmark_vpc" {
 
   tags = {
     Name = "Kafka_on_ES_Benchmark_VPC_${random_id.hash.hex}"
+    Benchmark = "Kafka_on_ES"
   }
 }
 
 # Create an internet gateway to give our subnet access to the outside world
 resource "aws_internet_gateway" "kafka_on_es" {
   vpc_id = "${aws_vpc.benchmark_vpc.id}"
+
+  tags = {
+    Benchmark = "Kafka_on_ES"
+  }
 }
 
 # Grant the VPC internet access on its main route table
@@ -69,6 +74,10 @@ resource "aws_route" "internet_access" {
   route_table_id         = "${aws_vpc.benchmark_vpc.main_route_table_id}"
   destination_cidr_block = "0.0.0.0/0"
   gateway_id             = "${aws_internet_gateway.kafka_on_es.id}"
+
+  tags = {
+    Benchmark = "Kafka_on_ES"
+  }
 }
 
 # Create a subnet to launch our instances into
@@ -77,6 +86,10 @@ resource "aws_subnet" "benchmark_subnet" {
   cidr_block              = "10.0.0.0/24"
   map_public_ip_on_launch = true
   availability_zone       = "${var.az}"
+
+  tags = {
+    Benchmark = "Kafka_on_ES"
+  }
 }
 
 resource "aws_security_group" "benchmark_security_group" {
@@ -109,12 +122,17 @@ resource "aws_security_group" "benchmark_security_group" {
 
   tags = {
     Name = "Kafka_on_ES_Benchmark_SecurityGroup_${random_id.hash.hex}"
+    Benchmark = "Kafka_on_ES"
   }
 }
 
 resource "aws_key_pair" "auth" {
   key_name   = "${var.key_name}-${random_id.hash.hex}"
   public_key = "${file(var.public_key_path)}"
+
+  tags = {
+    Benchmark = "Kafka_on_ES"
+  }
 }
 
 resource "aws_instance" "placement_manager" {
@@ -170,7 +188,7 @@ resource "aws_instance" "controller" {
 
   tags = {
     Name      = "kafka_controller_${count.index}"
-    Benchmark = "Kafka"
+    Benchmark = "Kafka_on_ES"
   }
 }
 
@@ -185,7 +203,7 @@ resource "aws_instance" "broker" {
 
   tags = {
     Name      = "kafka_broker_${count.index}"
-    Benchmark = "Kafka"
+    Benchmark = "Kafka_on_ES"
   }
 }
 
@@ -200,7 +218,7 @@ resource "aws_instance" "client" {
 
   tags = {
     Name      = "kafka_client_${count.index}"
-    Benchmark = "Kafka"
+    Benchmark = "Kafka_on_ES"
   }
 }
 
