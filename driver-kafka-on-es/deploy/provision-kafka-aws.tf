@@ -240,11 +240,11 @@ resource "aws_instance" "client" {
 }
 
 output "pm_ssh_host" {
-  value = aws_instance.placement_manager[0].public_ip
+  value = concat(aws_instance.placement_manager, aws_instance.mixed_pm_dn)[0].public_ip
 }
 
 output "dn_ssh_host" {
-  value = aws_instance.data_node[0].public_ip
+  value = concat(aws_instance.data_node, aws_instance.mixed_pm_dn)[0].public_ip
 }
 
 output "kafka_ssh_host" {
