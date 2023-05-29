@@ -10,7 +10,7 @@ Path to the SSH public key to be used for authentication.
 Ensure this keypair is added to your local SSH agent so provisioners can
 connect.
 
-Example: ~/.ssh/elasticstream_aws.pub
+Example: ~/.ssh/kafka_on_es_aws.pub
 DESCRIPTION
 }
 
@@ -19,7 +19,7 @@ resource "random_id" "hash" {
 }
 
 variable "key_name" {
-  default     = "elasticstream-benchmark-key"
+  default     = "kafka_on_es_benchmark_key"
   description = "Desired name prefix for the AWS key pair"
 }
 
@@ -42,12 +42,12 @@ resource "aws_vpc" "benchmark_vpc" {
   cidr_block = "10.0.0.0/16"
 
   tags = {
-    Name = "ElasticStream_Benchmark_VPC_${random_id.hash.hex}"
+    Name = "Kafka_on_ES_Benchmark_VPC_${random_id.hash.hex}"
   }
 }
 
 # Create an internet gateway to give our subnet access to the outside world
-resource "aws_internet_gateway" "elasticstream" {
+resource "aws_internet_gateway" "kafka_on_es" {
   vpc_id = "${aws_vpc.benchmark_vpc.id}"
 }
 
@@ -55,7 +55,7 @@ resource "aws_internet_gateway" "elasticstream" {
 resource "aws_route" "internet_access" {
   route_table_id         = "${aws_vpc.benchmark_vpc.main_route_table_id}"
   destination_cidr_block = "0.0.0.0/0"
-  gateway_id             = "${aws_internet_gateway.elasticstream.id}"
+  gateway_id             = "${aws_internet_gateway.kafka_on_es.id}"
 }
 
 # Create a subnet to launch our instances into
@@ -67,7 +67,7 @@ resource "aws_subnet" "benchmark_subnet" {
 }
 
 resource "aws_security_group" "benchmark_security_group" {
-  name   = "terraform-elasticstream-${random_id.hash.hex}"
+  name   = "kafka_on_es_${random_id.hash.hex}"
   vpc_id = "${aws_vpc.benchmark_vpc.id}"
 
   # SSH access from anywhere
@@ -95,7 +95,7 @@ resource "aws_security_group" "benchmark_security_group" {
   }
 
   tags = {
-    Name = "ElasticStream_Benchmark_SecurityGroup_${random_id.hash.hex}"
+    Name = "Kafka_on_ES_Benchmark_SecurityGroup_${random_id.hash.hex}"
   }
 }
 
@@ -121,7 +121,7 @@ resource "aws_instance" "placement_manager" {
 
   tags = {
     Name      = "pm_${count.index}"
-    Benchmark = "ElasticStream"
+    Benchmark = "Kafka_on_ES"
   }
 }
 
@@ -142,7 +142,7 @@ resource "aws_instance" "data_node" {
 
   tags = {
     Name      = "dn_${count.index}"
-    Benchmark = "ElasticStream"
+    Benchmark = "Kafka_on_ES"
   }
 }
 
@@ -163,7 +163,7 @@ resource "aws_instance" "client" {
 
   tags = {
     Name      = "client_${count.index}"
-    Benchmark = "ElasticStream"
+    Benchmark = "Kafka_on_ES"
   }
 }
 
