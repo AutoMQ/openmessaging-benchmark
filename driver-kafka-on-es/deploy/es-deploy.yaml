@@ -190,8 +190,8 @@
   - set_fact:
       pm_name: "{{ hostvars[inventory_hostname]['tags.Name'] }}"
       private_ip: "{{ hostvars[inventory_hostname]['private_ip'] }}"
-      pm_names: "{{ groups['placement_manager'] | map('extract', hostvars, 'tags.Name') | list }}"
-      pm_addrs: "{{ groups['placement_manager'] | map('extract', hostvars, 'private_ip') | map('regex_replace', '^(.*)$', '\\1:12380') | list }}"
+      pm_names: "{{ (groups.get('placement_manager', []) + groups.get('mixed_pm_dn', [])) | map('extract', hostvars, 'tags.Name') | list }}"
+      pm_addrs: "{{ (groups.get('placement_manager', []) + groups.get('mixed_pm_dn', [])) | map('extract', hostvars, 'private_ip') | map('regex_replace', '^(.*)$', '\\1:12380') | list }}"
   - set_fact:
       pm_initial_cluster: "{{ pm_names | zip(pm_addrs) | map('join', '=http://') | list | join(',') }}"
   - name: Create config file
@@ -219,7 +219,7 @@
   tasks:
   - set_fact:
       private_ip: "{{ hostvars[inventory_hostname]['private_ip'] }}"
-      pm_0_ip: "{{ hostvars[groups['placement_manager'][0]]['private_ip'] }}"
+      pm_0_ip: "{{ hostvars[(groups.get('placement_manager', []) + groups.get('mixed_pm_dn', []))[0]]['private_ip'] }}"
   - name: Create config file
     template:
       src: templates/es/dn-config.yaml
