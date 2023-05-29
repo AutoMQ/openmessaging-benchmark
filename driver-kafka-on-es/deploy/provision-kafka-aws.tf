@@ -146,12 +146,12 @@ resource "aws_instance" "placement_manager" {
   root_block_device {
     volume_size = 16
     tags = {
-      Name = "pm_${count.index}"
+      Name = "es_pm_${count.index}"
     }
   }
 
   tags = {
-    Name      = "pm_${count.index}"
+    Name      = "es_pm_${count.index}"
     Benchmark = "Kafka_on_ES"
   }
 }
@@ -167,12 +167,33 @@ resource "aws_instance" "data_node" {
   root_block_device {
     volume_size = 32
     tags = {
-      Name = "dn_${count.index}"
+      Name = "es_dn_${count.index}"
     }
   }
 
   tags = {
-    Name      = "dn_${count.index}"
+    Name      = "es_dn_${count.index}"
+    Benchmark = "Kafka_on_ES"
+  }
+}
+
+resource "aws_instance" "mixed_pm_dn" {
+  ami                    = "${var.ami}"
+  instance_type          = "${var.instance_types["mixed-pm-dn"]}"
+  key_name               = "${aws_key_pair.auth.id}"
+  subnet_id              = "${aws_subnet.benchmark_subnet.id}"
+  vpc_security_group_ids = ["${aws_security_group.benchmark_security_group.id}"]
+  count                  = "${var.num_instances["mixed-pm-dn"]}"
+
+  root_block_device {
+    volume_size = 32
+    tags = {
+      Name = "es_mixed_pm_dn_${count.index}"
+    }
+  }
+
+  tags = {
+    Name      = "es_mixed_pm_dn_${count.index}"
     Benchmark = "Kafka_on_ES"
   }
 }

@@ -1,5 +1,6 @@
 - name: Format and mount disks on data nodes
-  hosts: data_node
+  tags: [data_node]
+  hosts: data_node, mixed_pm_dn
   connection: ssh
   become: true
   tasks:
@@ -55,7 +56,8 @@
     reboot:
 
 - name: Setup Data Node
-  hosts: data_node
+  tags: [data_node]
+  hosts: data_node, mixed_pm_dn
   connection: ssh
   tasks:
   - name: Install Rust and Cargo
@@ -122,7 +124,8 @@
       executable: /bin/bash
 
 - name: Setup Placement Manager
-  hosts: placement_manager
+  tags: [placement_manager]
+  hosts: placement_manager, mixed_pm_dn
   connection: ssh
   tasks:
   - name: Install Docker
@@ -180,8 +183,8 @@
       chdir: /home/ubuntu/elastic-stream-pm/placement-manager
 
 - name: Start Placement Manager
-  tags: [golang, run]
-  hosts: placement_manager
+  tags: [golang, run, placement_manager]
+  hosts: placement_manager, mixed_pm_dn
   connection: ssh
   tasks:
   - set_fact:
@@ -210,8 +213,8 @@
       var: pm_pid.stdout
 
 - name: Start Data Node
-  tags: [rust, run]
-  hosts: data_node
+  tags: [rust, run, data_node]
+  hosts: data_node, mixed_pm_dn
   connection: ssh
   tasks:
   - set_fact:
