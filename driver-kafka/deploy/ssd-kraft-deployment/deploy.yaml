@@ -68,10 +68,10 @@
   become: true
   tasks:
     - name: Install RPM packages
-      yum: pkg={{ item }} state=latest
+      apt: pkg={{ item }} state=latest
       with_items:
         - wget
-        - java-17-openjdk-devel
+        - openjdk-17-jdk
         - sysstat
         - vim
         - chrony
