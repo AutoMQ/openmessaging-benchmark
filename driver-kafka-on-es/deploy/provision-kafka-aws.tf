@@ -183,6 +183,7 @@ resource "aws_instance" "mixed_pm_dn" {
 
   root_block_device {
     volume_size = 32
+    volume_type = "io1"
     tags = {
       Name = "es_mixed_pm_dn_${count.index}"
     }
