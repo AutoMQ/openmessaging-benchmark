@@ -55,7 +55,7 @@ The `terraform.tfvars` file contains the following variables:
 Once the Terraform installation is complete, you can run the Ansible playbook to install the necessary software and start the **AutoMQ for Apache Kafka** on the EC2 instances:
 
 ```bash
-TF_STATE=. ansible-playbook --user ubuntu --inventory `which terraform-inventory` kafka-mix-deploy.yaml
+TF_STATE=. ansible-playbook --user ubuntu --inventory `which terraform-inventory` kafka-deploy.yaml
 ```
 
 #### SSH into EC2 Instances

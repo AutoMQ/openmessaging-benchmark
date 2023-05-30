@@ -13,17 +13,7 @@
 #
 
 - name: Deploy a es cluster
-  ansible.builtin.import_playbook: es-deploy.yaml
-
-- name: Prepare for kafka deployment
-  hosts: [ controller, broker ]
-  connection: ssh
-  become: true
-  tasks:
-    - name: set facts for kafka
-      set_fact:
-        connect_pm_addresses: "{{ groups['placement_manager'] | map('extract', hostvars, 'private_ip') | map('regex_replace', '^(.*)$', '\\1:12378') | list }}"
-        stream_replication: 1
+  ansible.builtin.import_playbook: es-kafka-deploy.yaml
 
 - name: Format and mount disks for Kafka hosts
   hosts: [controller, broker]
@@ -38,7 +28,6 @@
         dev: '{{ item }}'
       with_items:
         - '/dev/nvme1n1'
-        - '/dev/nvme2n1'
     - name: Mount disks
       mount:
         path: "{{ item.path }}"
@@ -48,7 +37,6 @@
         state: mounted
       with_items:
         - { path: "/mnt/data-1", src: "/dev/nvme1n1" }
-        - { path: "/mnt/data-2", src: "/dev/nvme2n1" }
     - name: Increase hard file descriptor limit
       pam_limits:
         domain: '*'
@@ -76,7 +64,7 @@
       reboot:
 
 - name: General setup for all
-  hosts: [ controller, broker, client ]
+  hosts: [controller, broker, client]
   connection: ssh
   become: true
   tasks:
@@ -90,14 +78,13 @@
         - chrony
     - name: Set common facts
       set_fact:
-        # combine all mixed servers with broker port
-        mixedServers: "{{ groups['controller'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9092') | join(',') }}"
+        controllerServers: "{{ groups['controller'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9093') | join(',') }}"
+        brokerServers: "{{ groups['broker'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9092') | join(',') }}"
         privateIp: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
     - name: Change locale to en_US.utf-8
       shell: |
         echo 'LANG=en_US.utf-8
               LC_ALL=en_US.utf-8' > /etc/environment
-
 
 - name: Kafka general setup
   hosts: [controller, broker]
@@ -124,9 +111,8 @@
         dest: /opt/kafka
         extra_opts: ["--strip-components=1"]
 
-
-# setting nodes that are both controller and broker.
-- name: Setup Kafka mix nodes
+# setting controllers.
+- name: Setup Kafka controllers
   hosts: controller
   connection: ssh
   become: true
@@ -135,20 +121,21 @@
       set_fact:
         nodeId: "{{ groups['controller'].index(inventory_hostname) + 1 }}"
     - template:
-        src: "templates/server.properties"
-        dest: "/opt/kafka/config/kraft/server.properties"
+        src: "templates/controller.properties"
+        dest: "/opt/kafka/config/kraft/controller.properties"
     - template:
-        src: "templates/server.service"
-        dest: "/etc/systemd/system/server.service"
+        src: "templates/controller.service"
+        dest: "/etc/systemd/system/controller.service"
     - name: Format Log Directories
-      shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/server.properties
+      shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/controller.properties
       args:
         chdir: /opt/kafka/
     - systemd:
         state: restarted
         daemon_reload: yes
-        name: "server"
-      tags: [restart-server]
+        name: "controller"
+      tags: [restart-controller]
+
 
 - name: Setup Kafka brokers
   hosts: broker
@@ -197,21 +184,11 @@
       register: drivers_list
       tags: [client-code]
 
-    - name: Fill brokerServers into bootstrapServers if brokerGroup exists
-      set_fact:
-        brokerServers: "{{ groups['broker'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9092') | join(',') }}"
-      when: "'broker' in groups"
-      tags: [client-code]
-    # all servers play the role of broker
-    - name: Set boostrapServers
-      set_fact:
-        bootstrapServers: "{{ (mixedServers + ',' + brokerServers) if ('broker' in groups) else mixedServers }}"
-
     - name: Configure Bootstrap Servers
       lineinfile:
         dest: '{{ item }}'
         regexp: '^  bootstrap.servers='
-        line: '  bootstrap.servers={{ bootstrapServers }}'
+        line: '  bootstrap.servers={{ brokerServers }}'
       with_items: '{{ drivers_list.stdout_lines }}'
       tags: [client-code]
 
@@ -223,14 +200,14 @@
       lineinfile:
         dest: '{{ item }}'
         regexp: '^  bootstrap.servers='
-        line: '  bootstrap.servers={{ bootstrapServers }}'
+        line: '  bootstrap.servers={{ brokerServers }}'
       with_items: '{{ jms_drivers_list.stdout_lines }}'
 
     - name: Configure JMS Connection Factory
       ansible.builtin.replace:
         dest: '{{ item }}'
         regexp: 'localhost\:9092'
-        replace: '{{ bootstrapServers }}'
+        replace: '{{ brokerServers }}'
       with_items: '{{ jms_drivers_list.stdout_lines }}'
 
     - name: Configure memory
@@ -269,6 +246,7 @@
         daemon_reload: yes
         name: "chronyd"
 
+
 - name:  Hosts addresses
   hosts: localhost
   become: false
@@ -279,7 +257,6 @@
     - debug:
         msg: "Kafka brokers {{ item }}"
       with_items: "{{ groups['broker'] }}"
-      when: "'broker' in groups"
     - debug:
         msg: "Benchmark clients {{ item }}"
       with_items: "{{ groups['client'] }}"
