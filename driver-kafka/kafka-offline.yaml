@@ -27,6 +27,10 @@ reset: true
 topicConfig: |
   min.insync.replicas=1
   flush.ms=1000
+
+commonConfig: |
+  bootstrap.servers=localhost:9092
+
 producerConfig: |
   acks=all
   linger.ms=1
