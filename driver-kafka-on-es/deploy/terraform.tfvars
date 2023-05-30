@@ -6,14 +6,18 @@ ami             = "ami-03f65b8614a860c29" // Ubuntu 22.04 LTS 20230516 Release
 instance_type = {
   "placement-manager" = "m5n.large"    // TODO
   "data-node"         = "i4i.2xlarge"  // TODO
+  "mixed-pm-dn"       = "i4i.2xlarge"  // TODO
+
   "broker"            = "i4i.4xlarge"
   "controller"        = "i3en.2xlarge"
   "client"            = "m5n.8xlarge"
 }
 
 instance_cnt = {
-  "placement-manager" = 1
-  "data-node"         = 3
+  "placement-manager" = 0
+  "data-node"         = 0
+  "mixed-pm-dn"       = 3
+
   "client"            = 4
   "broker"            = 3
   "controller"        = 1
