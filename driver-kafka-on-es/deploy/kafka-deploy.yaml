@@ -12,6 +12,41 @@
 # limitations under the License.
 #
 
+- name: General setup for all
+  hosts: [controller, broker, client]
+  connection: ssh
+  become: true
+  tasks:
+    - name: Update and upgrade apt packages
+      become: true
+      apt:
+        upgrade: yes
+        update_cache: yes
+        cache_valid_time: 86400
+    - name: Install packages
+      apt: pkg={{ item }} state=latest
+      with_items:
+        - wget
+        - tuned
+        - openjdk-17-jdk
+        - sysstat
+        - vim
+        - chrony
+    - name: Set common facts
+      set_fact:
+        controllerServers: "{{ groups['controller'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9093') | join(',') }}"
+        brokerServers: "{{ groups['broker'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9092') | join(',') }}"
+        privateIp: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+    - name: Change locale to en_US.utf-8
+      shell: |
+        echo 'LANG=en_US.utf-8
+              LC_ALL=en_US.utf-8' > /etc/environment
+    - name: set facts for kafka
+      set_fact:
+        connect_pm_addresses: "{{ groups['placement_manager'] | map('extract', hostvars, 'private_ip') | map('regex_replace', '^(.*)$', '\\1:12378') | list }}"
+        stream_replication: 1
+
+
 - name: Deploy a es cluster
   ansible.builtin.import_playbook: es-kafka-deploy.yaml
 
@@ -63,29 +98,6 @@
     - name: Reboot the machine with all defaults
       reboot:
 
-- name: General setup for all
-  hosts: [controller, broker, client]
-  connection: ssh
-  become: true
-  tasks:
-    - name: Install RPM packages
-      apt: pkg={{ item }} state=latest
-      with_items:
-        - wget
-        - openjdk-17-jdk
-        - sysstat
-        - vim
-        - chrony
-    - name: Set common facts
-      set_fact:
-        controllerServers: "{{ groups['controller'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9093') | join(',') }}"
-        brokerServers: "{{ groups['broker'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9092') | join(',') }}"
-        privateIp: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
-    - name: Change locale to en_US.utf-8
-      shell: |
-        echo 'LANG=en_US.utf-8
-              LC_ALL=en_US.utf-8' > /etc/environment
-
 - name: Kafka general setup
   hosts: [controller, broker]
   connection: ssh
@@ -106,10 +118,10 @@
         KAFKA_CLUSTER_ID: "XPufKTN9T1SpE82LDKwXwA"
     - name: Download Kafka package
       unarchive:
-        src: "http://archive.apache.org/dist/kafka/{{ kafkaVersion }}/kafka_2.13-{{ kafkaVersion }}.tgz"
+        src: "https://dlcdn.apache.org/kafka/{{ kafkaVersion }}/kafka_2.13-{{ kafkaVersion }}.tgz"
         remote_src: yes
         dest: /opt/kafka
-        extra_opts: ["--strip-components=1"]
+        extra_opts: [ "--strip-components=1" ]
 
 # setting controllers.
 - name: Setup Kafka controllers
