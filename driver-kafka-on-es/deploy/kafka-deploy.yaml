@@ -15,15 +15,14 @@
 - name: General setup for all
   hosts: [controller, data_node, client]
   connection: ssh
+  become: true
   tasks:
     - name: Update and upgrade apt packages
-      become: true
       apt:
         upgrade: yes
         update_cache: yes
         cache_valid_time: 86400
     - name: Install packages
-      become: true
       apt: pkg={{ item }} state=present
       with_items:
         - wget
@@ -38,7 +37,6 @@
         brokerServers: "{{ groups['data_node'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9092') | join(',') }}"
         privateIp: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
     - name: Change locale to en_US.utf-8
-      become: true
       shell: |
         echo 'LANG=en_US.utf-8
               LC_ALL=en_US.utf-8' > /etc/environment
@@ -49,7 +47,7 @@
 
 
 - name: Deploy a es cluster
- ansible.builtin.import_playbook: es-deploy.yaml
+  ansible.builtin.import_playbook: es-deploy.yaml
 
 - name: Format and mount disks for Kafka hosts
   hosts: [controller] # skip  data_node
@@ -102,6 +100,7 @@
 - name: Kafka general setup
   hosts: [controller, data_node]
   connection: ssh
+  become: true
   tasks:
     # used for building kafka
     - name: Install Rust and Cargo
@@ -125,7 +124,6 @@
       tags: [dependencies]
       block:
         - name: Install apt packages
-          become: true
           apt:
             name: "{{ item }}"
             state: present
@@ -135,7 +133,6 @@
             - unzip
             - maven
         - name: Install flatc
-          become: true
           unarchive:
             src: https://github.com/google/flatbuffers/releases/download/v23.3.3/Linux.flatc.binary.g++-10.zip
             dest: /usr/local/bin
@@ -167,13 +164,6 @@
         mvn install -DskipTests -DskipSigning
       args:
         chdir: /home/ubuntu/elastic-stream-dn/sdks/frontend-java
-    - name: change opt owner
-      become: true
-      file:
-        path: /opt
-        owner: ubuntu
-        group: ubuntu
-        mode: 0777
     - name: Clone latest kafka code from github
       tags: [ git, build ]
       git:
@@ -218,6 +208,7 @@
 - name: Setup Kafka controllers
   hosts: controller
   connection: ssh
+  become: true
   tasks:
     - name: Set nodeId
       set_fact:
@@ -225,16 +216,14 @@
     - template:
         src: "templates/controller.properties"
         dest: "/opt/kafka/config/kraft/controller.properties"
-    - become: true
-      template:
+    - template:
         src: "templates/controller.service"
         dest: "/etc/systemd/system/controller.service"
-    # - name: Format Log Directories
-    #   shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/controller.properties
-    #   args:
-    #     chdir: /opt/kafka/
-    - become: true
-      systemd:
+    - name: Format Log Directories
+      shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/controller.properties
+      args:
+        chdir: /opt/kafka/
+    - systemd:
         state: restarted
         daemon_reload: yes
         name: "controller"
@@ -244,6 +233,7 @@
 - name: Setup Kafka brokers
   hosts: data_node
   connection: ssh
+  become: true
   tasks:
     - name: Set nodeId
       set_fact:
@@ -252,16 +242,14 @@
       template:
         src: "templates/broker.properties"
         dest: "/opt/kafka/config/kraft/broker.properties"
-    - become: true
-      template:
+    - template:
         src: "templates/broker.service"
         dest: "/etc/systemd/system/broker.service"
     - name: Format Log Directories
       shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/broker.properties
       args:
         chdir: /opt/kafka/
-    - become: true
-      systemd:
+    - systemd:
         state: restarted
         daemon_reload: yes
         name: "broker"
@@ -271,16 +259,10 @@
 - name: Setup Benchmark client
   hosts: client
   connection: ssh
+  become: true
   tasks:
     - file: path=/opt/benchmark state=absent
       tags: [client-code]
-    - name: change opt owner
-      become: true
-      file:
-        path: /opt
-        owner: ubuntu
-        group: ubuntu
-        mode: 0777
     - name: Copy benchmark code
       unarchive:
         src: ../../package/target/openmessaging-benchmark-0.0.1-SNAPSHOT-bin.tar.gz
@@ -288,8 +270,7 @@
       tags: [client-code]
     - shell: mv /opt/openmessaging-benchmark-0.0.1-SNAPSHOT /opt/benchmark
       tags: [client-code]
-    - become: true
-      shell: tuned-adm profile latency-performance
+    - shell: tuned-adm profile latency-performance
 
     - name: Get list of driver config files
       raw: ls -1 /opt/benchmark/driver-kafka/*.yaml
@@ -339,25 +320,21 @@
         dest: "/opt/benchmark/workers.yaml"
       tags: [client-code]
     - name: Install benchmark systemd service
-      become: true
       template:
         src: "templates/benchmark-worker.service"
         dest: "/etc/systemd/system/benchmark-worker.service"
       tags: [client-code]
-    - become: true
-      systemd:
+    - systemd:
         state: restarted
         daemon_reload: yes
         name: "benchmark-worker"
       tags: [client-code]
 
     - name: Set up chronyd
-      become: true
       template:
         src: "templates/chrony.conf"
         dest: "/etc/chrony.conf"
-    - become: true
-      systemd:
+    - systemd:
         state: restarted
         daemon_reload: yes
         name: "chronyd"
