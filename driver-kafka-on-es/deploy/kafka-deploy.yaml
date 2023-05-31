@@ -13,9 +13,8 @@
 #
 
 - name: General setup for all
-  hosts: [controller, broker, client]
+  hosts: [controller, data_node, client]
   connection: ssh
-  become: true
   tasks:
     - name: Update and upgrade apt packages
       become: true
@@ -24,7 +23,8 @@
         update_cache: yes
         cache_valid_time: 86400
     - name: Install packages
-      apt: pkg={{ item }} state=latest
+      become: true
+      apt: pkg={{ item }} state=present
       with_items:
         - wget
         - tuned
@@ -35,23 +35,24 @@
     - name: Set common facts
       set_fact:
         controllerServers: "{{ groups['controller'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9093') | join(',') }}"
-        brokerServers: "{{ groups['broker'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9092') | join(',') }}"
+        brokerServers: "{{ groups['data_node'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9092') | join(',') }}"
         privateIp: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
     - name: Change locale to en_US.utf-8
+      become: true
       shell: |
         echo 'LANG=en_US.utf-8
               LC_ALL=en_US.utf-8' > /etc/environment
     - name: set facts for kafka
       set_fact:
-        connect_pm_addresses: "{{ groups['placement_manager'] | map('extract', hostvars, 'private_ip') | map('regex_replace', '^(.*)$', '\\1:12378') | list }}"
+        connect_pm_addresses: "{{ groups['placement_manager'] | map('extract', hostvars, 'private_ip') | list }}"
         stream_replication: 1
 
 
 - name: Deploy a es cluster
-  ansible.builtin.import_playbook: es-kafka-deploy.yaml
+ ansible.builtin.import_playbook: es-deploy.yaml
 
 - name: Format and mount disks for Kafka hosts
-  hosts: [controller, broker]
+  hosts: [controller] # skip  data_node
   connection: ssh
   become: true
   tasks:
@@ -99,9 +100,8 @@
       reboot:
 
 - name: Kafka general setup
-  hosts: [controller, broker]
+  hosts: [controller, data_node]
   connection: ssh
-  become: true
   tasks:
     # used for building kafka
     - name: Install Rust and Cargo
@@ -161,15 +161,35 @@
       args:
         chdir: /home/ubuntu/elastic-stream-dn/sdks
         executable: /bin/bash
+    - name: install java sdk
+      tags: [sdk, install]
+      shell: |
+        mvn install -DskipTests -DskipSigning
+      args:
+        chdir: /home/ubuntu/elastic-stream-dn/sdks/frontend-java
+    - name: change opt owner
+      become: true
+      file:
+        path: /opt
+        owner: ubuntu
+        group: ubuntu
+        mode: 0777
     - name: Clone latest kafka code from github
       tags: [ git, build ]
       git:
         repo: https://github.com/AutoMQ/kafka.git
-        dest: /home/ubuntu/kafka
+        dest: /opt/kafka
         version: develop
         depth: 1
         single_branch: true
         force: true
+    - name: create gradle directory
+      file:
+        path: /home/ubuntu/.gradle
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: 0755
     - name: Setting gradle properties
       copy:
         src: templates/init.gradle
@@ -179,11 +199,9 @@
       shell: |
         ./gradlew jar -x test
       args:
-        chdir: /home/ubuntu/kafka
+        chdir: /opt/kafka
         executable: /bin/bash
 
-    - file: path=/opt/kafka state=absent
-    - file: path=/opt/kafka state=directory
     - name: Generate quorum servers
       set_fact:
         quorumServers: "{{ quorumServers | default('') + (itemIndex + 1) | string + '@' + item + ',' }}"
@@ -195,18 +213,11 @@
         quorumServers: "{{ quorumServers[:-1] }}"
         kafkaVersion: "3.4.0"
         KAFKA_CLUSTER_ID: "XPufKTN9T1SpE82LDKwXwA"
-    - name: Download Kafka package
-      unarchive:
-        src: "https://dlcdn.apache.org/kafka/{{ kafkaVersion }}/kafka_2.13-{{ kafkaVersion }}.tgz"
-        remote_src: yes
-        dest: /opt/kafka
-        extra_opts: [ "--strip-components=1" ]
 
 # setting controllers.
 - name: Setup Kafka controllers
   hosts: controller
   connection: ssh
-  become: true
   tasks:
     - name: Set nodeId
       set_fact:
@@ -214,14 +225,16 @@
     - template:
         src: "templates/controller.properties"
         dest: "/opt/kafka/config/kraft/controller.properties"
-    - template:
+    - become: true
+      template:
         src: "templates/controller.service"
         dest: "/etc/systemd/system/controller.service"
-    - name: Format Log Directories
-      shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/controller.properties
-      args:
-        chdir: /opt/kafka/
-    - systemd:
+    # - name: Format Log Directories
+    #   shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/controller.properties
+    #   args:
+    #     chdir: /opt/kafka/
+    - become: true
+      systemd:
         state: restarted
         daemon_reload: yes
         name: "controller"
@@ -229,25 +242,26 @@
 
 
 - name: Setup Kafka brokers
-  hosts: broker
+  hosts: data_node
   connection: ssh
-  become: true
   tasks:
     - name: Set nodeId
       set_fact:
-        nodeId: "{{  (groups['controller'] | length) + groups['broker'].index(inventory_hostname) + 1 }}"
+        nodeId: "{{  (groups['controller'] | length) + groups['data_node'].index(inventory_hostname) + 1 }}"
     - name: Set up broker
       template:
         src: "templates/broker.properties"
         dest: "/opt/kafka/config/kraft/broker.properties"
-    - template:
+    - become: true
+      template:
         src: "templates/broker.service"
         dest: "/etc/systemd/system/broker.service"
     - name: Format Log Directories
       shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/broker.properties
       args:
         chdir: /opt/kafka/
-    - systemd:
+    - become: true
+      systemd:
         state: restarted
         daemon_reload: yes
         name: "broker"
@@ -257,18 +271,25 @@
 - name: Setup Benchmark client
   hosts: client
   connection: ssh
-  become: true
   tasks:
     - file: path=/opt/benchmark state=absent
       tags: [client-code]
+    - name: change opt owner
+      become: true
+      file:
+        path: /opt
+        owner: ubuntu
+        group: ubuntu
+        mode: 0777
     - name: Copy benchmark code
       unarchive:
-        src: ../../../package/target/openmessaging-benchmark-0.0.1-SNAPSHOT-bin.tar.gz
+        src: ../../package/target/openmessaging-benchmark-0.0.1-SNAPSHOT-bin.tar.gz
         dest: /opt
       tags: [client-code]
     - shell: mv /opt/openmessaging-benchmark-0.0.1-SNAPSHOT /opt/benchmark
       tags: [client-code]
-    - shell: tuned-adm profile latency-performance
+    - become: true
+      shell: tuned-adm profile latency-performance
 
     - name: Get list of driver config files
       raw: ls -1 /opt/benchmark/driver-kafka/*.yaml
@@ -318,21 +339,25 @@
         dest: "/opt/benchmark/workers.yaml"
       tags: [client-code]
     - name: Install benchmark systemd service
+      become: true
       template:
         src: "templates/benchmark-worker.service"
         dest: "/etc/systemd/system/benchmark-worker.service"
       tags: [client-code]
-    - systemd:
+    - become: true
+      systemd:
         state: restarted
         daemon_reload: yes
         name: "benchmark-worker"
       tags: [client-code]
 
     - name: Set up chronyd
+      become: true
       template:
         src: "templates/chrony.conf"
         dest: "/etc/chrony.conf"
-    - systemd:
+    - become: true
+      systemd:
         state: restarted
         daemon_reload: yes
         name: "chronyd"
@@ -340,14 +365,14 @@
 
 - name:  Hosts addresses
   hosts: localhost
-  become: false
   tasks:
     - debug:
         msg: "Kafka controller servers {{ item }}"
       with_items: "{{ groups['controller'] }}"
     - debug:
         msg: "Kafka brokers {{ item }}"
-      with_items: "{{ groups['broker'] }}"
+      with_items: "{{ groups['data_node'] }}"
     - debug:
         msg: "Benchmark clients {{ item }}"
       with_items: "{{ groups['client'] }}"
+

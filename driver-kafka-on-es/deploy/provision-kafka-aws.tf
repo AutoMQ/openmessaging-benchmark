@@ -249,7 +249,7 @@ output "dn_ssh_host" {
 }
 
 output "kafka_ssh_host" {
-  value = aws_instance.controller[0].public_ip
+  value = aws_instance.data_node[0].public_ip
 }
 
 output "client_ssh_host" {

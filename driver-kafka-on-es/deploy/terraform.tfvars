@@ -14,11 +14,11 @@ instance_type = {
 }
 
 instance_cnt = {
-  "placement-manager" = 0
-  "data-node"         = 0
-  "mixed-pm-dn"       = 3
+  "placement-manager" = 1
+  "data-node"         = 2
+  "mixed-pm-dn"       = 0
 
   "client"            = 4
-  "broker"            = 3
+  "broker"            = 0
   "controller"        = 1
 }
