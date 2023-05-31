@@ -12,7 +12,7 @@
 # limitations under the License.
 #
 
-name: 8-partitions-512K-rate-4-producer
+name: 1024-partitions-512K-rate-4-producer
 
 topics: 1
 partitionsPerTopic: 8
