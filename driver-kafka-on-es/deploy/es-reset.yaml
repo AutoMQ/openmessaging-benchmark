@@ -1,0 +1,63 @@
+- name: Reset Placement Manager
+  tags: [golang, run, placement_manager]
+  hosts: placement_manager, mixed_pm_dn
+  connection: ssh
+  tasks:
+    - set_fact:
+        pm_name: "{{ hostvars[inventory_hostname]['tags.Name'] }}"
+    - name: Stop Placement Manager
+      shell: |
+        pkill -f placement-manager
+      args:
+        executable: /bin/bash
+      ignore_errors: true
+    - name: Remove data directory
+      file:
+        path: "/home/ubuntu/{{ pm_name }}"
+        state: absent
+    - name: Start Placement Manager
+      shell: |
+        nohup ./elastic-stream-pm/placement-manager/bin/linux_amd64/placement-manager --config ./pm-config.yaml < /dev/null > /dev/null 2>&1 &
+      args:
+        chdir: /home/ubuntu
+        executable: /bin/bash
+    - shell: sleep 2 && pgrep -f placement-manager
+      args:
+        executable: /bin/bash
+      register: pm_pid
+      failed_when: pm_pid.stdout | length == 0
+    - debug:
+        var: pm_pid.stdout
+
+- name: Reset Data Node
+  tags: [rust, run, data_node]
+  hosts: data_node, mixed_pm_dn
+  connection: ssh
+  tasks:
+    - set_fact:
+        private_ip: "{{ hostvars[inventory_hostname]['private_ip'] }}"
+        pm_0_ip: "{{ hostvars[(groups.get('placement_manager', []) + groups.get('mixed_pm_dn', []))[0]]['private_ip'] }}"
+    - name: Stop Data Node
+      shell: |
+        pkill -f data-node
+      args:
+        executable: /bin/bash
+      ignore_errors: true
+    - name: Remove data directory
+      file:
+        path: "/mnt/data-1/store"
+        state: absent
+    - name: Start Data Node
+      become: true
+      shell: |
+        nohup ./elastic-stream-dn/target/release/data-node --config ./dn-config.yaml --log ./dn-log-config.yaml < /dev/null > /dev/null 2>&1 &
+      args:
+        chdir: /home/ubuntu
+        executable: /bin/bash
+    - shell: sleep 2 && pgrep -f data-node
+      args:
+        executable: /bin/bash
+      register: dn_pid
+      failed_when: dn_pid.stdout | length == 0
+    - debug:
+        var: dn_pid.stdout
