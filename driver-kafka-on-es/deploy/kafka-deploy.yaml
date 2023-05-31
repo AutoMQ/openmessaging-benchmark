@@ -103,6 +103,85 @@
   connection: ssh
   become: true
   tasks:
+    # used for building kafka
+    - name: Install Rust and Cargo
+      tags: [rust, dependencies]
+      block:
+        - name: Download Rust installer
+          get_url:
+            url: https://sh.rustup.rs
+            dest: /tmp/sh.rustup.rs
+            mode: '0755'
+            force: 'yes'
+        - name: Install Rust and Cargo
+          command: /tmp/sh.rustup.rs --verbose -y --default-toolchain nightly
+        - shell: source $HOME/.cargo/env && cargo --version
+          args:
+            executable: /bin/bash
+          register: cargo_version
+        - debug:
+            var: cargo_version.stdout
+    - name: Install dependencies
+      tags: [dependencies]
+      block:
+        - name: Install apt packages
+          become: true
+          apt:
+            name: "{{ item }}"
+            state: present
+          with_items:
+            - build-essential
+            - clang
+            - unzip
+            - maven
+        - name: Install flatc
+          become: true
+          unarchive:
+            src: https://github.com/google/flatbuffers/releases/download/v23.3.3/Linux.flatc.binary.g++-10.zip
+            dest: /usr/local/bin
+            remote_src: yes
+        - shell: flatc --version
+          register: flatc_version
+        - debug:
+            var: flatc_version.stdout
+    - name: Clone latest es code from github
+      tags: [git, build]
+      git:
+        repo: https://github.com/AutoMQ/elastic-stream.git
+        dest: /home/ubuntu/elastic-stream-dn
+        version: develop
+        depth: 1
+        single_branch: true
+        force: true
+    - name: Build java sdk
+      tags: [sdk, build]
+      shell: |
+        source $HOME/.cargo/env
+        ./build.sh
+      args:
+        chdir: /home/ubuntu/elastic-stream-dn/sdks
+        executable: /bin/bash
+    - name: Clone latest kafka code from github
+      tags: [ git, build ]
+      git:
+        repo: https://github.com/AutoMQ/kafka.git
+        dest: /home/ubuntu/kafka
+        version: develop
+        depth: 1
+        single_branch: true
+        force: true
+    - name: Setting gradle properties
+      copy:
+        src: templates/init.gradle
+        dest: /home/ubuntu/.gradle/init.gradle
+    - name: Build kafka
+      tags: [ kafka, build ]
+      shell: |
+        ./gradlew jar -x test
+      args:
+        chdir: /home/ubuntu/kafka
+        executable: /bin/bash
+
     - file: path=/opt/kafka state=absent
     - file: path=/opt/kafka state=directory
     - name: Generate quorum servers
