@@ -4,21 +4,25 @@ az              = "us-west-2a"
 ami             = "ami-03f65b8614a860c29" // Ubuntu 22.04 LTS 20230516 Release
 
 instance_type = {
-  "placement-manager" = "m5n.large"    // TODO
-  "data-node"         = "i4i.2xlarge"  // TODO
-  "mixed-pm-dn"       = "i4i.2xlarge"  // TODO
+  "placement-manager"   = "i4i.2xlarge"
+  "controller"          = "i4i.2xlarge"
+  "mixed-pm-ctrl"       = "i4i.2xlarge"
 
-  "broker"            = "i4i.4xlarge"
-  "controller"        = "i3en.2xlarge"
-  "client"            = "m5n.8xlarge"
+  "data-node"           = "i4i.4xlarge"
+  "broker"              = "i4i.4xlarge"
+  "mixed-dn-bkr"        = "i4i.4xlarge"
+
+  "client"              = "m5n.8xlarge"
 }
 
 instance_cnt = {
-  "placement-manager" = 1
-  "data-node"         = 2
-  "mixed-pm-dn"       = 0
+  "placement-manager"   = 0
+  "controller"          = 0
+  "mixed-pm-ctrl"       = 1
 
-  "client"            = 4
-  "broker"            = 0
-  "controller"        = 1
+  "data-node"           = 0
+  "broker"              = 0
+  "mixed-dn-bkr"        = 1
+
+  "client"              = 1
 }

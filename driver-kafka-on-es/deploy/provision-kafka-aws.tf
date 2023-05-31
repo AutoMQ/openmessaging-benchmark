@@ -142,12 +142,54 @@ resource "aws_instance" "placement_manager" {
   root_block_device {
     volume_size = 16
     tags = {
-      Name = "es_pm_${count.index}"
+      Name = "pm_${count.index}"
     }
   }
 
   tags = {
-    Name      = "es_pm_${count.index}"
+    Name      = "pm_${count.index}"
+    Benchmark = "Kafka_on_ES"
+  }
+}
+
+resource "aws_instance" "controller" {
+  ami                    = var.ami
+  instance_type          = var.instance_type["controller"]
+  key_name               = aws_key_pair.auth.id
+  subnet_id              = aws_subnet.benchmark_subnet.id
+  vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
+  count                  = var.instance_cnt["controller"]
+
+  root_block_device {
+    volume_size = 16
+    tags = {
+      Name = "ctrl_${count.index}"
+    }
+  }
+
+  tags = {
+    Name      = "ctrl_${count.index}"
+    Benchmark = "Kafka_on_ES"
+  }
+}
+
+resource "aws_instance" "mixed_pm_ctrl" {
+  ami                    = var.ami
+  instance_type          = var.instance_type["mixed-pm-ctrl"]
+  key_name               = aws_key_pair.auth.id
+  subnet_id              = aws_subnet.benchmark_subnet.id
+  vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
+  count                  = var.instance_cnt["mixed-pm-ctrl"]
+
+  root_block_device {
+    volume_size = 16
+    tags = {
+      Name = "mixed_pm_ctrl_${count.index}"
+    }
+  }
+
+  tags = {
+    Name      = "mixed_pm_ctrl_${count.index}"
     Benchmark = "Kafka_on_ES"
   }
 }
@@ -163,64 +205,54 @@ resource "aws_instance" "data_node" {
   root_block_device {
     volume_size = 32
     tags = {
-      Name = "es_dn_${count.index}"
+      Name = "dn_${count.index}"
     }
   }
 
   tags = {
-    Name      = "es_dn_${count.index}"
+    Name      = "dn_${count.index}"
     Benchmark = "Kafka_on_ES"
   }
 }
 
-resource "aws_instance" "mixed_pm_dn" {
-  ami                    = var.ami
-  instance_type          = var.instance_type["mixed-pm-dn"]
-  key_name               = aws_key_pair.auth.id
-  subnet_id              = aws_subnet.benchmark_subnet.id
-  vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
-  count                  = var.instance_cnt["mixed-pm-dn"]
-
-  root_block_device {
-    volume_size = 32
-    volume_type = "io1"
-    tags = {
-      Name = "es_mixed_pm_dn_${count.index}"
-    }
-  }
-
-  tags = {
-    Name      = "es_mixed_pm_dn_${count.index}"
-    Benchmark = "Kafka_on_ES"
-  }
-}
-
-# create hosts for Kafka controllers
-resource "aws_instance" "controller" {
-  ami                    = var.ami
-  instance_type          = var.instance_type["controller"]
-  key_name               = aws_key_pair.auth.id
-  subnet_id              = aws_subnet.benchmark_subnet.id
-  vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
-  count                  = var.instance_cnt["controller"]
-
-  tags = {
-    Name      = "kafka_controller_${count.index}"
-    Benchmark = "Kafka_on_ES"
-  }
-}
-
-# create hosts for Kafka brokers
 resource "aws_instance" "broker" {
   ami                    = var.ami
   instance_type          = var.instance_type["broker"]
   key_name               = aws_key_pair.auth.id
   subnet_id              = aws_subnet.benchmark_subnet.id
   vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
-  count                  = lookup(var.instance_cnt, "broker", 0) # (var.instance_cnt["broker"]")
+  count                  = var.instance_cnt["broker"]
+
+  root_block_device {
+    volume_size = 32
+    tags = {
+      Name = "bkr_${count.index}"
+    }
+  }
 
   tags = {
-    Name      = "kafka_broker_${count.index}"
+    Name      = "bkr_${count.index}"
+    Benchmark = "Kafka_on_ES"
+  }
+}
+
+resource "aws_instance" "mixed_dn_bkr" {
+  ami                    = var.ami
+  instance_type          = var.instance_type["mixed-dn-bkr"]
+  key_name               = aws_key_pair.auth.id
+  subnet_id              = aws_subnet.benchmark_subnet.id
+  vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
+  count                  = var.instance_cnt["mixed-dn-bkr"]
+
+  root_block_device {
+    volume_size = 32
+    tags = {
+      Name = "mixed_dn_bkr_${count.index}"
+    }
+  }
+
+  tags = {
+    Name      = "mixed_dn_bkr_${count.index}"
     Benchmark = "Kafka_on_ES"
   }
 }
@@ -235,21 +267,25 @@ resource "aws_instance" "client" {
   count                  = var.instance_cnt["client"]
 
   tags = {
-    Name      = "kafka_client_${count.index}"
+    Name      = "clt_${count.index}"
     Benchmark = "Kafka_on_ES"
   }
 }
 
 output "pm_ssh_host" {
-  value = concat(aws_instance.placement_manager, aws_instance.mixed_pm_dn)[0].public_ip
+  value = concat(aws_instance.placement_manager, aws_instance.mixed_pm_ctrl)[0].public_ip
 }
 
 output "dn_ssh_host" {
-  value = concat(aws_instance.data_node, aws_instance.mixed_pm_dn)[0].public_ip
+  value = concat(aws_instance.data_node, aws_instance.mixed_dn_bkr)[0].public_ip
 }
 
-output "kafka_ssh_host" {
-  value = aws_instance.data_node[0].public_ip
+output "controller_ssh_host" {
+  value = concat(aws_instance.controller, aws_instance.mixed_pm_ctrl)[0].public_ip
+}
+
+output "broker_ssh_host" {
+  value = concat(aws_instance.broker, aws_instance.mixed_dn_bkr)[0].public_ip
 }
 
 output "client_ssh_host" {
