@@ -15,7 +15,7 @@
 name: 1024-partitions-512K-rate-4-producer
 
 topics: 1
-partitionsPerTopic: 8
+partitionsPerTopic: 1024
 messageSize: 1024
 payloadFile: "payload/payload-1Kb.data"
 subscriptionsPerTopic: 1

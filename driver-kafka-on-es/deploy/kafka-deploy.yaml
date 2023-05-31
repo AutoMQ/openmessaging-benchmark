@@ -192,6 +192,11 @@
         chdir: /opt/kafka
         executable: /bin/bash
 
+    - name: Create kafka work directory
+      file:
+        path: /mnt/data-1/kafka
+        state: directory
+
     - name: Generate quorum servers
       set_fact:
         quorumServers: "{{ quorumServers | default('') + (itemIndex + 1) | string + '@' + item + ',' }}"
