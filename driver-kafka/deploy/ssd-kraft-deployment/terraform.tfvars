@@ -5,7 +5,7 @@ ami             = "ami-03f65b8614a860c29" // Ubuntu 22.04 LTS 20230516 Release
 
 instance_types = {
   "broker"     = "i4i.4xlarge"
-  "controller" = "i3en.2xlarge"
+  "controller" = "i4i.2xlarge"
   "client"     = "m5n.8xlarge"
 }
 

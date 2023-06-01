@@ -26,7 +26,7 @@ advertiseClientUrls: http://{{ private_ip }}:12379
 # human-readable name for this PM member
 name: {{ pm_name }}
 # path to the data directory
-dataDir: /home/ubuntu/{{ pm_name }}
+dataDir: /mnt/data-1/placement-manager/{{ pm_name }}
 # the initial cluster configuration for bootstrapping
 initialCluster: {{ pm_initial_cluster }}
 # the address of sbp server

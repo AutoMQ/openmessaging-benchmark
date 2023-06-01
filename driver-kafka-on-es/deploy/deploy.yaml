@@ -1,0 +1,563 @@
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+- name: Set common facts
+  tags: [always]
+  hosts: all
+  connection: ssh
+  tasks:
+  - set_fact:
+      # Global configs
+      kafka_dir: "/home/ubuntu/kafka"
+      pm_dir: "/home/ubuntu/elastic-stream-pm"
+      dn_dir: "/home/ubuntu/elastic-stream-dn"
+      sdk_dir: "/home/ubuntu/elastic-stream-sdk"
+      stream_replication: 1
+      kafka_cluster_id: "XPufKTN9T1SpE82LDKwXwA"
+  - set_fact:
+      private_ip: "{{ hostvars[inventory_hostname]['private_ip'] }}"
+
+
+- name: General setup for all
+  tags: [prepare]
+  hosts: all
+  connection: ssh
+  become: true
+  tasks:
+  - name: Update and upgrade apt packages
+    become: true
+    apt:
+      upgrade: yes
+      update_cache: yes
+      cache_valid_time: 86400
+
+
+- name: Format and mount disks
+  tags: [prepare]
+  hosts: [placement_manager, controller, data_node, broker]
+  connection: ssh
+  become: true
+  tasks:
+  - set_fact:
+      disks: [{
+        "path": "/mnt/data-1",
+        "src": "/dev/nvme1n1"
+      }]
+  - name: Format disks
+    filesystem:
+        fstype: xfs
+        dev: '{{ item.src }}'
+    with_items: "{{ disks }}"
+  - name: Mount disks
+    mount:
+      path: "{{ item.path }}"
+      src: "{{ item.src }}"
+      fstype: xfs
+      opts: defaults,noatime,nodiscard
+      state: mounted
+    with_items: "{{ disks }}"
+  - name: Grant ubuntu user access to mounted disk
+    file:
+      path: "{{ item.path }}"
+      owner: ubuntu
+      group: ubuntu
+      recurse: yes
+    with_items: "{{ disks }}"
+
+  - name: Increase hard file descriptor limit
+    pam_limits:
+      domain: '*'
+      limit_type: 'hard'
+      limit_item: nofile
+      value: 128000
+  - name: Increase soft file descriptor limit
+    pam_limits:
+      domain: '*'
+      limit_type: 'soft'
+      limit_item: nofile
+      value: 128000
+  - name: Enable pam_limits.so
+    lineinfile:
+      path: /etc/pam.d/login
+      insertafter: EOF
+      line: 'session required pam_limits.so'
+  - name: Set vm.max_map_count
+    sysctl:
+      name: vm.max_map_count
+      value: '262144'
+      state: present
+      reload: yes
+  - name: Reboot the machine with all defaults
+    reboot:
+
+
+- name: Install Rust and flatc
+  tags: [prepare]
+  hosts: [controller, data_node, broker]
+  connection: ssh
+  tasks:
+  - name: Install Rust and Cargo
+    block:
+    - name: Download Rust installer
+      get_url:
+        url: https://sh.rustup.rs
+        dest: /tmp/sh.rustup.rs
+        mode: '0755'
+        force: 'yes'
+    - name: Install Rust and Cargo
+      command: /tmp/sh.rustup.rs --verbose -y --default-toolchain nightly
+    - shell: source $HOME/.cargo/env && cargo --version
+      args:
+        executable: /bin/bash
+      register: cargo_version
+    - debug:
+        var: cargo_version.stdout
+
+  - name: Install flatc
+    block:
+    - name: Install apt packages
+      become: true
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - unzip
+    - name: Install flatc
+      become: true
+      unarchive:
+        src: https://github.com/google/flatbuffers/releases/download/v23.3.3/Linux.flatc.binary.g++-10.zip
+        dest: /usr/local/bin
+        remote_src: yes
+    - shell: flatc --version
+      register: flatc_version
+    - debug:
+        var: flatc_version.stdout
+
+
+- name: Prepare Data Node
+  hosts: [data_node]
+  connection: ssh
+  tasks:
+  - name: Install dependencies
+    tags: [prepare]
+    block:
+    - name: Install apt packages
+      become: true
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - build-essential
+        - clang
+  - name: Clone latest code from github
+    tags: [build]
+    git:
+      repo: https://github.com/AutoMQ/elastic-stream.git
+      dest: "{{ dn_dir }}"
+      version: develop
+      depth: 1
+      single_branch: true
+      force: true
+  - name: Build Data Node
+    tags: [build]
+    shell: |
+      source $HOME/.cargo/env
+      cargo build --release --bin data-node
+    args:
+      chdir: "{{ dn_dir }}"
+      executable: /bin/bash
+
+
+- name: Prepare Placement Manager
+  hosts: [placement_manager]
+  connection: ssh
+  tasks:
+  - name: Install Docker
+    tags: [prepare]
+    block:
+    - name: Download Docker installer
+      get_url:
+        url: https://get.docker.com
+        dest: /tmp/get-docker.sh
+        mode: '0755'
+        force: 'yes'
+    - name: Install Docker
+      become: true
+      command: /tmp/get-docker.sh
+    - name: Add ubuntu user to docker group
+      become: true
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
+    - shell: docker run hello-world | grep "Hello from Docker!"
+      register: docker_hello_world
+    - debug:
+        var: docker_hello_world.stdout
+
+  - name: Install apt packages
+    tags: [prepare]
+    become: true
+    apt:
+      name: "{{ item }}"
+      state: present
+    with_items:
+      - cmake
+  - name: Clone latest code from github
+    tags: [build]
+    git:
+      repo: https://github.com/AutoMQ/elastic-stream.git
+      dest: "{{ pm_dir }}"
+      version: develop
+      depth: 1
+      single_branch: true
+      force: true
+  - name: Build Placement Manager
+    tags: [build]
+    shell: |
+      make
+    args:
+      chdir: "{{ pm_dir }}/placement-manager"
+
+
+- name: Prepare Kafka
+  hosts: [controller, broker]
+  connection: ssh
+  tasks:
+  - name: Set facts
+    tags: [always]
+    block:
+    - set_fact:
+        node_id: "{{ hostvars[inventory_hostname]['kafka_id'] }}"
+        pm_0_ip: "{{ groups.get('placement_manager') | map('extract', hostvars, ['private_ip']) | list | first }}"
+
+        controller_ids: "{{ groups.get('controller') | map('extract', hostvars, ['kafka_id']) | list }}"
+        controller_ips: "{{ groups.get('controller') | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9093') | list }}"
+    - set_fact:
+        controller_quorum_voters: "{{ controller_ids | zip(controller_ips) | map('join', '@') | join(',') }}"
+
+  - name: Prepare JAVA
+    tags: [prepare]
+    block:
+    - name: Install apt packages
+      become: true
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - openjdk-17-jdk
+        - maven
+        - clang
+    - name: Create gradle directory
+      file:
+        path: /home/ubuntu/.gradle
+        state: directory
+    - name: Setting gradle properties
+      copy:
+        src: templates/init.gradle
+        dest: /home/ubuntu/.gradle/init.gradle
+
+  - name: Build Elastic Stream java sdk
+    tags: [build]
+    block:
+    - name: Clone latest code from github
+      git:
+        repo: https://github.com/AutoMQ/elastic-stream.git
+        dest: "{{ sdk_dir }}"
+        version: develop
+        depth: 1
+        single_branch: true
+        force: true
+    - name: Build Elastic Stream java sdk
+      shell: |
+        source $HOME/.cargo/env
+        ./sdks/build.sh
+      args:
+        chdir: "{{ sdk_dir }}"
+        executable: /bin/bash
+    - name: Install java sdk
+      tags: [sdk, install]
+      shell: |
+        mvn install -DskipTests -DskipSigning
+      args:
+        chdir: "{{ sdk_dir }}/sdks/frontend-java"
+
+  - name: Build Kafka
+    tags: [build]
+    block:
+    - name: Clone latest code from github
+      git:
+        repo: https://github.com/AutoMQ/kafka.git
+        dest: "{{ kafka_dir }}"
+        version: develop
+        depth: 1
+        single_branch: true
+        force: true
+    - name: Build kafka
+      shell: |
+        ./gradlew jar -x test
+      args:
+        chdir: "{{ kafka_dir }}"
+        executable: /bin/bash
+
+
+- name: Setup Placement Manager
+  tags: [run]
+  hosts: placement_manager
+  connection: ssh
+  tasks:
+  - set_fact:
+      pm_name: "{{ hostvars[inventory_hostname]['pm_name'] }}"
+      pm_names: "{{ groups.get('placement_manager') | map('extract', hostvars, 'pm_name') | list }}"
+      pm_addrs: "{{ groups.get('placement_manager') | map('extract', hostvars, 'private_ip') | map('regex_replace', '^(.*)$', '\\1:12380') | list }}"
+  - set_fact:
+      pm_initial_cluster: "{{ pm_names | zip(pm_addrs) | map('join', '=http://') | list | join(',') }}"
+  - name: Create config file
+    template:
+      src: templates/es/pm-config.yaml
+      dest: "{{ pm_dir }}/pm-config.yaml"
+
+  - name: Start Placement Manager
+    shell: |
+      nohup ./placement-manager/bin/linux_amd64/placement-manager --config ./pm-config.yaml < /dev/null > /dev/null 2>&1 &
+    args:
+      chdir: "{{ pm_dir }}"
+      executable: /bin/bash
+  - shell: sleep 2 && pgrep -f placement-manager
+    args:
+      executable: /bin/bash
+    register: pm_pid
+    failed_when: pm_pid.stdout | length == 0
+  - debug:
+      var: pm_pid.stdout
+
+- name: Setup Data Node
+  tags: [run]
+  hosts: data_node
+  connection: ssh
+  tasks:
+  - set_fact:
+      pm_0_ip: "{{ groups.get('placement_manager') | map('extract', hostvars, ['private_ip']) | list | first }}"
+  - name: Create config file
+    template:
+      src: templates/es/dn-config.yaml
+      dest: "{{ dn_dir }}/dn-config.yaml"
+  - name: Create log config file
+    template:
+      src: templates/es/dn-log-config.yaml
+      dest: "{{ dn_dir }}/dn-log-config.yaml"
+
+  - name: Start Data Node
+    become: true
+    shell: |
+      nohup ./target/release/data-node --config ./dn-config.yaml --log ./dn-log-config.yaml < /dev/null > /dev/null 2>&1 &
+    args:
+      chdir: "{{ dn_dir }}"
+      executable: /bin/bash
+  - shell: sleep 2 && pgrep -f data-node
+    args:
+      executable: /bin/bash
+    register: dn_pid
+    failed_when: dn_pid.stdout | length == 0
+  - debug:
+      var: dn_pid.stdout
+
+
+- name: Setup Kafka controllers
+  tags: [run]
+  hosts: [controller]
+  connection: ssh
+  become: true
+  tasks:
+  - template:
+      src: "templates/controller.properties"
+      dest: "{{ kafka_dir }}/config/kraft/controller.properties"
+  - template:
+      src: "templates/controller.service"
+      dest: "/etc/systemd/system/controller.service"
+  - name: Format Log Directories
+    shell: bin/kafka-storage.sh format --cluster-id {{ kafka_cluster_id }} --config config/kraft/controller.properties --ignore-formatted
+    args:
+      chdir: "{{ kafka_dir }}"
+  - name: Start Kafka controller
+    systemd:
+      state: restarted
+      daemon_reload: yes
+      name: "controller"
+  - name: Wait Kafka controller to be active
+    service_facts:
+    register: controller_service
+    until: controller_service.ansible_facts.services['controller.service'].state == 'running'
+    retries: 10
+    delay: 5
+
+
+- name: Setup Kafka brokers
+  tags: [run]
+  hosts: [broker]
+  connection: ssh
+  become: true
+  tasks:
+  - template:
+      src: "templates/broker.properties"
+      dest: "{{ kafka_dir }}/config/kraft/broker.properties"
+  - template:
+      src: "templates/broker.service"
+      dest: "/etc/systemd/system/broker.service"
+  - name: Format Log Directories
+    shell: bin/kafka-storage.sh format --cluster-id {{ kafka_cluster_id }} --config config/kraft/broker.properties --ignore-formatted
+    args:
+      chdir: "{{ kafka_dir }}"
+  - name: Start Kafka broker
+    systemd:
+      state: restarted
+      daemon_reload: yes
+      name: "broker"
+    register: broker_service
+  - name: Wait Kafka broker to be active
+    service_facts:
+    register: broker_service
+    until: broker_service.ansible_facts.services['broker.service'].state == 'running'
+    retries: 10
+    delay: 5
+
+
+- name: Setup benchmark client
+  tags: [run]
+  hosts: [client]
+  connection: ssh
+  become: true
+  tasks:
+  - name: Set up chronyd
+    template:
+      src: "templates/chrony.conf"
+      dest: "/etc/chrony.conf"
+  - systemd:
+      state: restarted
+      daemon_reload: yes
+      name: "chronyd"
+    register: chronyd_service
+  - name: Wait chronyd to be active
+    service_facts:
+    register: chronyd_service
+    until: chronyd_service.ansible_facts.services['chronyd.service'].state == 'running'
+    retries: 10
+    delay: 5
+  
+  - name: Set facts
+    tags: [always]
+    set_fact:
+      brokerServers: "{{ groups.get('broker') | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9092') | join(',') }}"
+  
+  - name: Install apt packages
+    tags: [prepare]
+    apt:
+      name: "{{ item }}"
+      state: present
+    with_items:
+      - chrony
+      - openjdk-17-jdk
+      - tuned
+
+  - file: path=/opt/benchmark state=absent
+    tags: [client-code]
+  - name: Copy benchmark code
+    unarchive:
+      src: ../../package/target/openmessaging-benchmark-0.0.1-SNAPSHOT-bin.tar.gz
+      dest: /opt
+    tags: [client-code]
+  - shell: mv /opt/openmessaging-benchmark-0.0.1-SNAPSHOT /opt/benchmark
+    tags: [client-code]
+  - shell: tuned-adm profile latency-performance
+
+  - name: Get list of driver config files
+    raw: ls -1 /opt/benchmark/driver-kafka/*.yaml
+    register: drivers_list
+    tags: [client-code]
+
+  - name: Configure bootstrap servers
+    lineinfile:
+      dest: '{{ item }}'
+      regexp: '^  bootstrap.servers='
+      line: '  bootstrap.servers={{ brokerServers }}'
+    with_items: '{{ drivers_list.stdout_lines }}'
+    tags: [client-code]
+
+  - name: Get list of jms driver config files
+    raw: ls -1 /opt/benchmark/driver-jms/kafka*.yaml
+    register: jms_drivers_list
+
+  - name: Configure JMS bootstrap servers
+    lineinfile:
+      dest: '{{ item }}'
+      regexp: '^  bootstrap.servers='
+      line: '  bootstrap.servers={{ brokerServers }}'
+    with_items: '{{ jms_drivers_list.stdout_lines }}'
+
+  - name: Configure JMS connection factory
+    ansible.builtin.replace:
+      dest: '{{ item }}'
+      regexp: 'localhost\:9092'
+      replace: '{{ brokerServers }}'
+    with_items: '{{ jms_drivers_list.stdout_lines }}'
+
+  - name: Configure memory
+    lineinfile:
+      dest: /opt/benchmark/bin/benchmark-worker
+      regexp: '^JVM_MEM='
+      line: 'JVM_MEM="-Xms100G -Xmx100G -XX:+UnlockExperimentalVMOptions -XX:+UseZGC -XX:+ParallelRefProcEnabled -XX:+DoEscapeAnalysis -XX:ParallelGCThreads=12 -XX:ConcGCThreads=12 -XX:+DisableExplicitGC -XX:-ResizePLAB"'
+    tags: [client-code]
+  - name: Configure memory
+    lineinfile:
+      dest: /opt/benchmark/bin/benchmark
+      regexp: '^JVM_MEM='
+      line: 'JVM_MEM="-Xmx4G"'
+    tags: [client-code]
+  - template:
+      src: "templates/workers.yaml"
+      dest: "/opt/benchmark/workers.yaml"
+    tags: [client-code]
+  - name: Install benchmark systemd service
+    template:
+      src: "templates/benchmark-worker.service"
+      dest: "/etc/systemd/system/benchmark-worker.service"
+    tags: [client-code]
+  - systemd:
+      state: restarted
+      daemon_reload: yes
+      name: "benchmark-worker"
+    tags: [client-code]
+    register: benchmark_worker_service
+  - name: Wait benchmark worker to be active
+    service_facts:
+    register: benchmark-worker_service
+    until: benchmark-worker_service.ansible_facts.services['benchmark-worker.service'].state == 'running'
+    retries: 10
+    delay: 5
+    tags: [client-code]
+
+
+- name:  Hosts addresses
+  tags: [always]
+  hosts: localhost
+  tasks:
+    - debug:
+        msg: "Kafka controller servers {{ item }}"
+      with_items: "{{ groups['controller'] }}"
+    - debug:
+        msg: "Kafka brokers {{ item }}"
+      with_items: "{{ groups['data_node'] }}"
+    - debug:
+        msg: "Benchmark clients {{ item }}"
+      with_items: "{{ groups['client'] }}"
