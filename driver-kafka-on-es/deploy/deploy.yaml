@@ -25,7 +25,6 @@
       pm_dir: "{{ ansible_env.HOME }}/elastic-stream-pm"
       dn_dir: "{{ ansible_env.HOME }}/elastic-stream-dn"
       sdk_dir: "{{ ansible_env.HOME }}/elastic-stream-sdk"
-      stream_replication: 1
       kafka_cluster_id: "XPufKTN9T1SpE82LDKwXwA"
 
 
