@@ -8,11 +8,11 @@ instance_type = {
   "controller"          = "i4i.2xlarge"
   "mixed-pm-ctrl"       = "i4i.2xlarge"
 
-  "data-node"           = "i4i.2xlarge"
-  "broker"              = "i4i.2xlarge"
-  "mixed-dn-bkr"        = "i4i.2xlarge"
+  "data-node"           = "i4i.4xlarge"
+  "broker"              = "i4i.4xlarge"
+  "mixed-dn-bkr"        = "i4i.4xlarge"
 
-  "client"              = "m5n.xlarge"
+  "client"              = "m5n.8xlarge"
 }
 
 instance_cnt = {
