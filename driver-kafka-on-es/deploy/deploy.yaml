@@ -332,6 +332,7 @@
   tags: [run]
   hosts: placement_manager
   connection: ssh
+  become: true
   tasks:
   - set_fact:
       pm_name: "{{ hostvars[inventory_hostname]['pm_name'] }}"
@@ -339,55 +340,54 @@
       pm_addrs: "{{ groups.get('placement_manager') | map('extract', hostvars, 'private_ip') | map('regex_replace', '^(.*)$', '\\1:12380') | list }}"
   - set_fact:
       pm_initial_cluster: "{{ pm_names | zip(pm_addrs) | map('join', '=http://') | list | join(',') }}"
-  - name: Create config file
-    template:
-      src: templates/es/pm-config.yaml
+  - template:
+      src: templates/pm-config.yaml
       dest: "{{ pm_dir }}/pm-config.yaml"
+  - template:
+      src: templates/placement-manager.service
+      dest: /etc/systemd/system/placement-manager.service
 
   - name: Start Placement Manager
-    shell: |
-      nohup ./placement-manager/bin/linux_amd64/placement-manager --config ./pm-config.yaml < /dev/null > /dev/null 2>&1 &
-    args:
-      chdir: "{{ pm_dir }}"
-      executable: /bin/bash
-  - shell: sleep 2 && pgrep -f placement-manager
-    args:
-      executable: /bin/bash
-    register: pm_pid
-    failed_when: pm_pid.stdout | length == 0
-  - debug:
-      var: pm_pid.stdout
+    systemd:
+      state: restarted
+      daemon_reload: yes
+      name: "placement-manager"
+  - name: Wait Placement Manager to be active
+    service_facts:
+    register: placement_manager_service
+    until: placement_manager_service.ansible_facts.services['placement-manager.service'].state == 'running'
+    retries: 10
+    delay: 5
 
 - name: Setup Data Node
   tags: [run]
   hosts: data_node
   connection: ssh
+  become: true
   tasks:
   - set_fact:
       pm_0_ip: "{{ groups.get('placement_manager') | map('extract', hostvars, ['private_ip']) | list | first }}"
-  - name: Create config file
-    template:
-      src: templates/es/dn-config.yaml
+  - template:
+      src: templates/dn-config.yaml
       dest: "{{ dn_dir }}/dn-config.yaml"
-  - name: Create log config file
-    template:
-      src: templates/es/dn-log-config.yaml
+  - template:
+      src: templates/dn-log-config.yaml
       dest: "{{ dn_dir }}/dn-log-config.yaml"
+  - template:
+      src: templates/data-node.service
+      dest: /etc/systemd/system/data-node.service
 
   - name: Start Data Node
-    become: true
-    shell: |
-      nohup ./target/release/data-node --config ./dn-config.yaml --log ./dn-log-config.yaml < /dev/null > /dev/null 2>&1 &
-    args:
-      chdir: "{{ dn_dir }}"
-      executable: /bin/bash
-  - shell: sleep 2 && pgrep -f data-node
-    args:
-      executable: /bin/bash
-    register: dn_pid
-    failed_when: dn_pid.stdout | length == 0
-  - debug:
-      var: dn_pid.stdout
+    systemd:
+      state: restarted
+      daemon_reload: yes
+      name: "data-node"
+  - name: Wait Data Node to be active
+    service_facts:
+    register: data_node_service
+    until: data_node_service.ansible_facts.services['data-node.service'].state == 'running'
+    retries: 10
+    delay: 5
 
 
 - name: Setup Kafka controllers

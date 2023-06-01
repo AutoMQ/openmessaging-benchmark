@@ -183,13 +183,4 @@ public class KafkaBenchmarkDriver implements BenchmarkDriver {
     private static final ObjectMapper mapper =
             new ObjectMapper(new YAMLFactory())
                     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
-    public static void main(String[] args) throws IOException {
-        File configurationFile = new File("/Users/tianjie/program/openmessaging-benchmark/driver-kafka/kafka-all.yaml");
-        Config config = mapper.readValue(configurationFile, Config.class);
-
-        Properties commonProperties = new Properties();
-        commonProperties.load(new StringReader(config.commonConfig));
-        System.out.println(commonProperties);
-    }
 }

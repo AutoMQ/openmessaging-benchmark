@@ -274,6 +274,10 @@ resource "aws_instance" "client" {
   }
 }
 
+output "user" {
+  value = var.user
+}
+
 output "pm_ssh_host" {
   value = concat(aws_instance.placement_manager, aws_instance.mixed_pm_ctrl)[0].public_ip
 }

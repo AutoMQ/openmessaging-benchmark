@@ -1,0 +1,14 @@
+[Unit]
+Description=Placement Manager
+After=network.target
+
+[Service]
+ExecStart={{ pm_dir }}/placement-manager/bin/linux_amd64/placement-manager --config ./pm-config.yaml
+WorkingDirectory={{ pm_dir }}
+RestartSec=1s
+Restart=on-failure
+Type=simple
+LimitNOFILE=300000
+
+[Install]
+WantedBy=multi-user.target

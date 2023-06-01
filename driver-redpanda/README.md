@@ -21,15 +21,15 @@
            terraform init
            terraform apply -auto-approve
 
-5. Install ansible roles:
+4. Install ansible roles:
 
            ansible-galaxy install -r requirements.yaml
 
-6. Install jmespath:
+5. Install jmespath:
 
            pip3 install jmespath
 
-7. To setup the deployed nodes. Run:
+6. To setup the deployed nodes. Run:
 
            ansible-playbook deploy.yaml
 
@@ -83,3 +83,4 @@ The output of this command is web page with charts for throughput, publish laten
 Once you are done. Tear down the cluster with the following command:
 
         terraform destroy -auto-approve
+

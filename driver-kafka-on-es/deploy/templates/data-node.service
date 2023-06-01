@@ -1,0 +1,14 @@
+[Unit]
+Description=Data Node
+After=network.target
+
+[Service]
+ExecStart={{ dn_dir }}/target/release/data-node --config ./dn-config.yaml --log ./dn-log-config.yaml
+WorkingDirectory={{ dn_dir }}
+RestartSec=1s
+Restart=on-failure
+Type=simple
+LimitNOFILE=300000
+
+[Install]
+WantedBy=multi-user.target
