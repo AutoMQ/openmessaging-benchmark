@@ -8,20 +8,20 @@ instance_type = {
   "controller"          = "i4i.2xlarge"
   "mixed-pm-ctrl"       = "i4i.2xlarge"
 
-  "data-node"           = "i4i.4xlarge"
-  "broker"              = "i4i.4xlarge"
-  "mixed-dn-bkr"        = "i4i.4xlarge"
+  "data-node"           = "i4i.2xlarge"
+  "broker"              = "i4i.2xlarge"
+  "mixed-dn-bkr"        = "i4i.2xlarge"
 
-  "client"              = "m5n.8xlarge"
+  "client"              = "m5n.xlarge"
 }
 
 instance_cnt = {
-  "placement-manager"   = 0
-  "controller"          = 0
-  "mixed-pm-ctrl"       = 1
+  "placement-manager"   = 1
+  "controller"          = 1
+  "mixed-pm-ctrl"       = 2
 
-  "data-node"           = 0
-  "broker"              = 0
+  "data-node"           = 1
+  "broker"              = 1
   "mixed-dn-bkr"        = 1
 
   "client"              = 1

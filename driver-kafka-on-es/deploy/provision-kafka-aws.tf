@@ -291,3 +291,22 @@ output "broker_ssh_host" {
 output "client_ssh_host" {
   value = aws_instance.client[0].public_ip
 }
+
+resource "local_file" "hosts_ini" {
+  content = templatefile("${path.module}/hosts.ini.tpl",
+    {
+      pm = aws_instance.placement_manager,
+      ctrl = aws_instance.controller,
+      mixed_pm_ctrl = aws_instance.mixed_pm_ctrl,
+
+      dn = aws_instance.data_node,
+      bkr = aws_instance.broker,
+      mixed_dn_bkr = aws_instance.mixed_dn_bkr,
+
+      client = aws_instance.client,
+
+      ssh_user = "ubuntu",
+    }
+  )
+  filename = "${path.module}/hosts.ini"
+}

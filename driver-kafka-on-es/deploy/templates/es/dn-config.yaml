@@ -64,7 +64,7 @@ store:
   # Store directory
   path:
     # Base path of the store, containing lock, immutable properties and other configuration files
-    base: "/mnt/data-1/store"
+    base: "/mnt/data-1/data-node/store"
     # Directory of WAL segment files. It could be absolute or relative to `base`
     wal: "wal"
     # Directory of metadata RocksDB files. It could be absolute or relative to `base`

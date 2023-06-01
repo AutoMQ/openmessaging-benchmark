@@ -154,9 +154,9 @@
       tags: [sdk, build]
       shell: |
         source $HOME/.cargo/env
-        ./build.sh
+        ./sdks/build.sh
       args:
-        chdir: /home/ubuntu/elastic-stream-dn/sdks
+        chdir: /home/ubuntu/elastic-stream-dn
         executable: /bin/bash
     - name: install java sdk
       tags: [sdk, install]
@@ -357,4 +357,3 @@
     - debug:
         msg: "Benchmark clients {{ item }}"
       with_items: "{{ groups['client'] }}"
-
