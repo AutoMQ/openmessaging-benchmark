@@ -18,15 +18,15 @@
   connection: ssh
   tasks:
   - set_fact:
+      private_ip: "{{ hostvars[inventory_hostname]['private_ip'] }}"
+  - set_fact:
       # Global configs
-      kafka_dir: "/home/ubuntu/kafka"
-      pm_dir: "/home/ubuntu/elastic-stream-pm"
-      dn_dir: "/home/ubuntu/elastic-stream-dn"
-      sdk_dir: "/home/ubuntu/elastic-stream-sdk"
+      kafka_dir: "{{ ansible_env.HOME }}/kafka"
+      pm_dir: "{{ ansible_env.HOME }}/elastic-stream-pm"
+      dn_dir: "{{ ansible_env.HOME }}/elastic-stream-dn"
+      sdk_dir: "{{ ansible_env.HOME }}/elastic-stream-sdk"
       stream_replication: 1
       kafka_cluster_id: "XPufKTN9T1SpE82LDKwXwA"
-  - set_fact:
-      private_ip: "{{ hostvars[inventory_hostname]['private_ip'] }}"
 
 
 - name: General setup for all
@@ -41,6 +41,14 @@
       upgrade: yes
       update_cache: yes
       cache_valid_time: 86400
+  - name: Upgrade linux kernel
+    become: true
+    apt:
+      name: linux-image-5.19.0-0.deb11.2-cloud-amd64
+      state: present
+    register: kernel_upgrade
+  - reboot:
+    when: kernel_upgrade.changed
 
 
 - name: Format and mount disks
@@ -54,6 +62,11 @@
         "path": "/mnt/data-1",
         "src": "/dev/nvme1n1"
       }]
+  - name: Install mkfx.xfs
+    become: true
+    apt:
+      name: xfsprogs
+      state: present
   - name: Format disks
     filesystem:
         fstype: xfs
@@ -67,11 +80,11 @@
       opts: defaults,noatime,nodiscard
       state: mounted
     with_items: "{{ disks }}"
-  - name: Grant ubuntu user access to mounted disk
+  - name: Grant ansible user access to mounted disk
     file:
       path: "{{ item.path }}"
-      owner: ubuntu
-      group: ubuntu
+      owner: "{{ ansible_user }}"
+      group: "{{ ansible_user }}"
       recurse: yes
     with_items: "{{ disks }}"
 
@@ -136,7 +149,7 @@
     - name: Install flatc
       become: true
       unarchive:
-        src: https://github.com/google/flatbuffers/releases/download/v23.3.3/Linux.flatc.binary.g++-10.zip
+        src: https://github.com/AutoMQ/flatbuffers/releases/download/v23.3.3/Linux.flatc.binary.g++-10.zip
         dest: /usr/local/bin
         remote_src: yes
     - shell: flatc --version
@@ -160,6 +173,7 @@
       with_items:
         - build-essential
         - clang
+        - git
   - name: Clone latest code from github
     tags: [build]
     git:
@@ -195,10 +209,10 @@
     - name: Install Docker
       become: true
       command: /tmp/get-docker.sh
-    - name: Add ubuntu user to docker group
+    - name: Add ansible user to docker group
       become: true
       user:
-        name: ubuntu
+        name: "{{ ansible_user }}"
         groups: docker
         append: yes
     - shell: docker run hello-world | grep "Hello from Docker!"
@@ -214,6 +228,7 @@
       state: present
     with_items:
       - cmake
+      - git
   - name: Clone latest code from github
     tags: [build]
     git:
@@ -259,14 +274,15 @@
         - openjdk-17-jdk
         - maven
         - clang
+        - git
     - name: Create gradle directory
       file:
-        path: /home/ubuntu/.gradle
+        path: "{{ ansible_env.HOME }}/.gradle"
         state: directory
     - name: Setting gradle properties
       copy:
         src: templates/init.gradle
-        dest: /home/ubuntu/.gradle/init.gradle
+        dest: "{{ ansible_env.HOME }}/.gradle/init.gradle"
 
   - name: Build Elastic Stream java sdk
     tags: [build]
@@ -424,7 +440,6 @@
       state: restarted
       daemon_reload: yes
       name: "broker"
-    register: broker_service
   - name: Wait Kafka broker to be active
     service_facts:
     register: broker_service
@@ -447,19 +462,18 @@
       state: restarted
       daemon_reload: yes
       name: "chronyd"
-    register: chronyd_service
   - name: Wait chronyd to be active
     service_facts:
     register: chronyd_service
-    until: chronyd_service.ansible_facts.services['chronyd.service'].state == 'running'
+    until: chronyd_service.ansible_facts.services['chronyd.service'].state in ['running', 'active']
     retries: 10
     delay: 5
-  
+
   - name: Set facts
     tags: [always]
     set_fact:
       brokerServers: "{{ groups.get('broker') | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9092') | join(',') }}"
-  
+
   - name: Install apt packages
     tags: [prepare]
     apt:
@@ -538,11 +552,10 @@
       daemon_reload: yes
       name: "benchmark-worker"
     tags: [client-code]
-    register: benchmark_worker_service
   - name: Wait benchmark worker to be active
     service_facts:
-    register: benchmark-worker_service
-    until: benchmark-worker_service.ansible_facts.services['benchmark-worker.service'].state == 'running'
+    register: benchmark_worker_service
+    until: benchmark_worker_service.ansible_facts.services['benchmark-worker.service'].state == 'running'
     retries: 10
     delay: 5
     tags: [client-code]

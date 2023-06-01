@@ -38,9 +38,11 @@ variable "key_name" {
 
 variable "region" {}
 
+variable "az" {}
+
 variable "ami" {}
 
-variable "az" {}
+variable "user" {}
 
 variable "instance_type" {
   type = map(string)
@@ -305,7 +307,7 @@ resource "local_file" "hosts_ini" {
 
       client = aws_instance.client,
 
-      ssh_user = "ubuntu",
+      ssh_user = var.user,
     }
   )
   filename = "${path.module}/hosts.ini"
