@@ -34,6 +34,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.bookkeeper.stats.StatsLogger;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.DeleteTopicsResult;
@@ -47,6 +48,7 @@ import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
+@Slf4j
 public class KafkaBenchmarkDriver implements BenchmarkDriver {
 
     private Config config;
@@ -87,6 +89,9 @@ public class KafkaBenchmarkDriver implements BenchmarkDriver {
         topicProperties.load(new StringReader(config.topicConfig));
 
         admin = AdminClient.create(commonProperties);
+
+        log.info("Initialized Kafka benchmark driver with common config: {}, producer config: {}, consumer config: {}, topic config: {}, replicationFactor: {}", commonProperties,
+                producerProperties, consumerProperties, topicProperties, config.replicationFactor);
 
         if (config.reset) {
             // List existing topics

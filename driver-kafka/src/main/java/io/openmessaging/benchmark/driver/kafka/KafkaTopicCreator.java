@@ -49,6 +49,7 @@ class KafkaTopicCreator {
 
     KafkaTopicCreator(AdminClient admin, Map<String, String> topicConfigs, short replicationFactor) {
         this(admin, topicConfigs, replicationFactor, MAX_BATCH_SIZE);
+        log.info("replicationFactor in KafkaTopicCreator is: {}, topicConfigs are: {}", replicationFactor, topicConfigs);
     }
 
     CompletableFuture<Void> create(List<TopicInfo> topicInfos) {
@@ -94,6 +95,7 @@ class KafkaTopicCreator {
         Map<String, TopicInfo> lookup = batch.stream().collect(toMap(TopicInfo::getTopic, identity()));
 
         List<NewTopic> newTopics = batch.stream().map(this::newTopic).collect(toList());
+        log.info("admin will create topics: {}", newTopics);
 
         return admin.createTopics(newTopics).values().entrySet().stream()
                 .collect(toMap(e -> lookup.get(e.getKey()), e -> isSuccess(e.getValue())));
