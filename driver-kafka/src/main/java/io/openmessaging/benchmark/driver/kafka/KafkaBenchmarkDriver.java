@@ -90,7 +90,8 @@ public class KafkaBenchmarkDriver implements BenchmarkDriver {
 
         admin = AdminClient.create(commonProperties);
 
-        log.info("Initialized Kafka benchmark driver with common config: {}, producer config: {}, consumer config: {}, topic config: {}, replicationFactor: {}", commonProperties,
+        log.info("Initialized Kafka benchmark driver with common config: {}, producer config: {},"
+                + " consumer config: {}, topic config: {}, replicationFactor: {}", commonProperties,
                 producerProperties, consumerProperties, topicProperties, config.replicationFactor);
 
         if (config.reset) {

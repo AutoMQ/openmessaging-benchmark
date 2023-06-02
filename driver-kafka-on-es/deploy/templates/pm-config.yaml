@@ -54,4 +54,4 @@ sbp:
     # time interval between sending heartbeats from client to server
     heartbeatInterval: 5s
     # number of consecutive heartbeats that the server can miss before considering the client to be unresponsive and terminating the connection
-    heartbeatMissCount: 3
+    heartbeatMissCount: 0

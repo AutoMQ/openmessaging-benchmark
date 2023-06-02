@@ -1,0 +1,114 @@
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+- name: Stop client
+  tags: [stop]
+  hosts: client
+  connection: ssh
+  become: true
+  tasks:
+  - name: Stop client
+    systemd:
+      state: stopped
+      name: "benchmark-worker"
+  - name: Wait client to be stopped
+    service_facts:
+    register: benchmark_worker_service
+    until: benchmark_worker_service.ansible_facts.services['benchmark-worker.service'].state in ['stopped', 'inactive']
+    retries: 10
+    delay: 5
+
+- name: Stop controller
+  tags: [stop]
+  hosts: controller
+  connection: ssh
+  become: true
+  tasks:
+  - name: Stop controller
+    systemd:
+      state: stopped
+      name: "controller"
+  - name: Wait controller to be stopped
+    service_facts:
+    register: controller_service
+    until: controller_service.ansible_facts.services['controller.service'].state in ['stopped', 'inactive']
+    retries: 10
+    delay: 5
+  - name: Remove data dir
+    file:
+      path: /mnt/data-1/kafka-controller
+      state: absent
+
+- name: Stop broker
+  tags: [stop]
+  hosts: broker
+  connection: ssh
+  become: true
+  tasks:
+  - name: Stop broker
+    systemd:
+      state: stopped
+      name: "broker"
+  - name: Wait broker to be stopped
+    service_facts:
+    register: broker_service
+    until: broker_service.ansible_facts.services['broker.service'].state in ['stopped', 'inactive']
+    retries: 10
+    delay: 5
+  - name: Remove data dir
+    file:
+      path: /mnt/data-1/kafka-broker
+      state: absent
+
+- name: Stop Data Node
+  tags: [stop]
+  hosts: data_node
+  connection: ssh
+  become: true
+  tasks:
+  - name: Stop Data Node
+    systemd:
+      state: stopped
+      name: "data-node"
+  - name: Wait Data Node to be stopped
+    service_facts:
+    register: data_node_service
+    until: data_node_service.ansible_facts.services['data-node.service'].state in ['stopped', 'inactive']
+    retries: 10
+    delay: 5
+  - name: Remove data dir
+    file:
+      path: /mnt/data-1/data-node
+      state: absent
+
+- name: Stop Placement Manager
+  tags: [stop]
+  hosts: placement_manager
+  connection: ssh
+  become: true
+  tasks:
+  - name: Stop Placement Manager
+    systemd:
+      state: stopped
+      name: "placement-manager"
+  - name: Wait Placement Manager to be stopped
+    service_facts:
+    register: placement_manager_service
+    until: placement_manager_service.ansible_facts.services['placement-manager.service'].state in ['stopped', 'inactive']
+    retries: 10
+    delay: 5
+  - name: Remove data dir
+    file:
+      path: /mnt/data-1/placement-manager
+      state: absent
