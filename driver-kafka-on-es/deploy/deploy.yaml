@@ -26,6 +26,8 @@
       dn_dir: "{{ ansible_env.HOME }}/elastic-stream-dn"
       sdk_dir: "{{ ansible_env.HOME }}/elastic-stream-sdk"
       kafka_cluster_id: "XPufKTN9T1SpE82LDKwXwA"
+      kafka_xm: "16g"
+      client_xm: "100g"
 
 
 - name: General setup for all
@@ -453,6 +455,15 @@
   connection: ssh
   become: true
   tasks:
+  - name: Install apt packages
+    tags: [ prepare ]
+    apt:
+      name: "{{ item }}"
+      state: present
+    with_items:
+      - chrony
+      - openjdk-17-jdk
+      - tuned
   - name: Set up chronyd
     template:
       src: "templates/chrony.conf"
@@ -472,16 +483,6 @@
     tags: [always]
     set_fact:
       brokerServers: "{{ groups.get('broker') | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9092') | join(',') }}"
-
-  - name: Install apt packages
-    tags: [prepare]
-    apt:
-      name: "{{ item }}"
-      state: present
-    with_items:
-      - chrony
-      - openjdk-17-jdk
-      - tuned
 
   - file: path=/opt/benchmark state=absent
     tags: [client-code]
@@ -529,7 +530,7 @@
     lineinfile:
       dest: /opt/benchmark/bin/benchmark-worker
       regexp: '^JVM_MEM='
-      line: 'JVM_MEM="-Xms100G -Xmx100G -XX:+UnlockExperimentalVMOptions -XX:+UseZGC -XX:+ParallelRefProcEnabled -XX:+DoEscapeAnalysis -XX:ParallelGCThreads=12 -XX:ConcGCThreads=12 -XX:+DisableExplicitGC -XX:-ResizePLAB"'
+      line: 'JVM_MEM="-Xms{{ client_xm }} -Xmx{{ client_xm }} -XX:+UnlockExperimentalVMOptions -XX:+UseZGC -XX:+ParallelRefProcEnabled -XX:+DoEscapeAnalysis -XX:ParallelGCThreads=12 -XX:ConcGCThreads=12 -XX:+DisableExplicitGC -XX:-ResizePLAB"'
     tags: [client-code]
   - name: Configure memory
     lineinfile:

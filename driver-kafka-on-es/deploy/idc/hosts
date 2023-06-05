@@ -1,0 +1,17 @@
+[placement_manager]
+192.168.123.143  ansible_user=root private_ip=192.168.123.143 index=0 pm_name=pm1
+
+[data_node]
+192.168.123.141  ansible_user=root private_ip=192.168.123.141 index=0
+192.168.123.142  ansible_user=root private_ip=192.168.123.142 index=1
+
+[client]
+192.168.123.144  ansible_user=root private_ip=192.168.123.144 index=0
+192.168.123.145  ansible_user=root private_ip=192.168.123.145 index=1
+
+[controller]
+192.168.123.140  ansible_user=root private_ip=192.168.123.140 index=0 kafka_id=1
+
+[broker]
+192.168.123.141  ansible_user=root private_ip=192.168.123.141 index=0 kafka_id=2
+192.168.123.142  ansible_user=root private_ip=192.168.123.142 index=1 kafka_id=3
