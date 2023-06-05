@@ -12,7 +12,7 @@
 
 ### Generate SSH Keys
 
-Once you’re all set up with AWS and have the necessary tools installed locally, you’ll need to create both a public and a private SSH key at `~/.ssh/kafka_on_es_aws` (private) and `~/.ssh/kafka_on_es_aws.pub` (public), respectively. You can do this by running the following command:
+Once you're all set up with AWS and have the necessary tools installed locally, you'll need to create both a public and a private SSH key at `~/.ssh/kafka_on_es_aws` (private) and `~/.ssh/kafka_on_es_aws.pub` (public), respectively. You can do this by running the following command:
 
 ```bash
 ssh-keygen -f ~/.ssh/kafka_on_es_aws
@@ -47,6 +47,7 @@ The `terraform.tfvars` file contains the following variables:
 - `region`: The AWS region where the resources will be created.
 - `az`: The AWS availability zone where the resources will be created.
 - `ami`: The [AMI](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html) ID to use for the EC2 instances.
+- `user`: The default user to use when SSHing into the EC2 instances.
 - `instance_type`: The EC2 instance type used by the various components
 - `instance_cnt`: The number of EC2 instances to create for each component
 
@@ -55,7 +56,7 @@ The `terraform.tfvars` file contains the following variables:
 Once the Terraform installation is complete, you can run the Ansible playbook to install the necessary software and start the **AutoMQ for Apache Kafka** on the EC2 instances:
 
 ```bash
-TF_STATE=. ansible-playbook --user ubuntu --inventory `which terraform-inventory` kafka-deploy.yaml
+ansible-playbook deploy.yaml -i hosts.ini
 ```
 
 #### SSH into EC2 Instances
@@ -65,6 +66,9 @@ You can SSH into the EC2 instances using the following command:
 ```bash
 ssh -i ~/.ssh/kafka_on_es_aws ubuntu@$(terraform output --raw pm_ssh_host)
 ssh -i ~/.ssh/kafka_on_es_aws ubuntu@$(terraform output --raw dn_ssh_host)
+ssh -i ~/.ssh/kafka_on_es_aws ubuntu@$(terraform output --raw controller_ssh_host)
+ssh -i ~/.ssh/kafka_on_es_aws ubuntu@$(terraform output --raw broker_ssh_host)
+ssh -i ~/.ssh/kafka_on_es_aws ubuntu@$(terraform output --raw client_ssh_host)
 ```
 
 ### Tear Down
