@@ -43,7 +43,7 @@ server:
     # Network io_uring queue depth
     queue-depth: 128
   # Connection idle duration in ticks
-  connection-idle-duration: 600000000000000000
+  connection-idle-duration: 60000000
   # grace period in ticks, after this period of time, disconnect lingering client connections
   grace-period: 120
   profiling:
