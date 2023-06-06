@@ -131,7 +131,7 @@
         src: "templates/controller.service"
         dest: "/etc/systemd/system/controller.service"
     - name: Format Log Directories
-      shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/controller.properties
+      shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/controller.properties --ignore-formatted
       args:
         chdir: /opt/kafka/
     - systemd:
@@ -157,7 +157,7 @@
         src: "templates/broker.service"
         dest: "/etc/systemd/system/broker.service"
     - name: Format Log Directories
-      shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/broker.properties
+      shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/broker.properties --ignore-formatted
       args:
         chdir: /opt/kafka/
     - systemd:

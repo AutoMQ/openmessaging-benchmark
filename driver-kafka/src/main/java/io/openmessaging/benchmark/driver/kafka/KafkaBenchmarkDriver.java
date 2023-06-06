@@ -90,9 +90,14 @@ public class KafkaBenchmarkDriver implements BenchmarkDriver {
 
         admin = AdminClient.create(commonProperties);
 
-        log.info("Initialized Kafka benchmark driver with common config: {}, producer config: {},"
-                + " consumer config: {}, topic config: {}, replicationFactor: {}", commonProperties,
-                producerProperties, consumerProperties, topicProperties, config.replicationFactor);
+        log.info(
+                "Initialized Kafka benchmark driver with common config: {}, producer config: {},"
+                        + " consumer config: {}, topic config: {}, replicationFactor: {}",
+                commonProperties,
+                producerProperties,
+                consumerProperties,
+                topicProperties,
+                config.replicationFactor);
 
         if (config.reset) {
             // List existing topics
@@ -102,7 +107,10 @@ public class KafkaBenchmarkDriver implements BenchmarkDriver {
                 // Delete all existing topics
                 DeleteTopicsResult deletes = admin.deleteTopics(topics);
                 deletes.all().get();
-            } catch (InterruptedException | ExecutionException e) {
+            } catch (ExecutionException ignored) {
+                // We ignore the exception since multiple workers deleting topics at the same time will lead
+                // to ExecutionExceptions here.
+            } catch (InterruptedException e) {
                 throw new IOException(e);
             }
         }

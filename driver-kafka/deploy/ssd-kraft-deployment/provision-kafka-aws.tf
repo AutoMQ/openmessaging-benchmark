@@ -159,7 +159,7 @@ resource "aws_instance" "client" {
   }
 }
 
-output "kafka_ssh_host" {
+output "controller_ssh_host" {
   value = "${aws_instance.controller.0.public_ip}"
 }
 
