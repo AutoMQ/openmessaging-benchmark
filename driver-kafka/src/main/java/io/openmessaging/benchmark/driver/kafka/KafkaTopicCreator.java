@@ -49,7 +49,10 @@ class KafkaTopicCreator {
 
     KafkaTopicCreator(AdminClient admin, Map<String, String> topicConfigs, short replicationFactor) {
         this(admin, topicConfigs, replicationFactor, MAX_BATCH_SIZE);
-        log.info("replicationFactor in KafkaTopicCreator is: {}, topicConfigs are: {}", replicationFactor, topicConfigs);
+        log.info(
+                "replicationFactor in KafkaTopicCreator is: {}, topicConfigs are: {}",
+                replicationFactor,
+                topicConfigs);
     }
 
     CompletableFuture<Void> create(List<TopicInfo> topicInfos) {
