@@ -108,6 +108,7 @@
         quorumServers: "{{ quorumServers[:-1] }}"
         kafkaVersion: "3.4.0"
         KAFKA_CLUSTER_ID: "XPufKTN9T1SpE82LDKwXwA"
+        flushScheduleInterval: "9223372036854775807"
     - name: Download Kafka package
       unarchive:
         src: "https://dlcdn.apache.org/kafka/{{ kafkaVersion }}/kafka_2.13-{{ kafkaVersion }}.tgz"
@@ -124,7 +125,8 @@
     - name: Set nodeId
       set_fact:
         nodeId: "{{ groups['controller'].index(inventory_hostname) + 1 }}"
-    - template:
+    - name: copy controller properties
+      template:
         src: "templates/controller.properties"
         dest: "/opt/kafka/config/kraft/controller.properties"
     - template:
@@ -149,7 +151,7 @@
     - name: Set nodeId
       set_fact:
         nodeId: "{{  (groups['controller'] | length) + groups['broker'].index(inventory_hostname) + 1 }}"
-    - name: Set up broker
+    - name: copy broker properties
       template:
         src: "templates/broker.properties"
         dest: "/opt/kafka/config/kraft/broker.properties"

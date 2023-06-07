@@ -1,0 +1,90 @@
+- name: Set common facts
+  hosts: [ controller, broker ]
+  connection: ssh
+  become: true
+  tasks:
+    - name: Generate quorum servers
+      set_fact:
+        quorumServers: "{{ quorumServers | default('') + (itemIndex + 1) | string + '@' + item + ',' }}"
+      loop: "{{ groups['controller'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9093') }}"
+      loop_control:
+        index_var: itemIndex
+    - name: Set common facts
+      set_fact:
+        quorumServers: "{{ quorumServers[:-1] }}"
+        privateIp: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+        KAFKA_CLUSTER_ID: "XPufKTN9T1SpE82LDKwXwA"
+        flushScheduleInterval: "1"
+
+
+- name: change controller nodes
+  hosts: [controller]
+  connection: ssh
+  become: true
+  tasks:
+    - name: Set nodeId
+      set_fact:
+        nodeId: "{{ groups['controller'].index(inventory_hostname) + 1 }}"
+    - name: stop controller
+      systemd:
+        state: stopped
+        name: "controller"
+    - name: Wait controller to be stopped
+      service_facts:
+      register: controller_service
+      until: controller_service.ansible_facts.services['controller.service'].state in ['stopped', 'inactive']
+      retries: 10
+      delay: 5
+    - name: remove data dir
+      shell: rm -rf *
+      args:
+        chdir: /mnt/data-1
+    - name: copy controller properties
+      template:
+        src: "templates/controller.properties"
+        dest: "/opt/kafka/config/kraft/controller.properties"
+    - name: Format Log Directories
+      shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/controller.properties --ignore-formatted
+      args:
+        chdir: /opt/kafka/
+    - name: start controller
+      systemd:
+        state: restarted
+        daemon_reload: yes
+        name: "controller"
+
+- name: change broker nodes
+  hosts: [broker]
+  connection: ssh
+  become: true
+  tasks:
+    - name: Set nodeId
+      set_fact:
+        nodeId: "{{  (groups['controller'] | length) + groups['broker'].index(inventory_hostname) + 1 }}"
+    - name: Stop broker
+      systemd:
+        state: stopped
+        name: "broker"
+    - name: Wait broker to be stopped
+      service_facts:
+      register: broker_service
+      until: broker_service.ansible_facts.services['broker.service'].state in ['stopped', 'inactive']
+      retries: 10
+      delay: 5
+    - name: remove data dir
+      shell: rm -rf *
+      args:
+        chdir: /mnt/data-1
+    - name: copy broker properties
+      template:
+        src: "templates/broker.properties"
+        dest: "/opt/kafka/config/kraft/broker.properties"
+    - name: Format Log Directories
+      shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/broker.properties --ignore-formatted
+      args:
+        chdir: /opt/kafka/
+    - name: start broker
+      systemd:
+        state: restarted
+        daemon_reload: yes
+        name: "broker"

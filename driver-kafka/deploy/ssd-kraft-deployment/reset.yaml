@@ -1,0 +1,61 @@
+- name: reset controller nodes
+  hosts: [controller]
+  connection: ssh
+  become: true
+  vars:
+    KAFKA_CLUSTER_ID: "XPufKTN9T1SpE82LDKwXwA"
+  tasks:
+    - name: stop controller
+      systemd:
+        state: stopped
+        name: "controller"
+    - name: Wait controller to be stopped
+      service_facts:
+      register: controller_service
+      until: controller_service.ansible_facts.services['controller.service'].state in ['stopped', 'inactive']
+      retries: 10
+      delay: 5
+    - name: remove data dir
+      shell: rm -rf *
+      args:
+        chdir: /mnt/data-1
+    - name: Format Log Directories
+      shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/controller.properties --ignore-formatted
+      args:
+        chdir: /opt/kafka/
+    - name: start controller
+      systemd:
+        state: restarted
+        daemon_reload: yes
+        name: "controller"
+
+- name: prepare broker nodes
+  hosts: [broker]
+  connection: ssh
+  become: true
+  vars:
+    KAFKA_CLUSTER_ID: "XPufKTN9T1SpE82LDKwXwA"
+  tasks:
+    - name: Stop broker
+      systemd:
+        state: stopped
+        name: "broker"
+    - name: Wait broker to be stopped
+      service_facts:
+      register: broker_service
+      until: broker_service.ansible_facts.services['broker.service'].state in ['stopped', 'inactive']
+      retries: 10
+      delay: 5
+    - name: remove data dir
+      shell: rm -rf *
+      args:
+        chdir: /mnt/data-1
+    - name: Format Log Directories
+      shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/broker.properties --ignore-formatted
+      args:
+        chdir: /opt/kafka/
+    - name: start broker
+      systemd:
+        state: restarted
+        daemon_reload: yes
+        name: "broker"

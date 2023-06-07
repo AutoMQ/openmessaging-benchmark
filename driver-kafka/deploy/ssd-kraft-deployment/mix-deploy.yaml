@@ -111,6 +111,7 @@
         quorumServers: "{{ quorumServers[:-1] }}"
         kafkaVersion: "3.4.0"
         KAFKA_CLUSTER_ID: "XPufKTN9T1SpE82LDKwXwA"
+        flushScheduleInterval: "9223372036854775807"
     - name: Download Kafka package
       unarchive:
         src: "https://dlcdn.apache.org/kafka/{{ kafkaVersion }}/kafka_2.13-{{ kafkaVersion }}.tgz"
