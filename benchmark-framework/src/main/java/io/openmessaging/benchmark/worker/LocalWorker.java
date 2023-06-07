@@ -255,7 +255,8 @@ public class LocalWorker implements Worker, ConsumerCallback {
 
     /**
      * This method is called by the consumer when a message is received.
-     * Note that publishTimestamp is in milliseconds, which loses precision in conversion to nanoseconds. Fix it if needed.
+     * Note that publishTimestamp is in milliseconds, which loses precision in conversion to nanoseconds.
+     * Fix it if needed.
      * @param size size of the received message
      * @param publishTimestamp publish timestamp of the received message
      */
