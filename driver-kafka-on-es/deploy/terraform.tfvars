@@ -22,7 +22,7 @@ instance_type = {
 instance_cnt = {
   "placement-manager"   = 0
   "controller"          = 0
-  "mixed-pm-ctrl"       = 1
+  "mixed-pm-ctrl"       = 3
 
   "data-node"           = 0
   "broker"              = 0

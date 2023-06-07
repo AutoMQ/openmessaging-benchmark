@@ -42,6 +42,7 @@ import io.openmessaging.benchmark.worker.commands.TopicsInfo;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -252,9 +253,19 @@ public class LocalWorker implements Worker, ConsumerCallback {
         internalMessageReceived(data.remaining(), publishTimestamp);
     }
 
+    /**
+     * This method is called by the consumer when a message is received.
+     * Note that publishTimestamp is in milliseconds, which loses precision in conversion to nanoseconds. Fix it if needed.
+     * @param size size of the received message
+     * @param publishTimestamp publish timestamp of the received message
+     */
     public void internalMessageReceived(int size, long publishTimestamp) {
-        long now = System.currentTimeMillis();
-        long endToEndLatencyMicros = TimeUnit.MILLISECONDS.toMicros(now - publishTimestamp);
+        long publishTimeNanos = TimeUnit.MILLISECONDS.toNanos(publishTimestamp);
+        // NOTE: PublishTimestamp is expected to be using the wall-clock time across
+        // machines
+        Instant currentTime = Instant.now();
+        long currentTimeNanos = TimeUnit.SECONDS.toNanos(currentTime.getEpochSecond()) + currentTime.getNano();
+        long endToEndLatencyMicros = TimeUnit.NANOSECONDS.toMicros(currentTimeNanos - publishTimeNanos);
         stats.recordMessageReceived(size, endToEndLatencyMicros);
 
         while (consumersArePaused) {

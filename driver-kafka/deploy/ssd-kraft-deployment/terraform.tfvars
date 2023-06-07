@@ -12,5 +12,5 @@ instance_types = {
 num_instances = {
   "client"     = 4
   "broker"     = 3
-  "controller" = 1
+  "controller" = 3
 }
