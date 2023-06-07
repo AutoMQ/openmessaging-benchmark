@@ -16,7 +16,7 @@ name: Kafka
 driverClass: io.openmessaging.benchmark.driver.kafka.KafkaBenchmarkDriver
 
 # Kafka client-specific configuration
-replicationFactor: 1
+replicationFactor: 2
 reset: true
 
 topicConfig: |
