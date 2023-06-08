@@ -114,7 +114,7 @@
       unarchive:
         src: "https://dlcdn.apache.org/kafka/{{ kafkaVersion }}/kafka_2.13-{{ kafkaVersion }}.tgz"
         remote_src: yes
-        dest: {{ baseStorePath }}/kafka
+        dest: "{{ baseStorePath }}/kafka"
         extra_opts: ["--strip-components=1"]
 
 # setting controllers.
