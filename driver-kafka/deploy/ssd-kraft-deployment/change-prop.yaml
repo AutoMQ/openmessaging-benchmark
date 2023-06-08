@@ -49,7 +49,7 @@
         src: "templates/controller.properties"
         dest: "{{ baseStorePath }}/kafka/config/kraft/controller.properties"
     - name: Format Log Directories
-      shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/broker.properties --ignore-formatted
+      shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/controller.properties --ignore-formatted
       args:
         chdir: "{{ baseStorePath }}/kafka"
     - name: start controller
