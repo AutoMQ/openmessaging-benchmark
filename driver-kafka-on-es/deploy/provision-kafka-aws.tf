@@ -142,7 +142,7 @@ resource "aws_instance" "placement_manager" {
   count                  = var.instance_cnt["placement-manager"]
 
   root_block_device {
-    volume_size = 16
+    volume_size = 64
     tags = {
       Name = "pm_${count.index}"
     }
@@ -163,7 +163,7 @@ resource "aws_instance" "controller" {
   count                  = var.instance_cnt["controller"]
 
   root_block_device {
-    volume_size = 16
+    volume_size = 64
     tags = {
       Name = "ctrl_${count.index}"
     }
@@ -184,7 +184,7 @@ resource "aws_instance" "mixed_pm_ctrl" {
   count                  = var.instance_cnt["mixed-pm-ctrl"]
 
   root_block_device {
-    volume_size = 16
+    volume_size = 64
     tags = {
       Name = "mixed_pm_ctrl_${count.index}"
     }
@@ -205,7 +205,7 @@ resource "aws_instance" "data_node" {
   count                  = var.instance_cnt["data-node"]
 
   root_block_device {
-    volume_size = 32
+    volume_size = 64
     tags = {
       Name = "dn_${count.index}"
     }
@@ -226,7 +226,7 @@ resource "aws_instance" "broker" {
   count                  = var.instance_cnt["broker"]
 
   root_block_device {
-    volume_size = 32
+    volume_size = 64
     tags = {
       Name = "bkr_${count.index}"
     }
@@ -247,7 +247,7 @@ resource "aws_instance" "mixed_dn_bkr" {
   count                  = var.instance_cnt["mixed-dn-bkr"]
 
   root_block_device {
-    volume_size = 32
+    volume_size = 64
     tags = {
       Name = "mixed_dn_bkr_${count.index}"
     }
