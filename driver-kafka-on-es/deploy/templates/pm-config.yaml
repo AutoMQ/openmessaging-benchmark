@@ -38,7 +38,7 @@ leaderLease: 3
 
 log:
   # the minimum enabled logging level
-  level: DEBUG
+  level: INFO
   # whether to enable log rotation
   enableRotation: true
   zap:
