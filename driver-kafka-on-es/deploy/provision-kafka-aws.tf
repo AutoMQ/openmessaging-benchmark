@@ -148,6 +148,7 @@ resource "aws_instance" "placement_manager" {
     }
   }
 
+  monitoring = true
   tags = {
     Name      = "pm_${count.index}"
     Benchmark = "Kafka_on_ES"
@@ -169,6 +170,7 @@ resource "aws_instance" "controller" {
     }
   }
 
+  monitoring = true
   tags = {
     Name      = "ctrl_${count.index}"
     Benchmark = "Kafka_on_ES"
@@ -190,6 +192,7 @@ resource "aws_instance" "mixed_pm_ctrl" {
     }
   }
 
+  monitoring = true
   tags = {
     Name      = "mixed_pm_ctrl_${count.index}"
     Benchmark = "Kafka_on_ES"
@@ -211,6 +214,7 @@ resource "aws_instance" "data_node" {
     }
   }
 
+  monitoring = true
   tags = {
     Name      = "dn_${count.index}"
     Benchmark = "Kafka_on_ES"
@@ -232,6 +236,7 @@ resource "aws_instance" "broker" {
     }
   }
 
+  monitoring = true
   tags = {
     Name      = "bkr_${count.index}"
     Benchmark = "Kafka_on_ES"
@@ -253,6 +258,7 @@ resource "aws_instance" "mixed_dn_bkr" {
     }
   }
 
+  monitoring = true
   tags = {
     Name      = "mixed_dn_bkr_${count.index}"
     Benchmark = "Kafka_on_ES"
@@ -268,6 +274,14 @@ resource "aws_instance" "client" {
   vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
   count                  = var.instance_cnt["client"]
 
+  root_block_device {
+    volume_size = 64
+    tags = {
+      Name = "mixed_dn_bkr_${count.index}"
+    }
+  }
+
+  monitoring = true
   tags = {
     Name      = "clt_${count.index}"
     Benchmark = "Kafka_on_ES"
