@@ -56,43 +56,43 @@ appenders:
         base: 0
 
 root:
-  level: trace
+  level: info
   appenders:
     - stdout
 
 loggers:
   store:
-    level: trace
+    level: info
     appenders:
       - store
     additive: false
   data_node:
-    level: trace
+    level: info
     appenders:
       - data-node
     additive: false
   codec:
-    level: trace
+    level: info
     appenders:
       - data-node
     additive: false
   transport:
-    level: trace
+    level: info
     appenders:
       - data-node
     additive: false
   config:
-    level: trace
+    level: info
     appenders:
       - data-node
     additive: false
   client:
-    level: trace
+    level: info
     appenders:
       - data-node
     additive: false
   util:
-    level: trace
+    level: info
     appenders:
       - data-node
     additive: false
