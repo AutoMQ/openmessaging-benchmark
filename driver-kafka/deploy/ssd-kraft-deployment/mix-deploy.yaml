@@ -38,6 +38,7 @@
         # combine all mixed servers with broker port
         mixedServers: "{{ groups['controller'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9092') | join(',') }}"
         privateIp: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+        baseStorePath: "/mnt/data-1"
     - name: Change locale to en_US.utf-8
       shell: |
         echo 'LANG=en_US.utf-8
@@ -65,7 +66,7 @@
         opts: defaults,noatime,nodiscard
         state: mounted
       with_items:
-        - { path: "/mnt/data-1", src: "/dev/nvme1n1" }
+        - { path: "{{ baseStorePath }}", src: "/dev/nvme1n1" }
     - name: Increase hard file descriptor limit
       pam_limits:
         domain: '*'
@@ -98,8 +99,8 @@
   connection: ssh
   become: true
   tasks:
-    - file: path=/opt/kafka state=absent
-    - file: path=/opt/kafka state=directory
+    - file: path={{ baseStorePath }}/kafka state=absent
+    - file: path={{ baseStorePath }}/kafka state=directory
     - name: Generate quorum servers
       set_fact:
         quorumServers: "{{ quorumServers | default('') + (itemIndex + 1) | string + '@' + item + ',' }}"
@@ -116,7 +117,7 @@
       unarchive:
         src: "https://dlcdn.apache.org/kafka/{{ kafkaVersion }}/kafka_2.13-{{ kafkaVersion }}.tgz"
         remote_src: yes
-        dest: /opt/kafka
+        dest: "{{ baseStorePath }}/kafka"
         extra_opts: [ "--strip-components=1" ]
 
 
@@ -131,14 +132,14 @@
         nodeId: "{{ groups['controller'].index(inventory_hostname) + 1 }}"
     - template:
         src: "templates/server.properties"
-        dest: "/opt/kafka/config/kraft/server.properties"
+        dest: "{{ baseStorePath }}/kafka/config/kraft/server.properties"
     - template:
         src: "templates/server.service"
         dest: "/etc/systemd/system/server.service"
     - name: Format Log Directories
       shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/server.properties --ignore-formatted
       args:
-        chdir: /opt/kafka/
+        chdir: "{{ baseStorePath }}/kafka/"
     - systemd:
         state: restarted
         daemon_reload: yes
@@ -156,14 +157,14 @@
     - name: Set up broker
       template:
         src: "templates/broker.properties"
-        dest: "/opt/kafka/config/kraft/broker.properties"
+        dest: "{{ baseStorePath }}/kafka/config/kraft/broker.properties"
     - template:
         src: "templates/broker.service"
         dest: "/etc/systemd/system/broker.service"
     - name: Format Log Directories
       shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/broker.properties --ignore-formatted
       args:
-        chdir: /opt/kafka/
+        chdir: "{{ baseStorePath }}/kafka/"
     - systemd:
         state: restarted
         daemon_reload: yes

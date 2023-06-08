@@ -4,6 +4,7 @@
   become: true
   vars:
     KAFKA_CLUSTER_ID: "XPufKTN9T1SpE82LDKwXwA"
+    baseStorePath: "/mnt/data-1"
   tasks:
     - name: stop controller
       systemd:
@@ -16,13 +17,17 @@
       retries: 10
       delay: 5
     - name: remove data dir
-      shell: rm -rf *
+      shell: rm -rf data
       args:
-        chdir: /mnt/data-1
+        chdir: "{{ baseStorePath }}"
+    - name: remove logs
+      shell: rm -f *
+      args:
+        chdir: "{{ baseStorePath }}/kafka/logs"
     - name: Format Log Directories
       shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/controller.properties --ignore-formatted
       args:
-        chdir: /opt/kafka/
+        chdir: "{{ baseStorePath }}/kafka"
     - name: start controller
       systemd:
         state: restarted
@@ -35,6 +40,7 @@
   become: true
   vars:
     KAFKA_CLUSTER_ID: "XPufKTN9T1SpE82LDKwXwA"
+    baseStorePath: "/mnt/data-1"
   tasks:
     - name: Stop broker
       systemd:
@@ -47,13 +53,17 @@
       retries: 10
       delay: 5
     - name: remove data dir
-      shell: rm -rf *
+      shell: rm -rf data
       args:
-        chdir: /mnt/data-1
+        chdir: "{{ baseStorePath }}"
+    - name: remove logs
+      shell: rm -f *
+      args:
+        chdir: "{{ baseStorePath }}/kafka/logs"
     - name: Format Log Directories
       shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/broker.properties --ignore-formatted
       args:
-        chdir: /opt/kafka/
+        chdir: "{{ baseStorePath }}/kafka"
     - name: start broker
       systemd:
         state: restarted
