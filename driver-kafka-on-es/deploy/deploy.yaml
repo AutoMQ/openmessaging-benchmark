@@ -28,6 +28,7 @@
       kafka_cluster_id: "XPufKTN9T1SpE82LDKwXwA"
       kafka_xm: "16g"
       client_xm: "100g"
+      flushScheduleInterval: "9223372036854775807"
 
 
 - name: General setup for all

@@ -50,6 +50,12 @@ variable "num_instances" {
   type = map(string)
 }
 
+# if true, enable CloudWatch monitoring on the instances
+variable "monitoring" {
+  type    = bool
+  default = true
+}
+
 # Create a VPC to launch our instances into
 resource "aws_vpc" "benchmark_vpc" {
   cidr_block = "10.0.0.0/16"
@@ -125,6 +131,7 @@ resource "aws_instance" "controller" {
   vpc_security_group_ids = ["${aws_security_group.benchmark_security_group.id}"]
   count                  = "${var.num_instances["controller"]}"
 
+  monitoring = var.monitoring
   tags = {
     Name      = "kafka_controller_${count.index}"
     Benchmark = "Kafka"
@@ -139,6 +146,7 @@ resource "aws_instance" "broker" {
   vpc_security_group_ids = ["${aws_security_group.benchmark_security_group.id}"]
   count                  = lookup(var.num_instances, "broker", 0) # (var.num_instances["broker"]")
 
+  monitoring = var.monitoring
   tags = {
     Name      = "kafka_broker_${count.index}"
     Benchmark = "Kafka"
@@ -153,6 +161,7 @@ resource "aws_instance" "client" {
   vpc_security_group_ids = ["${aws_security_group.benchmark_security_group.id}"]
   count                  = "${var.num_instances["client"]}"
 
+  monitoring = var.monitoring
   tags = {
     Name      = "kafka_client_${count.index}"
     Benchmark = "Kafka"

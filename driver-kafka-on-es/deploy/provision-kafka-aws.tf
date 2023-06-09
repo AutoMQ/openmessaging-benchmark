@@ -52,6 +52,12 @@ variable "instance_cnt" {
   type = map(string)
 }
 
+# if true, enable CloudWatch monitoring on the instances
+variable "monitoring" {
+  type    = bool
+  default = true
+}
+
 # Create a VPC to launch our instances into
 resource "aws_vpc" "benchmark_vpc" {
   cidr_block = "10.0.0.0/16"
@@ -148,7 +154,7 @@ resource "aws_instance" "placement_manager" {
     }
   }
 
-  monitoring = true
+  monitoring = var.monitoring
   tags = {
     Name      = "pm_${count.index}"
     Benchmark = "Kafka_on_ES"
@@ -170,7 +176,7 @@ resource "aws_instance" "controller" {
     }
   }
 
-  monitoring = true
+  monitoring = var.monitoring
   tags = {
     Name      = "ctrl_${count.index}"
     Benchmark = "Kafka_on_ES"
@@ -192,7 +198,7 @@ resource "aws_instance" "mixed_pm_ctrl" {
     }
   }
 
-  monitoring = true
+  monitoring = var.monitoring
   tags = {
     Name      = "mixed_pm_ctrl_${count.index}"
     Benchmark = "Kafka_on_ES"
@@ -214,7 +220,7 @@ resource "aws_instance" "data_node" {
     }
   }
 
-  monitoring = true
+  monitoring = var.monitoring
   tags = {
     Name      = "dn_${count.index}"
     Benchmark = "Kafka_on_ES"
@@ -236,7 +242,7 @@ resource "aws_instance" "broker" {
     }
   }
 
-  monitoring = true
+  monitoring = var.monitoring
   tags = {
     Name      = "bkr_${count.index}"
     Benchmark = "Kafka_on_ES"
@@ -258,7 +264,7 @@ resource "aws_instance" "mixed_dn_bkr" {
     }
   }
 
-  monitoring = true
+  monitoring = var.monitoring
   tags = {
     Name      = "mixed_dn_bkr_${count.index}"
     Benchmark = "Kafka_on_ES"
@@ -281,7 +287,7 @@ resource "aws_instance" "client" {
     }
   }
 
-  monitoring = true
+  monitoring = var.monitoring
   tags = {
     Name      = "clt_${count.index}"
     Benchmark = "Kafka_on_ES"
