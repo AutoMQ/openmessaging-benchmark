@@ -72,7 +72,7 @@ store:
   # 1GiB
   segment-size: 1073741824
   # Max block cache size
-  max-cache-size: 1073741824
+  max-cache-size: 68719476736
   # Preferred IO read size: 128KiB
   read-block-size: 131072
   # Pre-allocated number of segment files

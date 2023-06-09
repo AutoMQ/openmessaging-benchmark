@@ -12,6 +12,14 @@
 # limitations under the License.
 #
 
+- name: Reboot
+  tags: [never]
+  hosts: all
+  connection: ssh
+  become: true
+  tasks:
+  - reboot:
+
 - name: Stop client
   tags: [stop]
   hosts: client

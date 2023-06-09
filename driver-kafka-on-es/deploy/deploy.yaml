@@ -22,7 +22,8 @@
   - set_fact:
       # Global configs
       baseStorePath: "/mnt/data-1"
-      kafka_dir: "/mnt/data-1/kafka"
+      kafka_dir: "{{ ansible_env.HOME }}/kafka"
+      es_git_version: "develop"
       pm_dir: "{{ ansible_env.HOME }}/elastic-stream-pm"
       dn_dir: "{{ ansible_env.HOME }}/elastic-stream-dn"
       sdk_dir: "{{ ansible_env.HOME }}/elastic-stream-sdk"
@@ -182,7 +183,7 @@
     git:
       repo: https://github.com/AutoMQ/elastic-stream.git
       dest: "{{ dn_dir }}"
-      version: develop
+      version: "{{ es_git_version }}"
       depth: 1
       single_branch: true
       force: true
@@ -237,7 +238,7 @@
     git:
       repo: https://github.com/AutoMQ/elastic-stream.git
       dest: "{{ pm_dir }}"
-      version: develop
+      version: "{{ es_git_version }}"
       depth: 1
       single_branch: true
       force: true
@@ -294,7 +295,7 @@
       git:
         repo: https://github.com/AutoMQ/elastic-stream.git
         dest: "{{ sdk_dir }}"
-        version: develop
+        version: "{{ es_git_version }}"
         depth: 1
         single_branch: true
         force: true
