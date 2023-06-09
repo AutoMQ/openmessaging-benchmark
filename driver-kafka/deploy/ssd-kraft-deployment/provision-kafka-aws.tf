@@ -131,6 +131,13 @@ resource "aws_instance" "controller" {
   vpc_security_group_ids = ["${aws_security_group.benchmark_security_group.id}"]
   count                  = "${var.num_instances["controller"]}"
 
+  root_block_device {
+    volume_size = 64
+    tags = {
+      Name = "ctrl_${count.index}"
+    }
+  }
+
   monitoring = var.monitoring
   tags = {
     Name      = "kafka_controller_${count.index}"
@@ -146,6 +153,13 @@ resource "aws_instance" "broker" {
   vpc_security_group_ids = ["${aws_security_group.benchmark_security_group.id}"]
   count                  = lookup(var.num_instances, "broker", 0) # (var.num_instances["broker"]")
 
+  root_block_device {
+    volume_size = 64
+    tags = {
+      Name = "bkr_${count.index}"
+    }
+  }
+
   monitoring = var.monitoring
   tags = {
     Name      = "kafka_broker_${count.index}"
@@ -160,6 +174,13 @@ resource "aws_instance" "client" {
   subnet_id              = "${aws_subnet.benchmark_subnet.id}"
   vpc_security_group_ids = ["${aws_security_group.benchmark_security_group.id}"]
   count                  = "${var.num_instances["client"]}"
+
+  root_block_device {
+    volume_size = 64
+    tags = {
+      Name = "client_${count.index}"
+    }
+  }
 
   monitoring = var.monitoring
   tags = {

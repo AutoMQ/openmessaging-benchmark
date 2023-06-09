@@ -283,7 +283,7 @@ resource "aws_instance" "client" {
   root_block_device {
     volume_size = 64
     tags = {
-      Name = "mixed_dn_bkr_${count.index}"
+      Name = "client_${count.index}"
     }
   }
 

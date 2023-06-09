@@ -12,43 +12,7 @@
 # limitations under the License.
 #
 
-- name: reset controller nodes
-  hosts: [controller]
-  connection: ssh
-  become: true
-  vars:
-    KAFKA_CLUSTER_ID: "XPufKTN9T1SpE82LDKwXwA"
-    baseStorePath: "/mnt/data-1"
-  tasks:
-    - name: stop controller
-      systemd:
-        state: stopped
-        name: "controller"
-    - name: Wait controller to be stopped
-      service_facts:
-      register: controller_service
-      until: controller_service.ansible_facts.services['controller.service'].state in ['stopped', 'inactive']
-      retries: 10
-      delay: 5
-    - name: remove data dir
-      shell: rm -rf data
-      args:
-        chdir: "{{ baseStorePath }}"
-    - name: remove logs
-      shell: rm -f *
-      args:
-        chdir: "{{ baseStorePath }}/kafka/logs"
-    - name: Format Log Directories
-      shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/controller.properties --ignore-formatted
-      args:
-        chdir: "{{ baseStorePath }}/kafka"
-    - name: start controller
-      systemd:
-        state: restarted
-        daemon_reload: yes
-        name: "controller"
-
-- name: prepare broker nodes
+- name: stop broker nodes
   hosts: [broker]
   connection: ssh
   become: true
@@ -78,7 +42,60 @@
       shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/broker.properties --ignore-formatted
       args:
         chdir: "{{ baseStorePath }}/kafka"
-    - name: start broker
+
+
+- name: stop controller nodes
+  hosts: [controller]
+  connection: ssh
+  become: true
+  vars:
+    KAFKA_CLUSTER_ID: "XPufKTN9T1SpE82LDKwXwA"
+    baseStorePath: "/mnt/data-1"
+  tasks:
+    - name: stop controller
+      systemd:
+        state: stopped
+        name: "controller"
+    - name: Wait controller to be stopped
+      service_facts:
+      register: controller_service
+      until: controller_service.ansible_facts.services['controller.service'].state in ['stopped', 'inactive']
+      retries: 10
+      delay: 5
+    - name: remove data dir
+      shell: rm -rf data
+      args:
+        chdir: "{{ baseStorePath }}"
+    - name: remove logs
+      shell: rm -f *
+      args:
+        chdir: "{{ baseStorePath }}/kafka/logs"
+    - name: Format Log Directories
+      shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/controller.properties --ignore-formatted
+      args:
+        chdir: "{{ baseStorePath }}/kafka"
+
+
+- name: Start Kafka controller
+  tags: [run]
+  hosts: [controller]
+  connection: ssh
+  become: true
+  tasks:
+    - name: Start Kafka controller
+      systemd:
+        state: restarted
+        daemon_reload: yes
+        name: "controller"
+
+
+- name: Start Kafka brokers
+  tags: [run]
+  hosts: [broker]
+  connection: ssh
+  become: true
+  tasks:
+    - name: Start Kafka broker
       systemd:
         state: restarted
         daemon_reload: yes
