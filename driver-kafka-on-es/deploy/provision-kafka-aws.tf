@@ -315,7 +315,7 @@ output "broker_ssh_host" {
 }
 
 output "client_ssh_host" {
-  value = aws_instance.client[0].public_ip
+  value = var.instance_cnt["client"] > 0 ? aws_instance.client[0].public_ip: null
 }
 
 resource "local_file" "hosts_ini" {

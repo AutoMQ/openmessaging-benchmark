@@ -21,7 +21,8 @@
       private_ip: "{{ hostvars[inventory_hostname]['private_ip'] }}"
   - set_fact:
       # Global configs
-      kafka_dir: "{{ ansible_env.HOME }}/kafka"
+      baseStorePath: "/mnt/data-1"
+      kafka_dir: "/mnt/data-1/kafka"
       pm_dir: "{{ ansible_env.HOME }}/elastic-stream-pm"
       dn_dir: "{{ ansible_env.HOME }}/elastic-stream-dn"
       sdk_dir: "{{ ansible_env.HOME }}/elastic-stream-sdk"
@@ -61,7 +62,7 @@
   tasks:
   - set_fact:
       disks: [{
-        "path": "/mnt/data-1",
+        "path": " {{ baseStorePath }}",
         "src": "/dev/nvme1n1"
       }]
   - name: Install mkfx.xfs
@@ -251,6 +252,7 @@
 - name: Prepare Kafka
   hosts: [controller, broker]
   connection: ssh
+  become: true
   tasks:
   - name: Set facts
     tags: [always]
@@ -268,7 +270,6 @@
     tags: [prepare]
     block:
     - name: Install apt packages
-      become: true
       apt:
         name: "{{ item }}"
         state: present

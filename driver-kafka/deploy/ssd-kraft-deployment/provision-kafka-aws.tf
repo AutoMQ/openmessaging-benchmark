@@ -169,9 +169,13 @@ resource "aws_instance" "client" {
 }
 
 output "controller_ssh_host" {
-  value = "${aws_instance.controller.0.public_ip}"
+  value = "${aws_instance.controller[0].public_ip}"
+}
+
+output "broker_ssh_host" {
+  value = var.num_instances["broker"] > 0 ? aws_instance.broker[0].public_ip: null
 }
 
 output "client_ssh_host" {
-  value = "${aws_instance.client.0.public_ip}"
+  value = var.num_instances["client"] > 0 ? aws_instance.client[0].public_ip: null
 }
