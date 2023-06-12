@@ -62,7 +62,7 @@
   tasks:
   - set_fact:
       disks: [{
-        "path": " {{ baseStorePath }}",
+        "path": "{{ baseStorePath }}",
         "src": "/dev/nvme1n1"
       }]
   - name: Install mkfx.xfs
