@@ -41,13 +41,11 @@
   become: true
   tasks:
   - name: Update and upgrade apt packages
-    become: true
     apt:
       upgrade: yes
       update_cache: yes
       cache_valid_time: 86400
   - name: Upgrade linux kernel
-    become: true
     apt:
       name: linux-image-5.19.0-0.deb11.2-cloud-amd64
       state: present
@@ -68,7 +66,6 @@
         "src": "/dev/nvme1n1"
       }]
   - name: Install mkfx.xfs
-    become: true
     apt:
       name: xfsprogs
       state: present
@@ -121,11 +118,11 @@
   - name: Reboot the machine with all defaults
     reboot:
 
-
 - name: Install Rust and flatc
   tags: [prepare]
   hosts: [controller, data_node, broker]
   connection: ssh
+  become: true
   tasks:
   - name: Install Rust and Cargo
     block:
@@ -147,14 +144,12 @@
   - name: Install flatc
     block:
     - name: Install apt packages
-      become: true
       apt:
         name: "{{ item }}"
         state: present
       with_items:
         - unzip
     - name: Install flatc
-      become: true
       unarchive:
         src: https://github.com/AutoMQ/flatbuffers/releases/download/v23.3.3/Linux.flatc.binary.g++-10.zip
         dest: /usr/local/bin
@@ -168,12 +163,12 @@
 - name: Prepare Data Node
   hosts: [data_node]
   connection: ssh
+  become: true
   tasks:
   - name: Install dependencies
     tags: [prepare]
     block:
     - name: Install apt packages
-      become: true
       apt:
         name: "{{ item }}"
         state: present
@@ -203,6 +198,7 @@
 - name: Prepare Placement Manager
   hosts: [placement_manager]
   connection: ssh
+  become: true
   tasks:
   - name: Install Docker
     tags: [prepare]
@@ -214,10 +210,8 @@
         mode: '0755'
         force: 'yes'
     - name: Install Docker
-      become: true
       command: /tmp/get-docker.sh
     - name: Add ansible user to docker group
-      become: true
       user:
         name: "{{ ansible_user }}"
         groups: docker
@@ -229,7 +223,6 @@
 
   - name: Install apt packages
     tags: [prepare]
-    become: true
     apt:
       name: "{{ item }}"
       state: present

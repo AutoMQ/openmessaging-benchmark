@@ -22,11 +22,11 @@ instance_type = {
 instance_cnt = {
   "placement-manager"   = 0
   "controller"          = 0
-  "mixed-pm-ctrl"       = 3
+  "mixed-pm-ctrl"       = 1
 
-  "data-node"           = 0
+  "data-node"           = 1
   "broker"              = 0
-  "mixed-dn-bkr"        = 3
+  "mixed-dn-bkr"        = 1
 
-  "client"              = 4
+  "client"              = 2
 }
