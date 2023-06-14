@@ -141,23 +141,11 @@
     - debug:
         var: cargo_version.stdout
 
-  - name: Install flatc
-    block:
-    - name: Install apt packages
-      apt:
-        name: "{{ item }}"
-        state: present
-      with_items:
-        - unzip
-    - name: Install flatc
-      unarchive:
-        src: https://github.com/AutoMQ/flatbuffers/releases/download/v23.3.3/Linux.flatc.binary.g++-10.zip
-        dest: /usr/local/bin
-        remote_src: yes
-    - shell: flatc --version
-      register: flatc_version
-    - debug:
-        var: flatc_version.stdout
+  - name: Install dependencies
+    shell:
+      cmd: ./scripts/install_deps.sh
+      chdir: "{{ dn_dir }}"
+      executable: /bin/bash
 
 
 - name: Prepare Data Node
