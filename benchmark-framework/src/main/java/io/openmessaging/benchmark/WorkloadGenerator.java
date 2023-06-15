@@ -390,6 +390,12 @@ public class WorkloadGenerator implements AutoCloseable {
                     dec.format(stats.publishDelayLatency.getValueAtPercentile(99)),
                     dec.format(stats.publishDelayLatency.getValueAtPercentile(99.9)),
                     throughputFormat.format(stats.publishDelayLatency.getMaxValue()));
+            log.info("E2E Latency (ms) avg: {} - 50%: {} - 99%: {} - 99.9%: {} - Max: {}",
+                dec.format(microsToMillis(stats.endToEndLatency.getMean())),
+                dec.format(microsToMillis(stats.endToEndLatency.getValueAtPercentile(50))),
+                dec.format(microsToMillis(stats.endToEndLatency.getValueAtPercentile(99))),
+                dec.format(microsToMillis(stats.endToEndLatency.getValueAtPercentile(99.9))),
+                throughputFormat.format(microsToMillis(stats.endToEndLatency.getMaxValue())));
 
             result.publishRate.add(publishRate);
             result.publishErrorRate.add(errorRate);
