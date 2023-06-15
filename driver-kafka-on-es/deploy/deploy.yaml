@@ -302,7 +302,7 @@
     - name: Install java sdk
       tags: [sdk, install]
       shell: |
-        mvn install -DskipTests -DskipSigning
+        mvn -DargLine="--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED" install -DskipTests -DskipSigning
       args:
         chdir: "{{ sdk_dir }}/sdks/frontend-java"
 
