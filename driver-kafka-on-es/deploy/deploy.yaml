@@ -118,7 +118,7 @@
   - name: Reboot the machine with all defaults
     reboot:
 
-- name: Install Rust and flatc
+- name: Install Rust
   tags: [prepare]
   hosts: [controller, data_node, broker]
   connection: ssh
@@ -140,12 +140,6 @@
       register: cargo_version
     - debug:
         var: cargo_version.stdout
-
-  - name: Install dependencies
-    shell:
-      cmd: ./scripts/install_deps.sh
-      chdir: "{{ dn_dir }}"
-      executable: /bin/bash
 
 
 - name: Prepare Data Node
@@ -173,6 +167,11 @@
       depth: 1
       single_branch: true
       force: true
+  - name: Install dependencies
+    shell:
+      cmd: ./scripts/install_deps.sh
+      chdir: "{{ dn_dir }}"
+      executable: /bin/bash
   - name: Build Data Node
     tags: [build]
     shell: |
@@ -226,6 +225,11 @@
       depth: 1
       single_branch: true
       force: true
+  - name: Install dependencies
+    shell:
+      cmd: ./scripts/install_deps.sh
+      chdir: "{{ pm_dir }}"
+      executable: /bin/bash
   - name: Build Placement Manager
     tags: [build]
     shell: |
@@ -283,6 +287,11 @@
         depth: 1
         single_branch: true
         force: true
+    - name: Install dependencies
+      shell:
+        cmd: ./scripts/install_deps.sh
+        chdir: "{{ sdk_dir }}"
+        executable: /bin/bash
     - name: Build Elastic Stream java sdk
       shell: |
         source $HOME/.cargo/env
