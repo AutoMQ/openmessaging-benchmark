@@ -373,7 +373,7 @@ public class WorkloadGenerator implements AutoCloseable {
                                     - stats.totalMessagesReceived);
 
             log.info(
-                    "Pub rate {} msg/s / {} MB/s | Pub err {} err/s | Cons rate {} msg/s / {} MB/s | Backlog: {} K | Pub Latency (ms) avg: {} - 50%: {} - 99%: {} - 99.9%: {} - Max: {} | Pub Delay Latency (us) avg: {} - 50%: {} - 99%: {} - 99.9%: {} - Max: {}",
+                    "Pub rate {} msg/s / {} MB/s | Pub err {} err/s | Cons rate {} msg/s / {} MB/s | Backlog: {} K | Pub Latency (ms) avg: {} - 50%: {} - 99%: {} - 99.9%: {} - Max: {} | Pub Delay Latency (us) avg: {} - 50%: {} - 99%: {} - 99.9%: {} - Max: {} | E2E Latency (ms) avg: {} - 50%: {} - 99%: {} - 99.9%: {} - Max: {}",
                     rateFormat.format(publishRate),
                     throughputFormat.format(publishThroughput),
                     rateFormat.format(errorRate),
@@ -389,13 +389,12 @@ public class WorkloadGenerator implements AutoCloseable {
                     dec.format(stats.publishDelayLatency.getValueAtPercentile(50)),
                     dec.format(stats.publishDelayLatency.getValueAtPercentile(99)),
                     dec.format(stats.publishDelayLatency.getValueAtPercentile(99.9)),
-                    throughputFormat.format(stats.publishDelayLatency.getMaxValue()));
-            log.info("E2E Latency (ms) avg: {} - 50%: {} - 99%: {} - 99.9%: {} - Max: {}",
-                dec.format(microsToMillis(stats.endToEndLatency.getMean())),
-                dec.format(microsToMillis(stats.endToEndLatency.getValueAtPercentile(50))),
-                dec.format(microsToMillis(stats.endToEndLatency.getValueAtPercentile(99))),
-                dec.format(microsToMillis(stats.endToEndLatency.getValueAtPercentile(99.9))),
-                throughputFormat.format(microsToMillis(stats.endToEndLatency.getMaxValue())));
+                    throughputFormat.format(stats.publishDelayLatency.getMaxValue()),
+                    dec.format(microsToMillis(stats.endToEndLatency.getMean())),
+                    dec.format(microsToMillis(stats.endToEndLatency.getValueAtPercentile(50))),
+                    dec.format(microsToMillis(stats.endToEndLatency.getValueAtPercentile(99))),
+                    dec.format(microsToMillis(stats.endToEndLatency.getValueAtPercentile(99.9))),
+                    throughputFormat.format(microsToMillis(stats.endToEndLatency.getMaxValue())));
 
             result.publishRate.add(publishRate);
             result.publishErrorRate.add(errorRate);

@@ -164,8 +164,10 @@ public class Benchmark {
 
                                     // Stop any left over workload
                                     worker.stopAll();
+                                    log.info("Successfully stopped all workers");
 
                                     worker.initializeDriver(new File(driverConfig));
+                                    log.info("worker has been initialized");
 
                                     WorkloadGenerator generator =
                                             new WorkloadGenerator(driverConfiguration.name, workload, worker);
