@@ -23,3 +23,5 @@ consumerPerSubscription: 4
 producersPerTopic: 4
 producerRate: 4000 # 100m: 800, 300m: 2400, 500m: 4000, 700m: 5600, 900m: 7200, 1G: 8192
 consumerBacklogSizeGB: 0
+warmupDurationMinutes: 1
+testDurationMinutes: 15
