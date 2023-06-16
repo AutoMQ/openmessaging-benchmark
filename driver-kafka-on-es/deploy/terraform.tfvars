@@ -24,7 +24,7 @@ instance_cnt = {
   "controller"          = 0
   "mixed-pm-ctrl"       = 3
 
-  "data-node"           = 1
+  "data-node"           = 0
   "broker"              = 0
   "mixed-dn-bkr"        = 3
 
