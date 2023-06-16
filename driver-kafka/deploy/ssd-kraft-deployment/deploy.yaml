@@ -112,7 +112,7 @@
         flushScheduleInterval: "9223372036854775807"
     - name: Download Kafka package
       unarchive:
-        src: "https://dlcdn.apache.org/kafka/{{ kafkaVersion }}/kafka_2.13-{{ kafkaVersion }}.tgz"
+        src: "https://archive.apache.org/dist/kafka/{{ kafkaVersion }}/kafka_2.13-{{ kafkaVersion }}.tgz"
         remote_src: yes
         dest: "{{ baseStorePath }}/kafka"
         extra_opts: ["--strip-components=1"]

@@ -12,16 +12,14 @@
 # limitations under the License.
 #
 
-name: 1024-partitions-512K-rate-4-producer
+name: 1024-partitions-4000-rate-4-producer
 
 topics: 1
 partitionsPerTopic: 1024
-messageSize: 1024
-payloadFile: "payload/payload-1Kb.data"
+messageSize: 131072
+payloadFile: "payload/payload-128Kb.data"
 subscriptionsPerTopic: 1
 consumerPerSubscription: 4
 producersPerTopic: 4
-producerRate: 512000
+producerRate: 4000 # 100m: 800, 300m: 2400, 500m: 4000, 700m: 5600, 900m: 7200, 1G: 8192
 consumerBacklogSizeGB: 0
-warmupDurationMinutes: 1
-testDurationMinutes: 15
