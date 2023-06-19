@@ -310,7 +310,7 @@
       git:
         repo: https://github.com/AutoMQ/kafka.git
         dest: "{{ kafka_dir }}"
-        version: develop
+        version: ny-benchmark
         depth: 1
         single_branch: true
         force: true
