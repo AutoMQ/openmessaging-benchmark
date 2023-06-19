@@ -80,6 +80,8 @@ store:
   # The total size of Status::Read segment files
   # 100GiB
   total-segment-file-size: 10737418240
+  # Policy to reclaim segment files
+  reclaim-policy: "Recycle"
   # io_uring setup
   uring:
     # IO io_uring queue depth
@@ -100,6 +102,6 @@ store:
     create-if-missing: true
     # Flush index entries of record-batch every `flush_threshold`
     flush-threshold: 32768
-    
+
 replication:
   connection-pool-size: 3
