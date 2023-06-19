@@ -1,5 +1,5 @@
 provider "aws" {
-  region  = var.region
+  region = var.region
 }
 
 provider "random" {}
@@ -63,7 +63,7 @@ resource "aws_vpc" "benchmark_vpc" {
   cidr_block = "10.0.0.0/16"
 
   tags = {
-    Name = "Kafka_on_ES_Benchmark_VPC_${random_id.hash.hex}"
+    Name      = "Kafka_on_ES_Benchmark_VPC_${random_id.hash.hex}"
     Benchmark = "Kafka_on_ES"
   }
 }
@@ -125,7 +125,7 @@ resource "aws_security_group" "benchmark_security_group" {
   }
 
   tags = {
-    Name = "Kafka_on_ES_Benchmark_SecurityGroup_${random_id.hash.hex}"
+    Name      = "Kafka_on_ES_Benchmark_SecurityGroup_${random_id.hash.hex}"
     Benchmark = "Kafka_on_ES"
   }
 }
@@ -299,34 +299,34 @@ output "user" {
 }
 
 output "pm_ssh_host" {
-  value = concat(aws_instance.placement_manager, aws_instance.mixed_pm_ctrl)[0].public_ip
+  value = var.instance_cnt["placement-manager"] + var.instance_cnt["mixed-pm-ctrl"] > 0 ? concat(aws_instance.placement_manager, aws_instance.mixed_pm_ctrl)[0].public_ip : null
 }
 
 output "dn_ssh_host" {
-  value = concat(aws_instance.data_node, aws_instance.mixed_dn_bkr)[0].public_ip
+  value = var.instance_cnt["data-node"] + var.instance_cnt["mixed-dn-bkr"] > 0 ? concat(aws_instance.data_node, aws_instance.mixed_dn_bkr)[0].public_ip : null
 }
 
 output "controller_ssh_host" {
-  value = concat(aws_instance.controller, aws_instance.mixed_pm_ctrl)[0].public_ip
+  value = var.instance_cnt["controller"] + var.instance_cnt["mixed-pm-ctrl"] > 0 ? concat(aws_instance.controller, aws_instance.mixed_pm_ctrl)[0].public_ip : null
 }
 
 output "broker_ssh_host" {
-  value = concat(aws_instance.broker, aws_instance.mixed_dn_bkr)[0].public_ip
+  value = var.instance_cnt["broker"] + var.instance_cnt["mixed-dn-bkr"] > 0 ? concat(aws_instance.broker, aws_instance.mixed_dn_bkr)[0].public_ip : null
 }
 
 output "client_ssh_host" {
-  value = var.instance_cnt["client"] > 0 ? aws_instance.client[0].public_ip: null
+  value = var.instance_cnt["client"] > 0 ? aws_instance.client[0].public_ip : null
 }
 
 resource "local_file" "hosts_ini" {
   content = templatefile("${path.module}/hosts.ini.tpl",
     {
-      pm = aws_instance.placement_manager,
-      ctrl = aws_instance.controller,
+      pm            = aws_instance.placement_manager,
+      ctrl          = aws_instance.controller,
       mixed_pm_ctrl = aws_instance.mixed_pm_ctrl,
 
-      dn = aws_instance.data_node,
-      bkr = aws_instance.broker,
+      dn           = aws_instance.data_node,
+      bkr          = aws_instance.broker,
       mixed_dn_bkr = aws_instance.mixed_dn_bkr,
 
       client = aws_instance.client,
