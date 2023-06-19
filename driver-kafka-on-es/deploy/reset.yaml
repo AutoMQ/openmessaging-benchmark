@@ -57,6 +57,8 @@
     file:
       path: /mnt/data-1/kafka-controller
       state: absent
+  - name: Clean cache
+    shell: sync; echo 3 > /proc/sys/vm/drop_caches
 
 - name: Stop broker
   tags: [stop]
@@ -78,6 +80,8 @@
     file:
       path: /mnt/data-1/kafka-broker
       state: absent
+  - name: Clean cache
+    shell: sync; echo 3 > /proc/sys/vm/drop_caches
 
 - name: Stop Data Node
   tags: [stop]

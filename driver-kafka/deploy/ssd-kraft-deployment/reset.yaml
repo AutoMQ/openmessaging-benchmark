@@ -42,6 +42,8 @@
       shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/broker.properties --ignore-formatted
       args:
         chdir: "{{ baseStorePath }}/kafka"
+    - name: Clean cache
+      shell: sync; echo 3 > /proc/sys/vm/drop_caches
 
 
 - name: stop controller nodes
@@ -74,7 +76,8 @@
       shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/controller.properties --ignore-formatted
       args:
         chdir: "{{ baseStorePath }}/kafka"
-
+    - name: Clean cache
+      shell: sync; echo 3 > /proc/sys/vm/drop_caches
 
 - name: Start Kafka controller
   tags: [run]
