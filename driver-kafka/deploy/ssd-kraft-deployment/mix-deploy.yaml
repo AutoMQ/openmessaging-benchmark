@@ -54,7 +54,7 @@
         tuned-adm profile latency-performance
     - name: Format disks
       filesystem:
-        fstype: xfs
+        fstype: ext4
         dev: '{{ item }}'
       with_items:
         - '/dev/nvme1n1'
@@ -62,8 +62,8 @@
       mount:
         path: "{{ item.path }}"
         src: "{{ item.src }}"
-        fstype: xfs
-        opts: defaults,noatime,nodiscard
+        fstype: ext4
+        opts: defaults,noatime,nodiscard,data=writeback
         state: mounted
       with_items:
         - { path: "{{ baseStorePath }}", src: "/dev/nvme1n1" }

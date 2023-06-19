@@ -238,6 +238,7 @@
   hosts: [controller, broker]
   connection: ssh
   become: true
+  tags: [build-kafka]
   tasks:
   - name: Set facts
     tags: [always]

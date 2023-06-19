@@ -19,9 +19,9 @@ partitionsPerTopic: 1024
 messageSize: 131072
 payloadFile: "payload/payload-128Kb.data"
 subscriptionsPerTopic: 1
-consumerPerSubscription: 4
-producersPerTopic: 4
-producerRate: 4000 # 100m: 800, 300m: 2400, 500m: 4000, 700m: 5600, 900m: 7200, 1G: 8192
+consumerPerSubscription: 32
+producersPerTopic: 32
+producerRate: 4000 # 100m: 800, 300m: 2400, 500m: 4000, 700m: 5600, 900m: 7200, 1G: 8192, 1.5G: 12288
 consumerBacklogSizeGB: 0
 warmupDurationMinutes: 1
 testDurationMinutes: 15
