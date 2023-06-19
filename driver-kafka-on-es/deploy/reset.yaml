@@ -37,29 +37,6 @@
     retries: 10
     delay: 5
 
-- name: Stop controller
-  tags: [stop]
-  hosts: controller
-  connection: ssh
-  become: true
-  tasks:
-  - name: Stop controller
-    systemd:
-      state: stopped
-      name: "controller"
-  - name: Wait controller to be stopped
-    service_facts:
-    register: controller_service
-    until: controller_service.ansible_facts.services['controller.service'].state in ['stopped', 'inactive']
-    retries: 10
-    delay: 5
-  - name: Remove data dir
-    file:
-      path: /mnt/data-1/kafka-controller
-      state: absent
-  - name: Clean cache
-    shell: sync; echo 3 > /proc/sys/vm/drop_caches
-
 - name: Stop broker
   tags: [stop]
   hosts: broker
@@ -79,6 +56,29 @@
   - name: Remove data dir
     file:
       path: /mnt/data-1/kafka-broker
+      state: absent
+  - name: Clean cache
+    shell: sync; echo 3 > /proc/sys/vm/drop_caches
+
+- name: Stop controller
+  tags: [stop]
+  hosts: controller
+  connection: ssh
+  become: true
+  tasks:
+  - name: Stop controller
+    systemd:
+      state: stopped
+      name: "controller"
+  - name: Wait controller to be stopped
+    service_facts:
+    register: controller_service
+    until: controller_service.ansible_facts.services['controller.service'].state in ['stopped', 'inactive']
+    retries: 10
+    delay: 5
+  - name: Remove data dir
+    file:
+      path: /mnt/data-1/kafka-controller
       state: absent
   - name: Clean cache
     shell: sync; echo 3 > /proc/sys/vm/drop_caches
