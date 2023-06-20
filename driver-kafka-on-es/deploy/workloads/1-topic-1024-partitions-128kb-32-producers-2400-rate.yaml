@@ -23,7 +23,7 @@ topics: 1
 partitionsPerTopic: 1024
 messageSize: 131072
 payloadFile: "payload/payload-128Kb.data"
-subscriptionsPerTopic: 1
+subscriptionsPerTopic: 0
 consumerPerSubscription: 0
 producersPerTopic: 32
 producerRate: 2400
