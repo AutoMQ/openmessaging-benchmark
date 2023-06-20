@@ -105,3 +105,4 @@ store:
 
 replication:
   connection-pool-size: 3
+  thread-count: 4
