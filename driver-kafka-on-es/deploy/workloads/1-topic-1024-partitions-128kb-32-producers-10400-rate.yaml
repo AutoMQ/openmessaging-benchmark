@@ -17,7 +17,7 @@
 # under the License.
 #
 
-name: 1-topic-1024-partitions-128kb-4p4c-2400-rate
+name: 1-topic-1024-partitions-128kb-4p4c-10400-rate
 
 topics: 1
 partitionsPerTopic: 1024
@@ -26,7 +26,7 @@ payloadFile: "payload/payload-128Kb.data"
 subscriptionsPerTopic: 1
 consumerPerSubscription: 4
 producersPerTopic: 4
-producerRate: 2400
+producerRate: 10400
 consumerBacklogSizeGB: 0
 warmupDurationMinutes: 1
 testDurationMinutes: 15
