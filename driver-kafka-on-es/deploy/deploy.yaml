@@ -14,6 +14,7 @@
 
 - name: Set common facts
   tags: [always]
+  any_errors_fatal: true
   hosts: all
   connection: ssh
   tasks:
@@ -37,6 +38,7 @@
 
 - name: General setup for all
   tags: [prepare]
+  any_errors_fatal: true
   hosts: all
   connection: ssh
   become: true
@@ -57,6 +59,7 @@
 
 - name: Format and mount disks
   tags: [prepare]
+  any_errors_fatal: true
   hosts: [placement_manager, controller, data_node, broker]
   connection: ssh
   become: true
@@ -117,6 +120,7 @@
 
 - name: Install Rust
   tags: [prepare]
+  any_errors_fatal: true
   hosts: [controller, data_node, broker]
   connection: ssh
   become: true
@@ -140,6 +144,7 @@
 
 
 - name: Prepare Data Node
+  any_errors_fatal: true
   hosts: [data_node]
   connection: ssh
   become: true
@@ -180,6 +185,7 @@
 
 
 - name: Prepare Placement Manager
+  any_errors_fatal: true
   hosts: [placement_manager]
   connection: ssh
   become: true
@@ -236,6 +242,7 @@
 
 
 - name: Prepare Kafka
+  any_errors_fatal: true
   hosts: [controller, broker]
   connection: ssh
   become: true
@@ -325,6 +332,7 @@
 
 - name: Setup Placement Manager
   tags: [run]
+  any_errors_fatal: true
   hosts: placement_manager
   connection: ssh
   become: true
@@ -356,6 +364,7 @@
 
 - name: Setup Data Node
   tags: [run]
+  any_errors_fatal: true
   hosts: data_node
   connection: ssh
   become: true
@@ -387,6 +396,7 @@
 
 - name: Setup Kafka controllers
   tags: [run]
+  any_errors_fatal: true
   hosts: [controller]
   connection: ssh
   become: true
@@ -416,6 +426,7 @@
 
 - name: Setup Kafka brokers
   tags: [run]
+  any_errors_fatal: true
   hosts: [broker]
   connection: ssh
   become: true
@@ -445,6 +456,7 @@
 
 - name: Setup benchmark client
   tags: [run]
+  any_errors_fatal: true
   hosts: [client]
   connection: ssh
   become: true
@@ -557,6 +569,7 @@
 
 - name:  Hosts addresses
   tags: [always]
+  any_errors_fatal: true
   hosts: localhost
   tasks:
     - debug:
