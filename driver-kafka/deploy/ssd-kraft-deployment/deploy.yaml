@@ -38,6 +38,7 @@
         brokerServers: "{{ groups['broker'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9092') | join(',') }}"
         privateIp: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
         baseStorePath: "/mnt/data-1"
+        kafka_xm: "16g"
     - name: Change locale to en_US.utf-8
       shell: |
         echo 'LANG=en_US.utf-8
