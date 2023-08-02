@@ -28,7 +28,7 @@
       sdk_dir: "{{ ansible_env.HOME }}/elastic-stream-sdk"
       kafka_cluster_id: "XPufKTN9T1SpE82LDKwXwA"
       kafka_xm: "16g"
-      client_worker_xm: "100g"
+      client_worker_xm: "16g"
       client_bench_xm: "4g"
       flushScheduleInterval: "9223372036854775807"
   - set_fact:
