@@ -31,6 +31,8 @@
       client_worker_xm: "16g"
       client_bench_xm: "4g"
       flushScheduleInterval: "9223372036854775807"
+      range_server_version: "0.2.8"
+      placement_driver_version: "0.2.8"
   - set_fact:
       private_ip: "{{ hostvars[inventory_hostname]['private_ip'] }}"
       kafka_dir: "{{ baseStorePath }}/kafka"
@@ -45,7 +47,7 @@
   tasks:
   - name: Update and upgrade apt packages
     apt:
-      upgrade: yes
+      upgrade: no
       update_cache: yes
       cache_valid_time: 86400
   - name: Upgrade linux kernel
@@ -118,30 +120,6 @@
   - name: Reboot the machine with all defaults
     reboot:
 
-- name: Install Rust
-  tags: [prepare]
-  any_errors_fatal: true
-  hosts: [controller, range_server, broker]
-  connection: ssh
-  become: true
-  tasks:
-  - name: Install Rust and Cargo
-    block:
-    - name: Download Rust installer
-      get_url:
-        url: https://sh.rustup.rs
-        dest: /tmp/sh.rustup.rs
-        mode: '0755'
-        force: 'yes'
-    - name: Install Rust and Cargo
-      command: /tmp/sh.rustup.rs --verbose -y --default-toolchain nightly
-    - shell: source $HOME/.cargo/env && cargo --version
-      args:
-        executable: /bin/bash
-      register: cargo_version
-    - debug:
-        var: cargo_version.stdout
-
 
 - name: Prepare Range Server
   any_errors_fatal: true
@@ -159,29 +137,10 @@
       with_items:
         - build-essential
         - clang
-        - git
-  - name: Clone latest code from github
-    tags: [build]
-    git:
-      repo: https://github.com/AutoMQ/elastic-stream.git
-      dest: "{{ rs_dir }}"
-      version: "{{ es_git_version }}"
-      depth: 1
-      single_branch: true
-      force: true
-  - name: Install dependencies
-    shell:
-      cmd: ./scripts/install_deps.sh
-      chdir: "{{ rs_dir }}"
-      executable: /bin/bash
-  - name: Build Range Server
-    tags: [build]
-    shell: |
-      source $HOME/.cargo/env
-      cargo build --release --bin range-server
-    args:
-      chdir: "{{ rs_dir }}"
-      executable: /bin/bash
+  - name: Install Range Server
+    tags: [install]
+    apt:
+      deb: "https://github.com/AutoMQ/elastic-stream/releases/download/v{{ range_server_version }}/range-server_{{ range_server_version }}_amd64.deb"
 
 
 - name: Prepare Placement Driver
@@ -190,55 +149,10 @@
   connection: ssh
   become: true
   tasks:
-  - name: Install Docker
-    tags: [prepare]
-    block:
-    - name: Download Docker installer
-      get_url:
-        url: https://get.docker.com
-        dest: /tmp/get-docker.sh
-        mode: '0755'
-        force: 'yes'
-    - name: Install Docker
-      command: /tmp/get-docker.sh
-    - name: Add ansible user to docker group
-      user:
-        name: "{{ ansible_user }}"
-        groups: docker
-        append: yes
-    - shell: docker run hello-world | grep "Hello from Docker!"
-      register: docker_hello_world
-    - debug:
-        var: docker_hello_world.stdout
-
-  - name: Install apt packages
-    tags: [prepare]
+  - name: Install Placement Driver
+    tags: [install]
     apt:
-      name: "{{ item }}"
-      state: present
-    with_items:
-      - cmake
-      - git
-  - name: Clone latest code from github
-    tags: [build]
-    git:
-      repo: https://github.com/AutoMQ/elastic-stream.git
-      dest: "{{ pd_dir }}"
-      version: "{{ es_git_version }}"
-      depth: 1
-      single_branch: true
-      force: true
-  - name: Install dependencies
-    shell:
-      cmd: ./scripts/install_deps.sh
-      chdir: "{{ pd_dir }}"
-      executable: /bin/bash
-  - name: Build Placement Driver
-    tags: [build]
-    shell: |
-      make
-    args:
-      chdir: "{{ pd_dir }}/placement-dirver"
+      deb: "https://github.com/AutoMQ/elastic-stream/releases/download/v{{ placement_driver_version }}/pd_{{ placement_driver_version }}_amd64.deb"
 
 
 - name: Prepare Kafka
@@ -343,6 +257,9 @@
       pd_addrs: "{{ groups.get('placement_driver') | map('extract', hostvars, 'private_ip') | map('regex_replace', '^(.*)$', '\\1:12380') | list }}"
   - set_fact:
       pd_initial_cluster: "{{ pd_names | zip(pd_addrs) | map('join', '=http://') | list | join(',') }}"
+  - file:
+      path: "{{ pd_dir }}"
+      state: directory
   - template:
       src: templates/pd-config.yaml
       dest: "{{ pd_dir }}/pd-config.yaml"
@@ -371,6 +288,9 @@
   tasks:
   - set_fact:
       pd_0_ip: "{{ groups.get('placement_driver') | map('extract', hostvars, ['private_ip']) | list | first }}"
+  - file:
+      path: "{{ rs_dir }}"
+      state: directory
   - template:
       src: templates/rs-config.yaml
       dest: "{{ rs_dir }}/rs-config.yaml"
