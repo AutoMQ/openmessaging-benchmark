@@ -233,18 +233,18 @@
       src: templates/pd-config.yaml
       dest: "{{ pd_dir }}/pd-config.yaml"
   - template:
-      src: templates/placement-dirver.service
-      dest: /etc/systemd/system/placement-dirver.service
+      src: templates/placement-driver.service
+      dest: /etc/systemd/system/placement-driver.service
 
   - name: Start Placement Driver
     systemd:
       state: restarted
       daemon_reload: yes
-      name: "placement-dirver"
+      name: "placement-driver"
   - name: Wait Placement Driver to be active
     service_facts:
     register: placement_driver_service
-    until: placement_driver_service.ansible_facts.services['placement-dirver.service'].state == 'running'
+    until: placement_driver_service.ansible_facts.services['placement-driver.service'].state == 'running'
     retries: 10
     delay: 5
 

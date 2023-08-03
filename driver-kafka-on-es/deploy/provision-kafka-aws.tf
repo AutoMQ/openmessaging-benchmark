@@ -141,11 +141,11 @@ resource "aws_key_pair" "auth" {
 
 resource "aws_instance" "placement_driver" {
   ami                    = var.ami
-  instance_type          = var.instance_type["placement-dirver"]
+  instance_type          = var.instance_type["placement-driver"]
   key_name               = aws_key_pair.auth.id
   subnet_id              = aws_subnet.benchmark_subnet.id
   vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
-  count                  = var.instance_cnt["placement-dirver"]
+  count                  = var.instance_cnt["placement-driver"]
 
   root_block_device {
     volume_size = 64
@@ -299,7 +299,7 @@ output "user" {
 }
 
 output "pd_ssh_host" {
-  value = var.instance_cnt["placement-dirver"] + var.instance_cnt["mixed-pd-ctrl"] > 0 ? concat(aws_instance.placement_driver, aws_instance.mixed_pd_ctrl)[0].public_ip : null
+  value = var.instance_cnt["placement-driver"] + var.instance_cnt["mixed-pd-ctrl"] > 0 ? concat(aws_instance.placement_driver, aws_instance.mixed_pd_ctrl)[0].public_ip : null
 }
 
 output "rs_ssh_host" {

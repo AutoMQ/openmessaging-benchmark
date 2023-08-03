@@ -26,7 +26,7 @@ advertiseClientUrls: http://{{ private_ip }}:12379
 # human-readable name for this pd member
 name: {{ pd_name }}
 # path to the data directory
-dataDir: /mnt/data-1/placement-dirver/{{ pd_name }}
+dataDir: /mnt/data-1/placement-driver/{{ pd_name }}
 # the initial cluster configuration for bootstrapping
 initialCluster: {{ pd_initial_cluster }}
 # the address of pd server

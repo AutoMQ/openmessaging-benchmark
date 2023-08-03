@@ -9,7 +9,7 @@ user            = "admin"
 // user            = "ubuntu"
 
 instance_type = {
-  "placement-dirver"    = "i4i.2xlarge"
+  "placement-driver"    = "i4i.2xlarge"
   "controller"          = "i4i.2xlarge"
   "mixed-pd-ctrl"       = "i4i.2xlarge"
 
@@ -21,7 +21,7 @@ instance_type = {
 }
 
 instance_cnt = {
-  "placement-dirver"    = 0
+  "placement-driver"    = 0
   "controller"          = 0
   "mixed-pd-ctrl"       = 3
 

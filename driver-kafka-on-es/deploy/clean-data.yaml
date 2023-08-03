@@ -113,16 +113,16 @@
     - name: Stop Placement Driver
       systemd:
         state: stopped
-        name: "placement-dirver"
+        name: "placement-driver"
     - name: Wait Placement Driver to be stopped
       service_facts:
       register: placement_driver_service
-      until: placement_driver_service.ansible_facts.services['placement-dirver.service'].state in ['stopped', 'inactive']
+      until: placement_driver_service.ansible_facts.services['placement-driver.service'].state in ['stopped', 'inactive']
       retries: 10
       delay: 5
     - name: Remove data dir
       file:
-        path: /mnt/data-1/placement-dirver
+        path: /mnt/data-1/placement-driver
         state: absent
 
 - name: Start Placement Driver
@@ -135,7 +135,7 @@
       systemd:
           state: restarted
           daemon_reload: yes
-          name: "placement-dirver"
+          name: "placement-driver"
 
 - name: Start Range Server
   tags: [run]
