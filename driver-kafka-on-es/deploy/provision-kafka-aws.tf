@@ -139,24 +139,24 @@ resource "aws_key_pair" "auth" {
   }
 }
 
-resource "aws_instance" "placement_manager" {
+resource "aws_instance" "placement_driver" {
   ami                    = var.ami
-  instance_type          = var.instance_type["placement-manager"]
+  instance_type          = var.instance_type["placement-dirver"]
   key_name               = aws_key_pair.auth.id
   subnet_id              = aws_subnet.benchmark_subnet.id
   vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
-  count                  = var.instance_cnt["placement-manager"]
+  count                  = var.instance_cnt["placement-dirver"]
 
   root_block_device {
     volume_size = 64
     tags = {
-      Name = "pm_${count.index}"
+      Name = "pd_${count.index}"
     }
   }
 
   monitoring = var.monitoring
   tags = {
-    Name      = "pm_${count.index}"
+    Name      = "pd_${count.index}"
     Benchmark = "Kafka_on_ES"
   }
 }
@@ -183,24 +183,24 @@ resource "aws_instance" "controller" {
   }
 }
 
-resource "aws_instance" "mixed_pm_ctrl" {
+resource "aws_instance" "mixed_pd_ctrl" {
   ami                    = var.ami
-  instance_type          = var.instance_type["mixed-pm-ctrl"]
+  instance_type          = var.instance_type["mixed-pd-ctrl"]
   key_name               = aws_key_pair.auth.id
   subnet_id              = aws_subnet.benchmark_subnet.id
   vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
-  count                  = var.instance_cnt["mixed-pm-ctrl"]
+  count                  = var.instance_cnt["mixed-pd-ctrl"]
 
   root_block_device {
     volume_size = 64
     tags = {
-      Name = "mixed_pm_ctrl_${count.index}"
+      Name = "mixed_pd_ctrl_${count.index}"
     }
   }
 
   monitoring = var.monitoring
   tags = {
-    Name      = "mixed_pm_ctrl_${count.index}"
+    Name      = "mixed_pd_ctrl_${count.index}"
     Benchmark = "Kafka_on_ES"
   }
 }
@@ -298,8 +298,8 @@ output "user" {
   value = var.user
 }
 
-output "pm_ssh_host" {
-  value = var.instance_cnt["placement-manager"] + var.instance_cnt["mixed-pm-ctrl"] > 0 ? concat(aws_instance.placement_manager, aws_instance.mixed_pm_ctrl)[0].public_ip : null
+output "pd_ssh_host" {
+  value = var.instance_cnt["placement-dirver"] + var.instance_cnt["mixed-pd-ctrl"] > 0 ? concat(aws_instance.placement_driver, aws_instance.mixed_pd_ctrl)[0].public_ip : null
 }
 
 output "dn_ssh_host" {
@@ -307,7 +307,7 @@ output "dn_ssh_host" {
 }
 
 output "controller_ssh_host" {
-  value = var.instance_cnt["controller"] + var.instance_cnt["mixed-pm-ctrl"] > 0 ? concat(aws_instance.controller, aws_instance.mixed_pm_ctrl)[0].public_ip : null
+  value = var.instance_cnt["controller"] + var.instance_cnt["mixed-pd-ctrl"] > 0 ? concat(aws_instance.controller, aws_instance.mixed_pd_ctrl)[0].public_ip : null
 }
 
 output "broker_ssh_host" {
@@ -321,9 +321,9 @@ output "client_ssh_host" {
 resource "local_file" "hosts_ini" {
   content = templatefile("${path.module}/hosts.ini.tpl",
     {
-      pm            = aws_instance.placement_manager,
+      pd            = aws_instance.placement_driver,
       ctrl          = aws_instance.controller,
-      mixed_pm_ctrl = aws_instance.mixed_pm_ctrl,
+      mixed_pd_ctrl = aws_instance.mixed_pd_ctrl,
 
       dn           = aws_instance.data_node,
       bkr          = aws_instance.broker,

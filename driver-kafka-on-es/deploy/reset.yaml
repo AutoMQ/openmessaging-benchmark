@@ -104,23 +104,23 @@
       path: /mnt/data-1/data-node
       state: absent
 
-- name: Stop Placement Manager
+- name: Stop Placement Driver
   tags: [stop]
-  hosts: placement_manager
+  hosts: placement_driver
   connection: ssh
   become: true
   tasks:
-  - name: Stop Placement Manager
+  - name: Stop Placement Driver
     systemd:
       state: stopped
-      name: "placement-manager"
-  - name: Wait Placement Manager to be stopped
+      name: "placement-dirver"
+  - name: Wait Placement Driver to be stopped
     service_facts:
-    register: placement_manager_service
-    until: placement_manager_service.ansible_facts.services['placement-manager.service'].state in ['stopped', 'inactive']
+    register: placement_driver_service
+    until: placement_driver_service.ansible_facts.services['placement-dirver.service'].state in ['stopped', 'inactive']
     retries: 10
     delay: 5
   - name: Remove data dir
     file:
-      path: /mnt/data-1/placement-manager
+      path: /mnt/data-1/placement-dirver
       state: absent

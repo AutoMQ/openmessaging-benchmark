@@ -64,7 +64,7 @@ ansible-playbook deploy.yaml -i hosts.ini --user admin
 You can SSH into the EC2 instances using the following command:
 
 ```bash
-ssh -i ~/.ssh/kafka_on_es_aws ubuntu@$(terraform output --raw pm_ssh_host)
+ssh -i ~/.ssh/kafka_on_es_aws ubuntu@$(terraform output --raw pd_ssh_host)
 ssh -i ~/.ssh/kafka_on_es_aws ubuntu@$(terraform output --raw dn_ssh_host)
 ssh -i ~/.ssh/kafka_on_es_aws ubuntu@$(terraform output --raw controller_ssh_host)
 ssh -i ~/.ssh/kafka_on_es_aws ubuntu@$(terraform output --raw broker_ssh_host)

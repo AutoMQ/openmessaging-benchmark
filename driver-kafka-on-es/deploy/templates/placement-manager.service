@@ -1,10 +1,10 @@
 [Unit]
-Description=Placement Manager
+Description=Placement Driver
 After=network.target
 
 [Service]
-ExecStart={{ pm_dir }}/placement-manager/bin/linux_amd64/placement-manager --config ./pm-config.yaml
-WorkingDirectory={{ pm_dir }}
+ExecStart={{ pd_dir }}/placement-dirver/bin/linux_amd64/placement-dirver --config ./pd-config.yaml
+WorkingDirectory={{ pd_dir }}
 RestartSec=1s
 Restart=on-failure
 Type=simple

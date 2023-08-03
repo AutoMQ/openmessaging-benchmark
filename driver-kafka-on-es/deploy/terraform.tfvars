@@ -9,9 +9,9 @@ user            = "admin"
 // user            = "ubuntu"
 
 instance_type = {
-  "placement-manager"   = "i4i.2xlarge"
+  "placement-dirver"   = "i4i.2xlarge"
   "controller"          = "i4i.2xlarge"
-  "mixed-pm-ctrl"       = "i4i.2xlarge"
+  "mixed-pd-ctrl"       = "i4i.2xlarge"
 
   "data-node"           = "i4i.4xlarge"
   "broker"              = "i4i.4xlarge"
@@ -21,9 +21,9 @@ instance_type = {
 }
 
 instance_cnt = {
-  "placement-manager"   = 0
+  "placement-dirver"   = 0
   "controller"          = 0
-  "mixed-pm-ctrl"       = 3
+  "mixed-pd-ctrl"       = 3
 
   "data-node"           = 0
   "broker"              = 0

@@ -23,7 +23,7 @@
       baseStorePath: "/mnt/data-1"
       es_git_version: "develop"
       kafka_git_version: "develop"
-      pm_dir: "{{ ansible_env.HOME }}/elastic-stream-pm"
+      pd_dir: "{{ ansible_env.HOME }}/elastic-stream-pd"
       dn_dir: "{{ ansible_env.HOME }}/elastic-stream-dn"
       sdk_dir: "{{ ansible_env.HOME }}/elastic-stream-sdk"
       kafka_cluster_id: "XPufKTN9T1SpE82LDKwXwA"
@@ -60,7 +60,7 @@
 - name: Format and mount disks
   tags: [prepare]
   any_errors_fatal: true
-  hosts: [placement_manager, controller, data_node, broker]
+  hosts: [placement_driver, controller, data_node, broker]
   connection: ssh
   become: true
   tasks:
@@ -184,9 +184,9 @@
       executable: /bin/bash
 
 
-- name: Prepare Placement Manager
+- name: Prepare Placement Driver
   any_errors_fatal: true
-  hosts: [placement_manager]
+  hosts: [placement_driver]
   connection: ssh
   become: true
   tasks:
@@ -223,7 +223,7 @@
     tags: [build]
     git:
       repo: https://github.com/AutoMQ/elastic-stream.git
-      dest: "{{ pm_dir }}"
+      dest: "{{ pd_dir }}"
       version: "{{ es_git_version }}"
       depth: 1
       single_branch: true
@@ -231,14 +231,14 @@
   - name: Install dependencies
     shell:
       cmd: ./scripts/install_deps.sh
-      chdir: "{{ pm_dir }}"
+      chdir: "{{ pd_dir }}"
       executable: /bin/bash
-  - name: Build Placement Manager
+  - name: Build Placement Driver
     tags: [build]
     shell: |
       make
     args:
-      chdir: "{{ pm_dir }}/placement-manager"
+      chdir: "{{ pd_dir }}/placement-dirver"
 
 
 - name: Prepare Kafka
@@ -253,7 +253,7 @@
     block:
     - set_fact:
         node_id: "{{ hostvars[inventory_hostname]['kafka_id'] }}"
-        pm_0_ip: "{{ groups.get('placement_manager') | map('extract', hostvars, ['private_ip']) | list | first }}"
+        pd_0_ip: "{{ groups.get('placement_driver') | map('extract', hostvars, ['private_ip']) | list | first }}"
 
         controller_ids: "{{ groups.get('controller') | map('extract', hostvars, ['kafka_id']) | list }}"
         controller_ips: "{{ groups.get('controller') | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9093') | list }}"
@@ -330,35 +330,35 @@
         executable: /bin/bash
 
 
-- name: Setup Placement Manager
+- name: Setup Placement Driver
   tags: [run]
   any_errors_fatal: true
-  hosts: placement_manager
+  hosts: placement_driver
   connection: ssh
   become: true
   tasks:
   - set_fact:
-      pm_name: "{{ hostvars[inventory_hostname]['pm_name'] }}"
-      pm_names: "{{ groups.get('placement_manager') | map('extract', hostvars, 'pm_name') | list }}"
-      pm_addrs: "{{ groups.get('placement_manager') | map('extract', hostvars, 'private_ip') | map('regex_replace', '^(.*)$', '\\1:12380') | list }}"
+      pd_name: "{{ hostvars[inventory_hostname]['pd_name'] }}"
+      pd_names: "{{ groups.get('placement_driver') | map('extract', hostvars, 'pd_name') | list }}"
+      pd_addrs: "{{ groups.get('placement_driver') | map('extract', hostvars, 'private_ip') | map('regex_replace', '^(.*)$', '\\1:12380') | list }}"
   - set_fact:
-      pm_initial_cluster: "{{ pm_names | zip(pm_addrs) | map('join', '=http://') | list | join(',') }}"
+      pd_initial_cluster: "{{ pd_names | zip(pd_addrs) | map('join', '=http://') | list | join(',') }}"
   - template:
-      src: templates/pm-config.yaml
-      dest: "{{ pm_dir }}/pm-config.yaml"
+      src: templates/pd-config.yaml
+      dest: "{{ pd_dir }}/pd-config.yaml"
   - template:
-      src: templates/placement-manager.service
-      dest: /etc/systemd/system/placement-manager.service
+      src: templates/placement-dirver.service
+      dest: /etc/systemd/system/placement-dirver.service
 
-  - name: Start Placement Manager
+  - name: Start Placement Driver
     systemd:
       state: restarted
       daemon_reload: yes
-      name: "placement-manager"
-  - name: Wait Placement Manager to be active
+      name: "placement-dirver"
+  - name: Wait Placement Driver to be active
     service_facts:
-    register: placement_manager_service
-    until: placement_manager_service.ansible_facts.services['placement-manager.service'].state == 'running'
+    register: placement_driver_service
+    until: placement_driver_service.ansible_facts.services['placement-dirver.service'].state == 'running'
     retries: 10
     delay: 5
 
@@ -370,7 +370,7 @@
   become: true
   tasks:
   - set_fact:
-      pm_0_ip: "{{ groups.get('placement_manager') | map('extract', hostvars, ['private_ip']) | list | first }}"
+      pd_0_ip: "{{ groups.get('placement_driver') | map('extract', hostvars, ['private_ip']) | list | first }}"
   - template:
       src: templates/dn-config.yaml
       dest: "{{ dn_dir }}/dn-config.yaml"

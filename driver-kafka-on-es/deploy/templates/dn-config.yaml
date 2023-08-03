@@ -15,8 +15,8 @@
 ---
 # Unit of interval in milliseconds
 tick: 100
-# Placement manager address
-placement-manager: {{ pm_0_ip }}:12378
+# Placement Driver address
+placement-dirver: {{ pd_0_ip }}:12378
 # Client configuration
 client:
   # Connect timeout duration in ticks
@@ -29,8 +29,8 @@ client:
   max-attempt: 3
   # Heartbeat interval in ticks
   heartbeat-interval: 30
-  # Refresh placement manager cluster interval in ticks
-  refresh-pm-cluster-interval: 300
+  # Refresh placement driver cluster interval in ticks
+  refresh-pd-cluster-interval: 300
 # Server configuration
 server:
   # Advertise host address

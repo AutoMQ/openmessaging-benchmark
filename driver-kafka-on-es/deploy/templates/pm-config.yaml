@@ -12,7 +12,7 @@
 # limitations under the License.
 #
 
-# PM Configuration.
+# PD Configuration.
 
 # urls for peer traffic
 peerUrls: http://0.0.0.0:12380
@@ -23,12 +23,12 @@ advertisePeerUrls: http://{{ private_ip }}:12380
 # advertise urls for client traffic
 advertiseClientUrls: http://{{ private_ip }}:12379
 
-# human-readable name for this PM member
-name: {{ pm_name }}
+# human-readable name for this pd member
+name: {{ pd_name }}
 # path to the data directory
-dataDir: /mnt/data-1/placement-manager/{{ pm_name }}
+dataDir: /mnt/data-1/placement-dirver/{{ pd_name }}
 # the initial cluster configuration for bootstrapping
-initialCluster: {{ pm_initial_cluster }}
+initialCluster: {{ pd_initial_cluster }}
 # the address of sbp server
 sbpAddr: 0.0.0.0:12378
 # advertise address of sbp server
@@ -44,10 +44,10 @@ log:
   zap:
     # a list of URLs or file paths to write logging output to
     outputPaths:
-      - pm.log
+      - pd.log
     # a list of URLs to write internal logger errors to
     errorOutputPaths:
-      - pm.log
+      - pd.log
 
 sbp:
   server:
