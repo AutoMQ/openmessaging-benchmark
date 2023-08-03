@@ -184,7 +184,6 @@
       with_items:
         - openjdk-17-jdk
         - maven
-        - clang
         - git
     - name: Create gradle directory
       file:
@@ -194,36 +193,6 @@
       copy:
         src: templates/init.gradle
         dest: "{{ ansible_env.HOME }}/.gradle/init.gradle"
-
-  - name: Build Elastic Stream java sdk
-    tags: [build]
-    block:
-    - name: Clone latest code from github
-      git:
-        repo: https://github.com/AutoMQ/elastic-stream.git
-        dest: "{{ sdk_dir }}"
-        version: "{{ es_git_version }}"
-        depth: 1
-        single_branch: true
-        force: true
-    - name: Install dependencies
-      shell:
-        cmd: ./scripts/install_deps.sh
-        chdir: "{{ sdk_dir }}"
-        executable: /bin/bash
-    - name: Build Elastic Stream java sdk
-      shell: |
-        source $HOME/.cargo/env
-        ./sdks/build.sh
-      args:
-        chdir: "{{ sdk_dir }}"
-        executable: /bin/bash
-    - name: Install java sdk
-      tags: [sdk, install]
-      shell: |
-        mvn -DargLine="--add-opens=java.base/jdk.internal.ref=ALL-UNNAMED --add-opens=java.base/sun.nio.ch=ALL-UNNAMED" install -DskipTests -DskipSigning
-      args:
-        chdir: "{{ sdk_dir }}/sdks/frontend-java"
 
   - name: Build Kafka
     tags: [build]
