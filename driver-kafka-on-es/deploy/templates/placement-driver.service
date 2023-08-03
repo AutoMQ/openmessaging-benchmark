@@ -3,7 +3,7 @@ Description=Placement Driver
 After=network.target
 
 [Service]
-ExecStart={{ pd_dir }}/placement-dirver/bin/linux_amd64/placement-dirver --config ./pd-config.yaml
+ExecStart=/usr/local/bin/pd --config ./pd-config.yaml
 WorkingDirectory={{ pd_dir }}
 RestartSec=1s
 Restart=on-failure

@@ -29,10 +29,10 @@ name: {{ pd_name }}
 dataDir: /mnt/data-1/placement-dirver/{{ pd_name }}
 # the initial cluster configuration for bootstrapping
 initialCluster: {{ pd_initial_cluster }}
-# the address of sbp server
-sbpAddr: 0.0.0.0:12378
-# advertise address of sbp server
-advertiseSbpAddr: {{ private_ip }}:12378
+# the address of pd server
+pdAddr: 0.0.0.0:12378
+# advertise address of pd server
+advertisePDAddr: {{ private_ip }}:12378
 # expiration time of the leader, in seconds
 leaderLease: 3
 
