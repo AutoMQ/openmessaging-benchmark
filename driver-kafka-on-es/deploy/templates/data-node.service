@@ -1,10 +1,10 @@
 [Unit]
-Description=Data Node
+Description=Range Server
 After=network.target
 
 [Service]
-ExecStart={{ dn_dir }}/target/release/data-node --config ./dn-config.yaml --log ./dn-log-config.yaml
-WorkingDirectory={{ dn_dir }}
+ExecStart={{ rs_dir }}/target/release/range-server --config ./rs-config.yaml --log ./rs-log-config.yaml
+WorkingDirectory={{ rs_dir }}
 RestartSec=1s
 Restart=on-failure
 Type=simple

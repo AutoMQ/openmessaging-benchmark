@@ -205,24 +205,24 @@ resource "aws_instance" "mixed_pd_ctrl" {
   }
 }
 
-resource "aws_instance" "data_node" {
+resource "aws_instance" "range_server" {
   ami                    = var.ami
-  instance_type          = var.instance_type["data-node"]
+  instance_type          = var.instance_type["range-server"]
   key_name               = aws_key_pair.auth.id
   subnet_id              = aws_subnet.benchmark_subnet.id
   vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
-  count                  = var.instance_cnt["data-node"]
+  count                  = var.instance_cnt["range-server"]
 
   root_block_device {
     volume_size = 64
     tags = {
-      Name = "dn_${count.index}"
+      Name = "rs_${count.index}"
     }
   }
 
   monitoring = var.monitoring
   tags = {
-    Name      = "dn_${count.index}"
+    Name      = "rs_${count.index}"
     Benchmark = "Kafka_on_ES"
   }
 }
@@ -249,24 +249,24 @@ resource "aws_instance" "broker" {
   }
 }
 
-resource "aws_instance" "mixed_dn_bkr" {
+resource "aws_instance" "mixed_rs_bkr" {
   ami                    = var.ami
-  instance_type          = var.instance_type["mixed-dn-bkr"]
+  instance_type          = var.instance_type["mixed-rs-bkr"]
   key_name               = aws_key_pair.auth.id
   subnet_id              = aws_subnet.benchmark_subnet.id
   vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
-  count                  = var.instance_cnt["mixed-dn-bkr"]
+  count                  = var.instance_cnt["mixed-rs-bkr"]
 
   root_block_device {
     volume_size = 64
     tags = {
-      Name = "mixed_dn_bkr_${count.index}"
+      Name = "mixed_rs_bkr_${count.index}"
     }
   }
 
   monitoring = var.monitoring
   tags = {
-    Name      = "mixed_dn_bkr_${count.index}"
+    Name      = "mixed_rs_bkr_${count.index}"
     Benchmark = "Kafka_on_ES"
   }
 }
@@ -302,8 +302,8 @@ output "pd_ssh_host" {
   value = var.instance_cnt["placement-dirver"] + var.instance_cnt["mixed-pd-ctrl"] > 0 ? concat(aws_instance.placement_driver, aws_instance.mixed_pd_ctrl)[0].public_ip : null
 }
 
-output "dn_ssh_host" {
-  value = var.instance_cnt["data-node"] + var.instance_cnt["mixed-dn-bkr"] > 0 ? concat(aws_instance.data_node, aws_instance.mixed_dn_bkr)[0].public_ip : null
+output "rs_ssh_host" {
+  value = var.instance_cnt["range-server"] + var.instance_cnt["mixed-rs-bkr"] > 0 ? concat(aws_instance.range_server, aws_instance.mixed_rs_bkr)[0].public_ip : null
 }
 
 output "controller_ssh_host" {
@@ -311,7 +311,7 @@ output "controller_ssh_host" {
 }
 
 output "broker_ssh_host" {
-  value = var.instance_cnt["broker"] + var.instance_cnt["mixed-dn-bkr"] > 0 ? concat(aws_instance.broker, aws_instance.mixed_dn_bkr)[0].public_ip : null
+  value = var.instance_cnt["broker"] + var.instance_cnt["mixed-rs-bkr"] > 0 ? concat(aws_instance.broker, aws_instance.mixed_rs_bkr)[0].public_ip : null
 }
 
 output "client_ssh_host" {
@@ -325,9 +325,9 @@ resource "local_file" "hosts_ini" {
       ctrl          = aws_instance.controller,
       mixed_pd_ctrl = aws_instance.mixed_pd_ctrl,
 
-      dn           = aws_instance.data_node,
+      rs           = aws_instance.range_server,
       bkr          = aws_instance.broker,
-      mixed_dn_bkr = aws_instance.mixed_dn_bkr,
+      mixed_rs_bkr = aws_instance.mixed_rs_bkr,
 
       client = aws_instance.client,
 

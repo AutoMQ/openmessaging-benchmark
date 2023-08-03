@@ -37,9 +37,9 @@ appenders:
         count: 10
         base: 0
 
-  data-node:
+  range-server:
     kind: rolling_file
-    path: "logs/data-node.log"
+    path: "logs/range-server.log"
     append: true
     encoder:
       pattern: "{d(%Y-%m-%d %H:%M:%S%.3f)} | {({l}):5.5} | {f}:{L} — {t} {m}{n}"
@@ -51,7 +51,7 @@ appenders:
       roller:
       roller:
         kind: fixed_window
-        pattern: logs/archive/data-node.{}.log
+        pattern: logs/archive/range-server.{}.log
         count: 10
         base: 0
 
@@ -66,33 +66,33 @@ loggers:
     appenders:
       - store
     additive: false
-  data_node:
+  range_server:
     level: info
     appenders:
-      - data-node
+      - range-server
     additive: false
   codec:
     level: info
     appenders:
-      - data-node
+      - range-server
     additive: false
   transport:
     level: info
     appenders:
-      - data-node
+      - range-server
     additive: false
   config:
     level: info
     appenders:
-      - data-node
+      - range-server
     additive: false
   client:
     level: info
     appenders:
-      - data-node
+      - range-server
     additive: false
   util:
     level: info
     appenders:
-      - data-node
+      - range-server
     additive: false

@@ -83,25 +83,25 @@
   - name: Clean cache
     shell: sync; echo 3 > /proc/sys/vm/drop_caches
 
-- name: Stop Data Node
+- name: Stop Range Server
   tags: [stop]
-  hosts: data_node
+  hosts: range_server
   connection: ssh
   become: true
   tasks:
-  - name: Stop Data Node
+  - name: Stop Range Server
     systemd:
       state: stopped
-      name: "data-node"
-  - name: Wait Data Node to be stopped
+      name: "range-server"
+  - name: Wait Range Server to be stopped
     service_facts:
-    register: data_node_service
-    until: data_node_service.ansible_facts.services['data-node.service'].state in ['stopped', 'inactive']
+    register: range_server_service
+    until: range_server_service.ansible_facts.services['range-server.service'].state in ['stopped', 'inactive']
     retries: 10
     delay: 5
   - name: Remove data dir
     file:
-      path: /mnt/data-1/data-node
+      path: /mnt/data-1/range-server
       state: absent
 
 - name: Stop Placement Driver

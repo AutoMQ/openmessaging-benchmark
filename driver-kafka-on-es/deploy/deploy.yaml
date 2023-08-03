@@ -24,7 +24,7 @@
       es_git_version: "develop"
       kafka_git_version: "develop"
       pd_dir: "{{ ansible_env.HOME }}/elastic-stream-pd"
-      dn_dir: "{{ ansible_env.HOME }}/elastic-stream-dn"
+      rs_dir: "{{ ansible_env.HOME }}/elastic-stream-rs"
       sdk_dir: "{{ ansible_env.HOME }}/elastic-stream-sdk"
       kafka_cluster_id: "XPufKTN9T1SpE82LDKwXwA"
       kafka_xm: "16g"
@@ -60,7 +60,7 @@
 - name: Format and mount disks
   tags: [prepare]
   any_errors_fatal: true
-  hosts: [placement_driver, controller, data_node, broker]
+  hosts: [placement_driver, controller, range_server, broker]
   connection: ssh
   become: true
   tasks:
@@ -121,7 +121,7 @@
 - name: Install Rust
   tags: [prepare]
   any_errors_fatal: true
-  hosts: [controller, data_node, broker]
+  hosts: [controller, range_server, broker]
   connection: ssh
   become: true
   tasks:
@@ -143,9 +143,9 @@
         var: cargo_version.stdout
 
 
-- name: Prepare Data Node
+- name: Prepare Range Server
   any_errors_fatal: true
-  hosts: [data_node]
+  hosts: [range_server]
   connection: ssh
   become: true
   tasks:
@@ -164,7 +164,7 @@
     tags: [build]
     git:
       repo: https://github.com/AutoMQ/elastic-stream.git
-      dest: "{{ dn_dir }}"
+      dest: "{{ rs_dir }}"
       version: "{{ es_git_version }}"
       depth: 1
       single_branch: true
@@ -172,15 +172,15 @@
   - name: Install dependencies
     shell:
       cmd: ./scripts/install_deps.sh
-      chdir: "{{ dn_dir }}"
+      chdir: "{{ rs_dir }}"
       executable: /bin/bash
-  - name: Build Data Node
+  - name: Build Range Server
     tags: [build]
     shell: |
       source $HOME/.cargo/env
-      cargo build --release --bin data-node
+      cargo build --release --bin range-server
     args:
-      chdir: "{{ dn_dir }}"
+      chdir: "{{ rs_dir }}"
       executable: /bin/bash
 
 
@@ -362,34 +362,34 @@
     retries: 10
     delay: 5
 
-- name: Setup Data Node
+- name: Setup Range Server
   tags: [run]
   any_errors_fatal: true
-  hosts: data_node
+  hosts: range_server
   connection: ssh
   become: true
   tasks:
   - set_fact:
       pd_0_ip: "{{ groups.get('placement_driver') | map('extract', hostvars, ['private_ip']) | list | first }}"
   - template:
-      src: templates/dn-config.yaml
-      dest: "{{ dn_dir }}/dn-config.yaml"
+      src: templates/rs-config.yaml
+      dest: "{{ rs_dir }}/rs-config.yaml"
   - template:
-      src: templates/dn-log-config.yaml
-      dest: "{{ dn_dir }}/dn-log-config.yaml"
+      src: templates/rs-log-config.yaml
+      dest: "{{ rs_dir }}/rs-log-config.yaml"
   - template:
-      src: templates/data-node.service
-      dest: /etc/systemd/system/data-node.service
+      src: templates/range-server.service
+      dest: /etc/systemd/system/range-server.service
 
-  - name: Start Data Node
+  - name: Start Range Server
     systemd:
       state: restarted
       daemon_reload: yes
-      name: "data-node"
-  - name: Wait Data Node to be active
+      name: "range-server"
+  - name: Wait Range Server to be active
     service_facts:
-    register: data_node_service
-    until: data_node_service.ansible_facts.services['data-node.service'].state == 'running'
+    register: range_server_service
+    until: range_server_service.ansible_facts.services['range-server.service'].state == 'running'
     retries: 10
     delay: 5
 
@@ -577,7 +577,7 @@
       with_items: "{{ groups['controller'] }}"
     - debug:
         msg: "Kafka brokers {{ item }}"
-      with_items: "{{ groups['data_node'] }}"
+      with_items: "{{ groups['range_server'] }}"
     - debug:
         msg: "Benchmark clients {{ item }}"
       with_items: "{{ groups['client'] }}"

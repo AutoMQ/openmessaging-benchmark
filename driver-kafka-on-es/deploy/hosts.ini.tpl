@@ -3,8 +3,8 @@
 ${ instance.public_ip } ansible_user=${ ssh_user } private_ip=${ instance.private_ip } index=${ i } pd_name=pd_${ i }
 %{ endfor ~}
 
-[data_node]
-%{ for i, instance in concat(dn, mixed_dn_bkr) ~}
+[range_server]
+%{ for i, instance in concat(rs, mixed_rs_bkr) ~}
 ${ instance.public_ip } ansible_user=${ ssh_user } private_ip=${ instance.private_ip } index=${ i }
 %{ endfor ~}
 
@@ -14,7 +14,7 @@ ${ instance.public_ip } ansible_user=${ ssh_user } private_ip=${ instance.privat
 %{ endfor ~}
 
 [broker]
-%{ for i, instance in concat(bkr, mixed_dn_bkr) ~}
+%{ for i, instance in concat(bkr, mixed_rs_bkr) ~}
 ${ instance.public_ip } ansible_user=${ ssh_user } private_ip=${ instance.private_ip } index=${ i } kafka_id=${ i + 1 + length(ctrl) + length(mixed_pd_ctrl) }
 %{ endfor ~}
 

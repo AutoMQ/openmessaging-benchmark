@@ -83,25 +83,25 @@
       args:
         chdir: "{{ kafka_dir }}"
 
-- name: Stop Data Node
+- name: Stop Range Server
   tags: [reset]
-  hosts: data_node
+  hosts: range_server
   connection: ssh
   become: true
   tasks:
-    - name: Stop Data Node
+    - name: Stop Range Server
       systemd:
         state: stopped
-        name: "data-node"
-    - name: Wait Data Node to be stopped
+        name: "range-server"
+    - name: Wait Range Server to be stopped
       service_facts:
-      register: data_node_service
-      until: data_node_service.ansible_facts.services['data-node.service'].state in ['stopped', 'inactive']
+      register: range_server_service
+      until: range_server_service.ansible_facts.services['range-server.service'].state in ['stopped', 'inactive']
       retries: 10
       delay: 5
     - name: Remove data dir
       file:
-        path: /mnt/data-1/data-node
+        path: /mnt/data-1/range-server
         state: absent
 
 - name: Stop Placement Driver
@@ -137,17 +137,17 @@
           daemon_reload: yes
           name: "placement-dirver"
 
-- name: Start data node
+- name: Start Range Server
   tags: [run]
-  hosts: [data_node]
+  hosts: [range_server]
   connection: ssh
   become: true
   tasks:
-    - name: Start data node
+    - name: Start Range Server
       systemd:
           state: restarted
           daemon_reload: yes
-          name: "data-node"
+          name: "range-server"
 
 - name: Start Kafka controller
   tags: [run]

@@ -9,25 +9,25 @@ user            = "admin"
 // user            = "ubuntu"
 
 instance_type = {
-  "placement-dirver"   = "i4i.2xlarge"
+  "placement-dirver"    = "i4i.2xlarge"
   "controller"          = "i4i.2xlarge"
   "mixed-pd-ctrl"       = "i4i.2xlarge"
 
-  "data-node"           = "i4i.4xlarge"
+  "range-server"        = "i4i.4xlarge"
   "broker"              = "i4i.4xlarge"
-  "mixed-dn-bkr"        = "i4i.4xlarge"
+  "mixed-rs-bkr"        = "i4i.4xlarge"
 
   "client"              = "m5n.8xlarge"
 }
 
 instance_cnt = {
-  "placement-dirver"   = 0
+  "placement-dirver"    = 0
   "controller"          = 0
   "mixed-pd-ctrl"       = 3
 
-  "data-node"           = 0
+  "range-server"        = 0
   "broker"              = 0
-  "mixed-dn-bkr"        = 3
+  "mixed-rs-bkr"        = 3
 
   "client"              = 4
 }
