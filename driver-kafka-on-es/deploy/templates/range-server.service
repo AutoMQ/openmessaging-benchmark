@@ -6,7 +6,7 @@ After=network.target
 ExecStart=/usr/local/bin/range-server start --config ./rs-config.yaml --log ./rs-log-config.yaml
 Environment='ES_ADDR=0.0.0.0:10911'
 Environment='ES_ADVERTISE_ADDR={{ private_ip }}:10911'
-Environment='ES_PD={{ pm_0_ip }}:12378'
+Environment='ES_PD={{ pd_0_ip }}:12378'
 WorkingDirectory={{ rs_dir }}
 RestartSec=1s
 Restart=on-failure
