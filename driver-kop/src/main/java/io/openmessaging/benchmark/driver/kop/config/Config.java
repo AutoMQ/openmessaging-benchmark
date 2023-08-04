@@ -26,15 +26,18 @@ public class Config {
     public ClientType consumerType;
     public long pollTimeoutMs = 100;
     public PulsarConfig pulsarConfig;
-    public String kafkaConfig;
+    public String kafkaCommonConfigConfig;
+    public String kafkaProducerConfig;
+    public String kafkaConsumerConfig;
+    public boolean reset;
 
     public Properties getKafkaProperties() {
-        if (StringUtils.isEmpty(kafkaConfig)) {
+        if (StringUtils.isEmpty(kafkaCommonConfigConfig)) {
             throw new IllegalArgumentException(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG + " is not set");
         }
         final Properties props = new Properties();
         try {
-            props.load(new StringReader(kafkaConfig));
+            props.load(new StringReader(kafkaCommonConfigConfig));
         } catch (IOException e) {
             throw new IllegalArgumentException(e);
         }
