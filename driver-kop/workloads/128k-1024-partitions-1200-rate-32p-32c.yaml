@@ -11,7 +11,7 @@
 # limitations under the License.
 #
 
-name: 128k-1024-partitions-80-rate-32p-32c
+name: 128k-1024-partitions-1200-rate-32p-32c
 
 topics: 1
 partitionsPerTopic: 1024
@@ -20,7 +20,7 @@ payloadFile: "payload/payload-128Kb.data"
 subscriptionsPerTopic: 1
 consumerPerSubscription: 32
 producersPerTopic: 32
-producerRate: 80 # 100m: 800, 300m: 2400, 500m: 4000, 700m: 5600, 900m: 7200, 1G: 8192
+producerRate: 1200 # 100m: 800, 300m: 2400, 500m: 4000, 700m: 5600, 900m: 7200, 1G: 8192
 consumerBacklogSizeGB: 0
 warmupDurationMinutes: 1
 testDurationMinutes: 15

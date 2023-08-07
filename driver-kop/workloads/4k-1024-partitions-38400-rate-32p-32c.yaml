@@ -11,7 +11,7 @@
 # limitations under the License.
 #
 
-name: 4k-1024-partitions-2560-rate-32p-32c
+name: 4k-1024-partitions-38400-rate-32p-32c
 
 topics: 1
 partitionsPerTopic: 1024
@@ -20,6 +20,6 @@ payloadFile: "payload/payload-4Kb.data"
 subscriptionsPerTopic: 1
 consumerPerSubscription: 32
 producersPerTopic: 32
-producerRate: 2560 # 100m: 25600, 300m: 76800, 500m: 128000, 700m: 179200, 900m: 230400, 1G: 262144
+producerRate: 38400 # 100m: 25600, 300m: 76800, 500m: 128000, 700m: 179200, 900m: 230400, 1G: 262144
 consumerBacklogSizeGB: 0
 testDurationMinutes: 15
