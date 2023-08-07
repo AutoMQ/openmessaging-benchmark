@@ -35,21 +35,21 @@
             pb_mount_path: "{{ pb_mount_path | default('/mnt/pulsar_bookie') }}"
         - set_fact:
             pulsar_binary:
-              src: "https://mirrors.tuna.tsinghua.edu.cn/apache/pulsar/pulsar-{{ pulsar_version }}/apache-pulsar-{{ pulsar_version }}-bin.tar.gz"
+              src: "https://mirrors.ustc.edu.cn/apache/pulsar/pulsar-{{ pulsar_version }}/apache-pulsar-{{ pulsar_version }}-bin.tar.gz"
               remote: yes
-          when: 
+          when:
             - pulsar_binary is not defined
             - kop_on is defined
-#        - set_fact:
-#            node_exporter_binary:
-#              src: "https://github.com/prometheus/node_exporter/releases/download/v{{     node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
-#              remote: yes
-#          when: node_exporter_binary is not defined
-#        - set_fact:
-#            prometheus_binary:
-#              src: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/   prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
-#              remote: yes
-#          when: prometheus_binary is not defined
+        #        - set_fact:
+        #            node_exporter_binary:
+        #              src: "https://github.com/prometheus/node_exporter/releases/download/v{{     node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+        #              remote: yes
+        #          when: node_exporter_binary is not defined
+        #        - set_fact:
+        #            prometheus_binary:
+        #              src: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/   prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+        #              remote: yes
+        #          when: prometheus_binary is not defined
         - set_fact:
             protocol_handlers:
               - { protocol: "kafka", local_path: "/home/ubuntu/pkg/protocols/pulsar-protocol-handler-kafka-{{ kop_version }}.nar", conf: "kop.conf" }
@@ -179,7 +179,7 @@
 #        state: started
 #        timeout: 5
 
-- name: Pulsar installation
+- name: install packages and set env
   hosts: pulsar:client:zookeeper
   connection: ssh
   become: true
@@ -200,6 +200,17 @@
         - sysstat
         - vim
         - chrony
+    - name: Change locale to en_US.utf-8
+      shell: |
+        echo 'LANG=en_US.utf-8
+              LC_ALL=en_US.utf-8' > /etc/environment
+
+- name: Pulsar installation
+  hosts: pulsar:zookeeper
+  connection: ssh
+  become: true
+  tags: [install]
+  tasks:
     - file: path=/opt/pulsar state=absent
     - file: path=/opt/pulsar state=directory
     - name: Download Pulsar binary package
@@ -218,10 +229,6 @@
     - template:
         src: "templates/bkenv.sh"
         dest: "/opt/pulsar/conf/bkenv.sh"
-    - name: Change locale to en_US.utf-8
-      shell: |
-        echo 'LANG=en_US.utf-8
-              LC_ALL=en_US.utf-8' > /etc/environment
 
 - name: Protocol Handlers installation
   tags: [protocol_handler]
@@ -357,7 +364,7 @@
         path: /opt/pulsar/conf/broker.conf
         line: "{{ item.stdout_lines | join('\n') }}"
       loop: "{{ conf_files.results }}"
-      when: 
+      when:
         - protocol_handlers is defined
         - conf_files is defined
     - systemd:
@@ -387,6 +394,8 @@
   tags: [client]
   become: true
   tasks:
+    - file: path=/opt/pulsar/conf state=absent
+    - file: path=/opt/pulsar/conf state=directory
     - name: Set up client config
       template:
         src: "templates/client.conf"
