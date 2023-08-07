@@ -31,6 +31,8 @@
             node_exporter_version: "{{ node_exporter_version | default('1.2.2') }}"
             prometheus_version: "{{ prometheus_version | default('2.31.1') }}"
             disk_dev: "{{ disk_dev | default(['/dev/nvme1n1']) }}"
+            zk_mount_path: "{{ zk_mount_path | default('/mnt/zookeeper') }}"
+            pb_mount_path: "{{ pb_mount_path | default('/mnt/pulsar_bookie') }}"
         - set_fact:
             pulsar_binary:
               src: "https://mirrors.tuna.tsinghua.edu.cn/apache/pulsar/pulsar-{{ pulsar_version }}/apache-pulsar-{{ pulsar_version }}-bin.tar.gz"
@@ -57,6 +59,10 @@
   hosts: zookeeper
   connection: ssh
   become: true
+  vars:
+    zk_path_list:
+      - "{{ zk_mount_path }}/logs"
+      - "{{ zk_mount_path }}/data"
   tasks:
     - name: Format disks
       filesystem:
@@ -72,13 +78,24 @@
         opts: defaults,noatime,nodiscard
         state: mounted
       with_items:
-        - { path: "/mnt/zookeeper/logs", src: "{{ disk_dev[0] }}" }
-        - { path: "/mnt/zookeeper/data", src: "{{ disk_dev[0] }}" }
+        - { path: "{{ zk_mount_path }}", src: "{{ disk_dev[0] }}" }
+    - file:
+        path: "{{ item }}"
+        state: absent
+      loop: "{{ zk_path_list }}"
+    - file:
+        path: "{{ item }}"
+        state: directory
+      loop: "{{ zk_path_list }}"
 
 - name: Format and mount disks for Pulsar/BookKeeper hosts
   hosts: pulsar
   connection: ssh
   become: true
+  vars:
+    pb_path_list:
+      - "{{ pb_mount_path }}/journal"
+      - "{{ pb_mount_path }}/storage"
   tasks:
     - name: Format disks
       filesystem:
@@ -94,8 +111,15 @@
         opts: defaults,noatime,nodiscard
         state: mounted
       with_items:
-        - { path: "/mnt/journal", src: "{{ disk_dev[0] }}" }
-        - { path: "/mnt/storage", src: "{{ disk_dev[0] }}" }
+        - { path: "{{ pb_mount_path }}", src: "{{ disk_dev[0] }}" }
+    - file:
+        path: "{{ item }}"
+        state: absent
+      loop: "{{ pb_path_list }}"
+    - file:
+        path: "{{ item }}"
+        state: directory
+      loop: "{{ pb_path_list }}"
 
 #- name: Install Node exporter on Brokers to collect system metrics
 #  hosts: pulsar
@@ -248,7 +272,7 @@
         dest: "/opt/pulsar/conf/zookeeper.conf"
     - template:
         src: templates/myid
-        dest: "/mnt/zookeeper/data/myid"
+        dest: "{{ zk_mount_path }}/data/myid"
     - template:
         src: "templates/zookeeper.service"
         dest: "/etc/systemd/system/zookeeper.service"
