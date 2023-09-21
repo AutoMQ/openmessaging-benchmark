@@ -183,7 +183,6 @@ resource "aws_iam_role" "benchmark_role_s3" {
           Effect = "Allow"
           Resource = [
             "arn:aws-cn:s3:::${aws_s3_bucket.benchmark_bucket.id}",
-            "arn:aws-cn:s3:::${aws_s3_bucket.benchmark_bucket.id}/*",
           ]
         }
       ]
@@ -267,7 +266,7 @@ resource "aws_instance" "client" {
 }
 
 resource "aws_s3_bucket" "benchmark_bucket" {
-  bucket = "kafka-on-s3-benchmark-${random_id.hash.hex}"
+  bucket        = "kafka-on-s3-benchmark-${random_id.hash.hex}"
   force_destroy = true
 
   tags = {
