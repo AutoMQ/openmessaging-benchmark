@@ -150,6 +150,63 @@ resource "aws_key_pair" "auth" {
   }
 }
 
+resource "aws_iam_role" "benchmark_role_s3" {
+  name = "kafka_on_s3_benchmark_role_s3_${random_id.hash.hex}"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com.cn"
+        }
+      }
+    ]
+  })
+
+  inline_policy {
+    name = "kafka_on_s3_benchmark_policy_${random_id.hash.hex}"
+
+    policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [
+        {
+          Action = [
+            "s3:ListBucket",
+            "s3:GetObject",
+            "s3:PutObject",
+            "s3:DeleteObject",
+            "s3:AbortMultipartUpload",
+          ]
+          Effect = "Allow"
+          Resource = [
+            "arn:aws-cn:s3:::${aws_s3_bucket.benchmark_bucket.id}",
+            "arn:aws-cn:s3:::${aws_s3_bucket.benchmark_bucket.id}/*",
+          ]
+        }
+      ]
+    })
+  }
+
+  tags = {
+    Name      = "Kafka_on_S3_Benchmark_IAM_Role_${random_id.hash.hex}"
+    Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+  }
+}
+
+resource "aws_iam_instance_profile" "benchmark_instance_profile_s3" {
+  name = "kafka_on_s3_benchmark_instance_profile_s3_${random_id.hash.hex}"
+
+  role = aws_iam_role.benchmark_role_s3.name
+
+  tags = {
+    Name      = "Kafka_on_S3_Benchmark_IAM_InstanceProfile_${random_id.hash.hex}"
+    Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+  }
+}
+
 resource "aws_instance" "server" {
   ami                    = var.ami
   instance_type          = var.instance_type["server"]
@@ -176,6 +233,8 @@ resource "aws_instance" "server" {
       Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
     }
   }
+
+  iam_instance_profile = aws_iam_instance_profile.benchmark_instance_profile_s3.name
 
   monitoring = var.monitoring
   tags = {
