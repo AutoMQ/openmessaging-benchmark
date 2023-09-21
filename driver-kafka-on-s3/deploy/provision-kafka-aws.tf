@@ -183,6 +183,7 @@ resource "aws_iam_role" "benchmark_role_s3" {
           Effect = "Allow"
           Resource = [
             "arn:aws-cn:s3:::${aws_s3_bucket.benchmark_bucket.id}",
+            "arn:aws-cn:s3:::${aws_s3_bucket.benchmark_bucket.id}/*",
           ]
         }
       ]
@@ -217,7 +218,7 @@ resource "aws_instance" "server" {
   root_block_device {
     volume_size = 16
     tags = {
-      Name      = "Kafka_on_S3_Benchmark_EBS_root_server_${count.index}"
+      Name      = "Kafka_on_S3_Benchmark_EBS_root_server_${count.index}_${random_id.hash.hex}"
       Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
     }
   }
@@ -228,7 +229,7 @@ resource "aws_instance" "server" {
     volume_size = var.ebs_volume_size
     iops        = var.ebs_iops
     tags = {
-      Name      = "Kafka_on_S3_Benchmark_EBS_data_server_${count.index}"
+      Name      = "Kafka_on_S3_Benchmark_EBS_data_server_${count.index}_${random_id.hash.hex}"
       Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
     }
   }
@@ -237,7 +238,7 @@ resource "aws_instance" "server" {
 
   monitoring = var.monitoring
   tags = {
-    Name      = "Kafka_on_S3_Benchmark_EC2_server_${count.index}"
+    Name      = "Kafka_on_S3_Benchmark_EC2_server_${count.index}_${random_id.hash.hex}"
     Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
   }
 }
@@ -253,14 +254,14 @@ resource "aws_instance" "client" {
   root_block_device {
     volume_size = 16
     tags = {
-      Name      = "Kafla_on_S3_Benchmark_EBS_root_client_${count.index}"
+      Name      = "Kafla_on_S3_Benchmark_EBS_root_client_${count.index}_${random_id.hash.hex}"
       Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
     }
   }
 
   monitoring = var.monitoring
   tags = {
-    Name      = "Kafka_on_S3_Benchmark_EC2_client_${count.index}"
+    Name      = "Kafka_on_S3_Benchmark_EC2_client_${count.index}_${random_id.hash.hex}"
     Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
   }
 }
@@ -294,6 +295,9 @@ resource "local_file" "hosts_ini" {
       client = aws_instance.client,
 
       ssh_user = var.user,
+
+      s3_region   = var.region,
+      s3_bucket   = aws_s3_bucket.benchmark_bucket.id,
     }
   )
   filename = "${path.module}/hosts.ini"

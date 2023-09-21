@@ -27,7 +27,6 @@
       kafka_direct_memory_size: "6g"
       client_worker_heap_size: "8g"
       client_bench_heap_size: "4g"
-      TODO: "TODO"
   - set_fact:
       private_ip: "{{ hostvars[inventory_hostname]['private_ip'] }}"
       kafka_dir: "{{ base_store_path }}/kafka"
@@ -131,6 +130,10 @@
       tags: always
       block:
         - set_fact:
+            s3_endpoint: "{{ hostvars[inventory_hostname]['s3_endpoint'] }}"
+            s3_region: "{{ hostvars[inventory_hostname]['s3_region'] }}"
+            s3_bucket: "{{ hostvars[inventory_hostname]['s3_bucket'] }}"
+
             node_id: "{{ hostvars[inventory_hostname]['kafka_id'] }}"
             server_ids: "{{ groups.get('server') | map('extract', hostvars, 'kafka_id') | list }}"
             server_addrs: "{{ groups.get('server') | map('extract', hostvars, 'private_ip') | map('regex_replace', '^(.*)$', '\\1:9093') | list }}"

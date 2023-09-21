@@ -11,8 +11,8 @@ instance_type = {
 }
 
 instance_cnt = {
-  "server"              = 1
-  "client"              = 1
+  "server"              = 3
+  "client"              = 4
 }
 
 monitoring = true
