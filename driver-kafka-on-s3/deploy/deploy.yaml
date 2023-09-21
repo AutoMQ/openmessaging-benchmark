@@ -27,6 +27,7 @@
       kafka_direct_memory_size: "6g"
       client_worker_heap_size: "8g"
       client_bench_heap_size: "4g"
+      TODO: "TODO"
   - set_fact:
       private_ip: "{{ hostvars[inventory_hostname]['private_ip'] }}"
       kafka_dir: "{{ base_store_path }}/kafka"
@@ -147,7 +148,7 @@
       unarchive:
         src: "{{ kafka_package }}"
         dest: "{{ kafka_dir }}"
-
+        extra_opts: ["--strip-components=1"]
 
 - name: Setup Kafka servers
   tags: [run]
@@ -245,22 +246,6 @@
         line: '  bootstrap.servers={{ broker_servers }}'
       with_items: '{{ drivers_list.stdout_lines }}'
       tags: [client-code]
-
-    - name: Get list of jms driver config files
-      raw: ls -1 /opt/benchmark/driver-jms/kafka*.yaml
-      register: jms_drivers_list
-    - name: Configure JMS Bootstrap Servers
-      lineinfile:
-        dest: '{{ item }}'
-        regexp: '^  bootstrap.servers='
-        line: '  bootstrap.servers={{ broker_servers }}'
-      with_items: '{{ jms_drivers_list.stdout_lines }}'
-    - name: Configure JMS Connection Factory
-      ansible.builtin.replace:
-        dest: '{{ item }}'
-        regexp: 'localhost\:9092'
-        replace: '{{ broker_servers }}'
-      with_items: '{{ jms_drivers_list.stdout_lines }}'
 
     - name: Configure memory
       lineinfile:
