@@ -12,7 +12,7 @@
 # limitations under the License.
 #
 
-name: Kafka
+name: Kafka on S3
 driverClass: io.openmessaging.benchmark.driver.kafka.KafkaBenchmarkDriver
 
 # Kafka client-specific configuration
