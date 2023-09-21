@@ -207,6 +207,16 @@ resource "aws_instance" "client" {
   }
 }
 
+resource "aws_s3_bucket" "benchmark_bucket" {
+  bucket = "kafka-on-s3-benchmark-${random_id.hash.hex}"
+  force_destroy = true
+
+  tags = {
+    Name      = "Kafka_on_S3_Benchmark_S3_${random_id.hash.hex}"
+    Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+  }
+}
+
 output "user" {
   value = var.user
 }
