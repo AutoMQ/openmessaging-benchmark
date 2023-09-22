@@ -252,10 +252,10 @@ resource "aws_instance" "client" {
   count                  = var.instance_cnt["client"]
 
   root_block_device {
-    volume_size = 16
+    volume_size = 64
     tags = {
       Name      = "Kafla_on_S3_Benchmark_EBS_root_client_${count.index}_${random_id.hash.hex}"
-      Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+      Benchmark = "Kafka_on_S3_${random_id.hash.hex}_client"
     }
   }
 
