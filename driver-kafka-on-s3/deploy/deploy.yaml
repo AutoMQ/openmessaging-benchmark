@@ -51,6 +51,8 @@
       with_items:
         - sysstat
         - vim
+        - nload
+        - net-tools
 
 
 - name: Format and mount disks for Kafka hosts
