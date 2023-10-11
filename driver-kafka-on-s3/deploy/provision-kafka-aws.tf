@@ -262,7 +262,7 @@ resource "aws_instance" "client" {
   monitoring = var.monitoring
   tags = {
     Name      = "Kafka_on_S3_Benchmark_EC2_client_${count.index}_${random_id.hash.hex}"
-    Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+    Benchmark = "Kafka_on_S3_${random_id.hash.hex}_client"
   }
 }
 
