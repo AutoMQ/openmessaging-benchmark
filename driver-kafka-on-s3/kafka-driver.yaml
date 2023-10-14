@@ -22,6 +22,7 @@ reset: false
 topicConfig: |
   min.insync.replicas=2
   flush.messages=1
+  retention.ms=86400000
 
 commonConfig: |
   bootstrap.servers=localhost:9092
