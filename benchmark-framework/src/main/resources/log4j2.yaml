@@ -20,6 +20,11 @@ Configuration:
     Console:
       name: Console
       target: SYSTEM_OUT
+      filters:
+        - ThresholdFilter:
+            level: info
+            onMatch: ACCEPT
+            onMismatch: DENY
       PatternLayout:
         Pattern: "%d{HH:mm:ss.SSS} [%t] %-4level %c{1} - %msg%n"
     RollingFile:
