@@ -109,7 +109,7 @@ public class LocalWorker implements Worker, ConsumerCallback {
         List<TopicInfo> topicInfos =
                 IntStream.range(0, topicsInfo.numberOfTopics)
                         .mapToObj(
-                                i -> new TopicInfo(generateTopicName(i), topicsInfo.numberOfPartitionsPerTopic))
+                                i -> new TopicInfo(generateTopicName(i, topicsInfo.numberOfPartitionsPerTopic), topicsInfo.numberOfPartitionsPerTopic))
                         .collect(toList());
 
         benchmarkDriver.createTopics(topicInfos).join();
@@ -120,8 +120,8 @@ public class LocalWorker implements Worker, ConsumerCallback {
         return topics;
     }
 
-    private String generateTopicName(int i) {
-        return String.format("%s-%07d", benchmarkDriver.getTopicNamePrefix(), i);
+    private String generateTopicName(int i, int p) {
+        return String.format("%s-%07d-%04d", benchmarkDriver.getTopicNamePrefix(), i, p);
     }
 
     @Override
