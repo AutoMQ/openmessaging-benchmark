@@ -13,11 +13,8 @@
  */
 package io.openmessaging.benchmark;
 
-import static java.util.concurrent.TimeUnit.MINUTES;
-
 import io.netty.util.concurrent.DefaultThreadFactory;
 import io.openmessaging.benchmark.utils.PaddingDecimalFormat;
-import io.openmessaging.benchmark.utils.RandomGenerator;
 import io.openmessaging.benchmark.utils.Timer;
 import io.openmessaging.benchmark.utils.payload.FilePayloadReader;
 import io.openmessaging.benchmark.utils.payload.PayloadReader;
@@ -29,18 +26,25 @@ import io.openmessaging.benchmark.worker.commands.PeriodStats;
 import io.openmessaging.benchmark.worker.commands.ProducerWorkAssignment;
 import io.openmessaging.benchmark.worker.commands.TopicSubscription;
 import io.openmessaging.benchmark.worker.commands.TopicsInfo;
-import java.io.IOException;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Random;
+import java.util.TreeMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import static java.util.concurrent.TimeUnit.MINUTES;
 
 public class WorkloadGenerator implements AutoCloseable {
 
@@ -93,6 +97,18 @@ public class WorkloadGenerator implements AutoCloseable {
                             log.warn("Failure in finding max sustainable rate", e);
                         }
                     });
+        }
+
+        if (null != workload.producerRateList) {
+            executor.execute(
+                    () -> {
+                        try {
+                            adjustPublishRate(workload.producerRateList);
+                        } catch (IOException e) {
+                            log.warn("Failure in adjusting publish rate", e);
+                        }
+                    }
+            );
         }
 
         final PayloadReader payloadReader = new FilePayloadReader(workload.messageSize);
@@ -218,6 +234,38 @@ public class WorkloadGenerator implements AutoCloseable {
                     rateController.nextRate(
                             currentRate, periodNanos, stats.messagesSent, stats.messagesReceived);
             worker.adjustPublishRate(currentRate);
+        }
+    }
+
+    private void adjustPublishRate(List<List<Integer>> rateList) throws IOException {
+        NavigableMap<LocalTime, Integer> timeMap = new TreeMap<>();
+        for (List<Integer> l : rateList) {
+            LocalTime t = LocalTime.of(l.get(0), l.get(1));
+            timeMap.put(t, l.get(2));
+        }
+        timeMap.put(LocalTime.MIN, timeMap.firstEntry().getValue());
+        timeMap.put(LocalTime.MAX, timeMap.lastEntry().getValue());
+
+        while (!runCompleted) {
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                return;
+            }
+
+            LocalTime now = LocalTime.now();
+            Map.Entry<LocalTime, Integer> floorEntry = timeMap.floorEntry(now);
+            Map.Entry<LocalTime, Integer> ceilingEntry = timeMap.ceilingEntry(now);
+
+            double x1 = floorEntry.getKey().toSecondOfDay();
+            double x2 = ceilingEntry.getKey().toSecondOfDay();
+            double y1 = floorEntry.getValue();
+            double y2 = ceilingEntry.getValue();
+            double x = now.toSecondOfDay();
+            double y = (y2 - y1) / (x2 - x1) * (x - x1) + y1;
+
+            double targetRate = y;
+            worker.adjustPublishRate(targetRate);
         }
     }
 
