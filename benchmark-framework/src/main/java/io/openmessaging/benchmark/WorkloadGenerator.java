@@ -238,13 +238,11 @@ public class WorkloadGenerator implements AutoCloseable {
     }
 
     private void adjustPublishRate(List<List<Integer>> rateList) throws IOException {
-        NavigableMap<LocalTime, Integer> timeMap = new TreeMap<>();
+        RateGenerator rateGenerator = new RateGenerator();
         for (List<Integer> l : rateList) {
             LocalTime t = LocalTime.of(l.get(0), l.get(1));
-            timeMap.put(t, l.get(2));
+            rateGenerator.put(t, l.get(2));
         }
-        timeMap.put(LocalTime.MIN, timeMap.firstEntry().getValue());
-        timeMap.put(LocalTime.MAX, timeMap.lastEntry().getValue());
 
         while (!runCompleted) {
             try {
@@ -254,17 +252,7 @@ public class WorkloadGenerator implements AutoCloseable {
             }
 
             LocalTime now = LocalTime.now();
-            Map.Entry<LocalTime, Integer> floorEntry = timeMap.floorEntry(now);
-            Map.Entry<LocalTime, Integer> ceilingEntry = timeMap.ceilingEntry(now);
-
-            double x1 = floorEntry.getKey().toSecondOfDay();
-            double x2 = ceilingEntry.getKey().toSecondOfDay();
-            double y1 = floorEntry.getValue();
-            double y2 = ceilingEntry.getValue();
-            double x = now.toSecondOfDay();
-            double y = (y2 - y1) / (x2 - x1) * (x - x1) + y1;
-
-            double targetRate = y;
+            double targetRate = rateGenerator.get(now);
             worker.adjustPublishRate(targetRate);
         }
     }
