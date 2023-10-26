@@ -13,11 +13,8 @@
  */
 package io.openmessaging.benchmark;
 
-import static java.util.concurrent.TimeUnit.MINUTES;
-
 import io.netty.util.concurrent.DefaultThreadFactory;
 import io.openmessaging.benchmark.utils.PaddingDecimalFormat;
-import io.openmessaging.benchmark.utils.RandomGenerator;
 import io.openmessaging.benchmark.utils.Timer;
 import io.openmessaging.benchmark.utils.payload.FilePayloadReader;
 import io.openmessaging.benchmark.utils.payload.PayloadReader;
@@ -29,8 +26,13 @@ import io.openmessaging.benchmark.worker.commands.PeriodStats;
 import io.openmessaging.benchmark.worker.commands.ProducerWorkAssignment;
 import io.openmessaging.benchmark.worker.commands.TopicSubscription;
 import io.openmessaging.benchmark.worker.commands.TopicsInfo;
+import org.apache.commons.lang.ArrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -38,9 +40,8 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import org.apache.commons.lang.ArrayUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static java.util.concurrent.TimeUnit.MINUTES;
 
 public class WorkloadGenerator implements AutoCloseable {
 
@@ -93,6 +94,18 @@ public class WorkloadGenerator implements AutoCloseable {
                             log.warn("Failure in finding max sustainable rate", e);
                         }
                     });
+        }
+
+        if (null != workload.producerRateList) {
+            executor.execute(
+                    () -> {
+                        try {
+                            adjustPublishRate(workload.producerRateList);
+                        } catch (IOException e) {
+                            log.warn("Failure in adjusting publish rate", e);
+                        }
+                    }
+            );
         }
 
         final PayloadReader payloadReader = new FilePayloadReader(workload.messageSize);
@@ -218,6 +231,26 @@ public class WorkloadGenerator implements AutoCloseable {
                     rateController.nextRate(
                             currentRate, periodNanos, stats.messagesSent, stats.messagesReceived);
             worker.adjustPublishRate(currentRate);
+        }
+    }
+
+    private void adjustPublishRate(List<List<Integer>> rateList) throws IOException {
+        RateGenerator rateGenerator = new RateGenerator();
+        for (List<Integer> l : rateList) {
+            LocalTime t = LocalTime.of(l.get(0), l.get(1));
+            rateGenerator.put(t, l.get(2));
+        }
+
+        while (!runCompleted) {
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                return;
+            }
+
+            LocalTime now = LocalTime.now();
+            double targetRate = rateGenerator.get(now);
+            worker.adjustPublishRate(targetRate);
         }
     }
 

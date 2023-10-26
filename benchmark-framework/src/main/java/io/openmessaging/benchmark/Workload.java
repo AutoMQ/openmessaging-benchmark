@@ -16,6 +16,8 @@ package io.openmessaging.benchmark;
 
 import io.openmessaging.benchmark.utils.distributor.KeyDistributorType;
 
+import java.util.List;
+
 public class Workload {
     public String name;
 
@@ -42,6 +44,11 @@ public class Workload {
     public int consumerPerSubscription;
 
     public int producerRate;
+
+    /**
+     * For example, [11, 30, 1000] means that at 11:30, the producer rate will be 1000 msg/s.
+     */
+    public List<List<Integer>> producerRateList = null;
 
     /**
      * If the consumer backlog is > 0, the generator will accumulate messages until the requested
