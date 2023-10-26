@@ -1,0 +1,62 @@
+kos:
+  ##  一个region下不同资源唯一标识会用installID区分，请确保唯一性
+  installID: 99d0af3b3ef7b322
+  vpcID: vpc-0e7c6f7ca4bfdb917
+  ## 网段不能超过指定VPC的范围，网段内的IP数需要大于等于256，建议使用xxx/24
+  cidr: 10.0.1.0/24
+  zoneNameList: cn-northwest-1a
+  kafka:
+    controllerCount: 3
+    heapOpts: "-Xms6g -Xmx6g -XX:MetaspaceSize=96m -XX:MaxDirectMemorySize=6G"
+    settings: |
+      metric.reporters=kafka.autobalancer.metricsreporter.AutoBalancerMetricsReporter,org.apache.kafka.server.metrics.s3stream.KafkaS3MetricsLoggerReporter
+      s3.metrics.logger.interval.ms=10000
+      autobalancer.topic.num.partitions=1
+      autobalancer.controller.enable=true
+      autobalancer.controller.anomaly.detect.interval.ms=60000
+      autobalancer.controller.metrics.delay.ms=20000
+      autobalancer.controller.network.in.distribution.detect.threshold=0.2
+      autobalancer.controller.network.in.distribution.detect.avg.deviation=0.2
+      autobalancer.controller.network.out.distribution.detect.threshold=0.2
+      autobalancer.controller.network.out.distribution.detect.avg.deviation=0.2
+      autobalancer.controller.network.in.utilization.threshold=0.8
+      autobalancer.controller.network.out.utilization.threshold=0.8
+      autobalancer.controller.execution.interval.ms=100
+      autobalancer.controller.load.aggregation=true
+      autobalancer.controller.exclude.topics=__consumer_offsets
+      autobalancer.reporter.metrics.reporting.interval.ms=5000
+      autobalancer.reporter.network.in.capacity=102367
+      autobalancer.reporter.network.out.capacity=102367
+      s3.network.inbound.baseline.bandwidth=104824045
+      s3.network.inbound.burst.bandwidth=524120227
+      s3.network.outbound.baseline.bandwidth=104824045
+      s3.network.outbound.burst.bandwidth=524120227
+      s3.wal.capacity=4294967296
+      s3.wal.cache.size=2147483648
+      s3.wal.object.size=536870912
+      s3.stream.object.split.size=16777216
+      s3.object.block.size=16777216
+      s3.object.part.size=33554432
+      s3.cache.size=1073741824
+      s3.object.compaction.cache.size=536870912
+      s3.object.compaction.network.in.bandwidth=10485760
+      s3.object.compaction.network.out.bandwidth=10485760
+  scaling:
+    cooldown: 60
+    alarmPeriod: 60
+    scalingAlarmEvaluationTimes: 1
+    fallbackAlarmEvaluationTimes: 2
+    scalingNetworkUpBoundRatio: 0.8
+    scalingNetworkLowerBoundRatio: 0.8
+  ec2:
+    instanceType: r6i.large
+    controllerSpotEnabled: false
+    ## ssh key pair用于ssh访问
+    keyPairName: kafka_on_s3_benchmark_key-99d0af3b3ef7b322
+    ## 是否分配EC2的publicIP 如果有公网访问需求，可以开启该配置。开启后会自动创建igw、nat和路由规则，有额外的成本开销，不过可以直接从公网进行访问
+    enablePublic: true
+    enableDetailedMonitor: true
+    deleteEbsOnTermination: true
+    ## 需要有ec2、asg、s3的权限，用于安装资源以及kafka写入s3使用
+  accessKey: AKIAUYSDY7YCCUPPNU7L
+  secretKey: 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
