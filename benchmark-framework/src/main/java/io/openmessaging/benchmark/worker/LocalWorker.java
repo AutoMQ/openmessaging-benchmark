@@ -120,9 +120,8 @@ public class LocalWorker implements Worker, ConsumerCallback {
             }
             topicInfos = new ArrayList<>();
             for (int i = 0; i < topicsInfo.numberOfTopics; i++) {
-                for (int p : topicsInfo.numberOfPartitionsPerTopicList) {
-                    topicInfos.add(new TopicInfo(generateTopicName(i, p), p));
-                }
+                int partitions = topicsInfo.numberOfPartitionsPerTopicList.get(i);
+                topicInfos.add(new TopicInfo(generateTopicName(i, partitions), partitions));
             }
         }
 
