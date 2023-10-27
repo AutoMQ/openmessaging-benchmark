@@ -72,6 +72,11 @@ public class Benchmark {
                 description = "Allocate extra consumer workers when your backlog builds.")
         boolean extraConsumers;
 
+        @Parameter(
+                names = {"-s", "--separate"},
+                description = "Separate producer and consumer workers")
+        boolean separate;
+
         @Parameter(description = "Workloads") // , required = true)
         public List<String> workloads;
 
@@ -142,7 +147,7 @@ public class Benchmark {
         if (arguments.workers != null && !arguments.workers.isEmpty()) {
             List<Worker> workers =
                     arguments.workers.stream().map(HttpWorkerClient::new).collect(toList());
-            worker = new DistributedWorkersEnsemble(workers, arguments.extraConsumers);
+            worker = new DistributedWorkersEnsemble(workers, arguments.extraConsumers, arguments.separate);
         } else {
             // Use local worker implementation
             worker = new LocalWorker();
