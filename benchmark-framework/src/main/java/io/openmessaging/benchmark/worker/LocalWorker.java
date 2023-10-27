@@ -13,8 +13,6 @@
  */
 package io.openmessaging.benchmark.worker;
 
-import static java.util.stream.Collectors.toList;
-
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -29,7 +27,6 @@ import io.openmessaging.benchmark.driver.BenchmarkDriver.ProducerInfo;
 import io.openmessaging.benchmark.driver.BenchmarkDriver.TopicInfo;
 import io.openmessaging.benchmark.driver.BenchmarkProducer;
 import io.openmessaging.benchmark.driver.ConsumerCallback;
-import io.openmessaging.benchmark.utils.RandomGenerator;
 import io.openmessaging.benchmark.utils.Timer;
 import io.openmessaging.benchmark.utils.UniformRateLimiter;
 import io.openmessaging.benchmark.utils.distributor.KeyDistributor;
@@ -39,6 +36,11 @@ import io.openmessaging.benchmark.worker.commands.CumulativeLatencies;
 import io.openmessaging.benchmark.worker.commands.PeriodStats;
 import io.openmessaging.benchmark.worker.commands.ProducerWorkAssignment;
 import io.openmessaging.benchmark.worker.commands.TopicsInfo;
+import org.apache.bookkeeper.stats.NullStatsLogger;
+import org.apache.bookkeeper.stats.StatsLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -54,10 +56,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
-import org.apache.bookkeeper.stats.NullStatsLogger;
-import org.apache.bookkeeper.stats.StatsLogger;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static java.util.stream.Collectors.toList;
 
 public class LocalWorker implements Worker, ConsumerCallback {
 
@@ -95,9 +95,9 @@ public class LocalWorker implements Worker, ConsumerCallback {
                     (BenchmarkDriver) Class.forName(driverConfiguration.driverClass).newInstance();
             benchmarkDriver.initialize(driverConfigFile, stats.getStatsLogger());
         } catch (InstantiationException
-                | IllegalAccessException
-                | ClassNotFoundException
-                | InterruptedException e) {
+                 | IllegalAccessException
+                 | ClassNotFoundException
+                 | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
@@ -106,11 +106,25 @@ public class LocalWorker implements Worker, ConsumerCallback {
     public List<String> createTopics(TopicsInfo topicsInfo) {
         Timer timer = new Timer();
 
-        List<TopicInfo> topicInfos =
-                IntStream.range(0, topicsInfo.numberOfTopics)
-                        .mapToObj(
-                                i -> new TopicInfo(generateTopicName(i, topicsInfo.numberOfPartitionsPerTopic), topicsInfo.numberOfPartitionsPerTopic))
-                        .collect(toList());
+        List<TopicInfo> topicInfos;
+        if (null == topicsInfo.numberOfPartitionsPerTopicList) {
+            topicInfos =
+                    IntStream.range(0, topicsInfo.numberOfTopics)
+                            .mapToObj(
+                                    i -> new TopicInfo(generateTopicName(i, topicsInfo.numberOfPartitionsPerTopic), topicsInfo.numberOfPartitionsPerTopic))
+                            .collect(toList());
+        } else {
+            if (topicsInfo.numberOfPartitionsPerTopicList.size() != topicsInfo.numberOfTopics) {
+                throw new IllegalArgumentException(
+                        "numberOfPartitionsPerTopicList size must be equal to numberOfTopics");
+            }
+            topicInfos = new ArrayList<>();
+            for (int i = 0; i < topicsInfo.numberOfTopics; i++) {
+                for (int p : topicsInfo.numberOfPartitionsPerTopicList) {
+                    topicInfos.add(new TopicInfo(generateTopicName(i, p), p));
+                }
+            }
+        }
 
         benchmarkDriver.createTopics(topicInfos).join();
 
@@ -256,7 +270,8 @@ public class LocalWorker implements Worker, ConsumerCallback {
      * This method is called by the consumer when a message is received.
      * Note that publishTimestamp is in milliseconds, which loses precision in conversion to nanoseconds.
      * Fix it if needed.
-     * @param size size of the received message
+     *
+     * @param size             size of the received message
      * @param publishTimestamp publish timestamp of the received message
      */
     public void internalMessageReceived(int size, long publishTimestamp) {

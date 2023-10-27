@@ -27,6 +27,12 @@ public class Workload {
     /** Number of partitions each topic will contain. */
     public int partitionsPerTopic;
 
+    /**
+     * If not null, its size must be equal to the number of topics, and it will be used to override
+     * the {@link #partitionsPerTopic} value for each topic.
+     */
+    public List<Integer> partitionsPerTopicList = null;
+
     public KeyDistributorType keyDistributor = KeyDistributorType.NO_KEY;
 
     public int messageSize;
@@ -40,6 +46,12 @@ public class Workload {
     public int subscriptionsPerTopic;
 
     public int producersPerTopic;
+
+    /**
+     * If not null, its size must be equal to the number of topics, and it will be used to override
+     * the {@link #producersPerTopic} value for each topic.
+     */
+    public List<Integer> producersPerTopicList = null;
 
     public int consumerPerSubscription;
 

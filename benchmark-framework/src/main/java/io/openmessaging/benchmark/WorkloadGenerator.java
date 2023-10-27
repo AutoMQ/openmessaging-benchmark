@@ -71,7 +71,7 @@ public class WorkloadGenerator implements AutoCloseable {
     public TestResult run() throws Exception {
         Timer timer = new Timer();
         List<String> topics =
-                worker.createTopics(new TopicsInfo(workload.topics, workload.partitionsPerTopic));
+                worker.createTopics(new TopicsInfo(workload.topics, workload.partitionsPerTopic, workload.partitionsPerTopicList));
         log.info("Created {} topics in {} ms", topics.size(), timer.elapsedMillis());
 
         createConsumers(topics);
@@ -287,9 +287,22 @@ public class WorkloadGenerator implements AutoCloseable {
     private void createProducers(List<String> topics) throws IOException {
         List<String> fullListOfTopics = new ArrayList<>();
 
-        // Add the topic multiple times, one for each producer
-        for (int i = 0; i < workload.producersPerTopic; i++) {
-            fullListOfTopics.addAll(topics);
+        if (null == workload.producersPerTopicList) {
+            // Add the topic multiple times, one for each producer
+            for (int i = 0; i < workload.producersPerTopic; i++) {
+                fullListOfTopics.addAll(topics);
+            }
+        } else {
+            if (workload.producersPerTopicList.size() != topics.size()) {
+                throw new IllegalArgumentException(
+                        "The number of topics and the number of producers per topic must match");
+            }
+            for (int i = 0; i < workload.producersPerTopicList.size(); i++) {
+                int numProducers = workload.producersPerTopicList.get(i);
+                for (int j = 0; j < numProducers; j++) {
+                    fullListOfTopics.add(topics.get(i));
+                }
+            }
         }
 
         Collections.shuffle(fullListOfTopics);
