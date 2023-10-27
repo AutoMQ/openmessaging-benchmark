@@ -209,7 +209,7 @@ class KosCluster:
         controller_cnt = self.controller_count
         broker_cnt = self.broker_count(produce_throughput, subscription_count)
         ec2_cost = self.aws_info.ec2_cost_hourly(
-            self.instance_type, controller_cnt) + self.aws_info.ec2_cost_hourly(self.instance_type, broker_cnt) * self.spot_cutoff
+            self.instance_type, controller_cnt) + self.aws_info.ec2_cost_hourly(self.instance_type, broker_cnt) * (1 - self.spot_cutoff)
         ebs_cost = self.aws_info.ebs_cost_hourly(
             self.ebs_type, self.ebs_size_gb, controller_cnt + broker_cnt)
         detailed_info = {
@@ -294,7 +294,8 @@ if __name__ == "__main__":
 
     kos_instance_cost_total = 0
     data_size_bytes = 0
-    throughput_list = [100, 400, 800, 500, 200, 100, 100, 100, 200, 300, 400, 500, 1000, 400, 300, 200, 100, 100, 100, 100, 100, 100, 100, 100]
+    throughput_list = [100, 800, 400, 100, 100, 100, 100, 100, 100, 100,
+                       100, 100, 800, 100, 100, 100, 100, 100, 100, 1200, 100, 100, 100, 100]
     for throughput in throughput_list:
         data_size_bytes += hours_to_seconds(1) * megabyte_to_bytes(throughput)
 
@@ -305,8 +306,10 @@ if __name__ == "__main__":
         kos_instance_cost_total += kos_cost
 
     kos_s3_cost = kos.s3_cost_hourly(data_size_bytes) * len(throughput_list)
-    kafka_ec2_cost_total = kafka.ec2_cost_hourly(max(throughput_list)) * len(throughput_list)
-    kafka_ebs_cost = kafka.ebs_cost_hourly(data_size_bytes) * len(throughput_list)
+    kafka_ec2_cost_total = kafka.ec2_cost_hourly(
+        max(throughput_list)) * len(throughput_list)
+    kafka_ebs_cost = kafka.ebs_cost_hourly(
+        data_size_bytes) * len(throughput_list)
 
     print(f"KoS instance cost: {kos_instance_cost_total:5.2f} {kos.aws_info.unit()}",
           f"KoS S3 cost: {kos_s3_cost:5.2f} {kos.aws_info.unit()}",
