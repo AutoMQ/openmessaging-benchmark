@@ -8,7 +8,13 @@ kos:
   kafka:
     controllerCount: 3
     heapOpts: "-Xms6g -Xmx6g -XX:MetaspaceSize=96m -XX:MaxDirectMemorySize=6g"
-    settings: |
+    controllerSettings: |
+      autobalancer.reporter.network.in.capacity=81894
+      autobalancer.reporter.network.out.capacity=81894
+    brokerSettings: |
+      autobalancer.reporter.network.in.capacity=102367
+      autobalancer.reporter.network.out.capacity=102367
+    commonSettings: |
       metric.reporters=kafka.autobalancer.metricsreporter.AutoBalancerMetricsReporter,org.apache.kafka.server.metrics.s3stream.KafkaS3MetricsLoggerReporter
       s3.metrics.logger.interval.ms=10000
       autobalancer.topic.num.partitions=1
@@ -22,19 +28,18 @@ kos:
       autobalancer.controller.network.in.utilization.threshold=0.8
       autobalancer.controller.network.out.utilization.threshold=0.8
       autobalancer.controller.execution.interval.ms=100
+      autobalancer.controller.execution.steps=1024
       autobalancer.controller.load.aggregation=true
       autobalancer.controller.exclude.topics=__consumer_offsets
       autobalancer.reporter.metrics.reporting.interval.ms=5000
-      autobalancer.reporter.network.in.capacity=102367
-      autobalancer.reporter.network.out.capacity=102367
       s3.network.inbound.baseline.bandwidth=104824045
-      s3.network.inbound.burst.bandwidth=524120227
+      s3.network.inbound.burst.bandwidth=104824045
       s3.network.outbound.baseline.bandwidth=104824045
-      s3.network.outbound.burst.bandwidth=524120227
+      s3.network.outbound.burst.bandwidth=104824045
       s3.wal.capacity=4294967296
       s3.wal.cache.size=2147483648
       s3.wal.object.size=536870912
-      s3.stream.object.split.size=16777216
+      s3.stream.object.split.size=8388608
       s3.object.block.size=16777216
       s3.object.part.size=33554432
       s3.cache.size=1073741824
