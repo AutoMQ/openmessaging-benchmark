@@ -9,11 +9,11 @@ kos:
     controllerCount: 3
     heapOpts: "-Xms6g -Xmx6g -XX:MetaspaceSize=96m -XX:MaxDirectMemorySize=6g"
     controllerSettings:
-      - autobalancer.reporter.network.in.capacity=92130
-      - autobalancer.reporter.network.out.capacity=92130
+      - autobalancer.reporter.network.in.capacity=60000
+      - autobalancer.reporter.network.out.capacity=60000
     brokerSettings:
-      - autobalancer.reporter.network.in.capacity=102367
-      - autobalancer.reporter.network.out.capacity=102367
+      - autobalancer.reporter.network.in.capacity=100000
+      - autobalancer.reporter.network.out.capacity=100000
     commonSettings:
       - metric.reporters=kafka.autobalancer.metricsreporter.AutoBalancerMetricsReporter,org.apache.kafka.server.metrics.s3stream.KafkaS3MetricsLoggerReporter
       - s3.metrics.logger.interval.ms=10000
@@ -22,9 +22,9 @@ kos:
       - autobalancer.controller.anomaly.detect.interval.ms=60000
       - autobalancer.controller.metrics.delay.ms=20000
       - autobalancer.controller.network.in.distribution.detect.threshold=0.2
-      - autobalancer.controller.network.in.distribution.detect.avg.deviation=0.2
+      - autobalancer.controller.network.in.distribution.detect.avg.deviation=0.05
       - autobalancer.controller.network.out.distribution.detect.threshold=0.2
-      - autobalancer.controller.network.out.distribution.detect.avg.deviation=0.2
+      - autobalancer.controller.network.out.distribution.detect.avg.deviation=0.05
       - autobalancer.controller.network.in.utilization.threshold=0.8
       - autobalancer.controller.network.out.utilization.threshold=0.8
       - autobalancer.controller.execution.interval.ms=100
