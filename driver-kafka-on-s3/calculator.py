@@ -12,8 +12,8 @@
 # limitations under the License.
 #
 
-from enum import Enum
 import math
+from enum import Enum
 
 HOUR_PER_MONTH = 730
 
