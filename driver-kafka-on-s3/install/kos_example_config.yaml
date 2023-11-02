@@ -21,6 +21,7 @@ kos:
   zoneNameList: cn-northwest-1a
   kafka:
     controllerCount: 3
+    enablePublic: false
     heapOpts: "-Xms6g -Xmx6g -XX:MetaspaceSize=96m -XX:MaxDirectMemorySize=6g"
     controllerSettings:
       - autobalancer.reporter.network.in.capacity=60000
