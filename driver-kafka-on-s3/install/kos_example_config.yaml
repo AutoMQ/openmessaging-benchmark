@@ -22,9 +22,9 @@ kos:
       - autobalancer.controller.anomaly.detect.interval.ms=60000
       - autobalancer.controller.metrics.delay.ms=20000
       - autobalancer.controller.network.in.distribution.detect.threshold=0.2
-      - autobalancer.controller.network.in.distribution.detect.avg.deviation=0.05
+      - autobalancer.controller.network.in.distribution.detect.avg.deviation=0.1
       - autobalancer.controller.network.out.distribution.detect.threshold=0.2
-      - autobalancer.controller.network.out.distribution.detect.avg.deviation=0.05
+      - autobalancer.controller.network.out.distribution.detect.avg.deviation=0.1
       - autobalancer.controller.network.in.utilization.threshold=0.8
       - autobalancer.controller.network.out.utilization.threshold=0.8
       - autobalancer.controller.execution.interval.ms=100
@@ -32,20 +32,15 @@ kos:
       - autobalancer.controller.load.aggregation=true
       - autobalancer.controller.exclude.topics=__consumer_offsets
       - autobalancer.reporter.metrics.reporting.interval.ms=5000
-      - s3.network.inbound.baseline.bandwidth=104824045
-      - s3.network.inbound.burst.bandwidth=104824045
-      - s3.network.outbound.baseline.bandwidth=104824045
-      - s3.network.outbound.burst.bandwidth=104824045
+      - s3.network.baseline.bandwidth=104824045
+      - s3.block.cache.size=1073741824
       - s3.wal.capacity=4294967296
       - s3.wal.cache.size=2147483648
       - s3.wal.object.size=536870912
       - s3.stream.object.split.size=8388608
       - s3.object.block.size=16777216
       - s3.object.part.size=33554432
-      - s3.cache.size=1073741824
       - s3.object.compaction.cache.size=536870912
-      - s3.object.compaction.network.in.bandwidth=10485760
-      - s3.object.compaction.network.out.bandwidth=10485760
   scaling:
     cooldown: 10
     alarmPeriod: 60
