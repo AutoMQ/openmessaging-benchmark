@@ -29,7 +29,7 @@ def get_all_instances_in_asg(asg_name: str) -> Generator[str, None, None]:
             yield instance_id
 
 
-def generate_cloud_watch_source(asg_name: str, controller_ids: "list[str]", broker_ids: "list[str]", client_ids: "list[str]", threshold: int, detailed: bool = False):
+def generate_cloud_watch_source(spot_asg_name: str, fall_back_asg_name: str, controller_ids: "list[str]", broker_ids: "list[str]", client_ids: "list[str]", threshold: int, detailed: bool = False):
     # TODO: colorize the metrics
     cloud_watch_source = {
         "title": "Kafka on S3 Metrics",
@@ -71,6 +71,8 @@ def generate_cloud_watch_source(asg_name: str, controller_ids: "list[str]", brok
     cnt = "controllerNetworkThroughput"
     cnta = "controllerNetworkThroughputAvg"
 
+    sp = "Spot"
+    fb = "FallBack"
     bc = "brokerCount"
     bni = "brokerNetworkIn"
     bno = "brokerNetworkOut"
@@ -79,15 +81,15 @@ def generate_cloud_watch_source(asg_name: str, controller_ids: "list[str]", brok
     metrics = []
 
     # client group
-    clno_list = []
+    clnt_list = []
     for i, clid in enumerate(client_ids):
         metrics.append(["AWS/EC2", "NetworkOut", "InstanceId", clid,
                         {"id": f"{clno}{i}", "label": "", "stat": "Sum", "visible": False}])
         metrics.append([{"id": f"{clnt}{i}", "expression": f"{clno}{i}/DIFF_TIME({clno}{i})",
                        "label": "", "visible": False}])
-        clno_list.append(f"{clno}{i}")
-    clno_list_str = ', '.join(clno_list)
-    metrics.append([{"id": clnt, "expression": f"SUM([ {clno_list_str} ])",
+        clnt_list.append(f"{clnt}{i}")
+    clnt_list_str = ', '.join(clnt_list)
+    metrics.append([{"id": clnt, "expression": f"SUM([ {clnt_list_str} ])",
                    "label": "total network throughput of all clients", "visible": not detailed}])
 
     # each controller
@@ -106,24 +108,31 @@ def generate_cloud_watch_source(asg_name: str, controller_ids: "list[str]", brok
                    "label": "average network throughput of each controller", "visible": True}])
 
     # broker count
-    metrics.append(["AWS/AutoScaling", "GroupInServiceInstances", "AutoScalingGroupName", asg_name,
-                   {"id": bc, "label": "broker count", "stat": "Average", "yAxis": "right", "visible": True}])
+    metrics.append(["AWS/AutoScaling", "GroupInServiceInstances", "AutoScalingGroupName", spot_asg_name,
+                   {"id": f"{bc}{sp}", "label": "", "stat": "Average", "yAxis": "right", "visible": False}])
+    metrics.append(["AWS/AutoScaling", "GroupInServiceInstances", "AutoScalingGroupName", fall_back_asg_name,
+                   {"id": f"{bc}{fb}", "label": "", "stat": "Average", "yAxis": "right", "visible": False}])
+    metrics.append([{"id": bc, "expression": f"{bc}{sp}+{bc}{fb}",
+                   "label": "broker count", "yAxis": "right", "visible": True}])
 
-    # each broker
-    for i, bid in enumerate(broker_ids):
-        metrics.append(["AWS/EC2", "NetworkIn", "InstanceId", bid,
-                        {"id": f"{bni}{i}", "label": "", "stat": "Sum", "visible": False}])
-        metrics.append(["AWS/EC2", "NetworkOut", "InstanceId", bid,
-                        {"id": f"{bno}{i}", "label": "", "stat": "Sum", "visible": False}])
-        metrics.append([{"id": f"{bnt}{i}", "expression": f"MAX([ {bni}{i}/DIFF_TIME({bni}{i}), {bno}{i}/DIFF_TIME({bno}{i}) ])",
-                         "label": f"network throughput of broker {i}", "visible": detailed}])
+    # # each broker
+    # for i, bid in enumerate(broker_ids):
+    #     metrics.append(["AWS/EC2", "NetworkIn", "InstanceId", bid,
+    #                     {"id": f"{bni}{i}", "label": "", "stat": "Sum", "visible": False}])
+    #     metrics.append(["AWS/EC2", "NetworkOut", "InstanceId", bid,
+    #                     {"id": f"{bno}{i}", "label": "", "stat": "Sum", "visible": False}])
+    #     metrics.append([{"id": f"{bnt}{i}", "expression": f"MAX([ {bni}{i}/DIFF_TIME({bni}{i}), {bno}{i}/DIFF_TIME({bno}{i}) ])",
+    #                      "label": f"network throughput of broker {i}", "visible": detailed}])
     # broker group
-    metrics.append(["AWS/EC2", "NetworkIn", "AutoScalingGroupName", asg_name,
-                    {"id": bni, "label": "", "stat": "Sum", "visible": False}])
-    metrics.append(["AWS/EC2", "NetworkOut", "AutoScalingGroupName", asg_name,
-                    {"id": bno, "label": "", "stat": "Sum", "visible": False}])
-    metrics.append([{"id": bnt, "expression": f"MAX([ {bni}/DIFF_TIME({bni}), {bno}/DIFF_TIME({bno}) ])",
-                     "label": "", "visible": False}])
+    metrics.append(["AWS/EC2", "NetworkIn", "AutoScalingGroupName", spot_asg_name,
+                    {"id": f"{bni}{sp}", "label": "", "stat": "Sum", "visible": False}])
+    metrics.append(["AWS/EC2", "NetworkOut", "AutoScalingGroupName", spot_asg_name,
+                    {"id": f"{bno}{sp}", "label": "", "stat": "Sum", "visible": False}])
+    metrics.append(["AWS/EC2", "NetworkIn", "AutoScalingGroupName", fall_back_asg_name,
+                    {"id": f"{bni}{fb}", "label": "", "stat": "Sum", "visible": False}])
+    metrics.append(["AWS/EC2", "NetworkOut", "AutoScalingGroupName", fall_back_asg_name,
+                    {"id": f"{bno}{fb}", "label": "", "stat": "Sum", "visible": False}])
+    metrics.append([{"id": bnt, "expression": f"MAX([ {bni}{sp}/DIFF_TIME({bni}{sp}), {bno}{sp}/DIFF_TIME({bno}{sp}) ]) + MAX([ {bni}{fb}/DIFF_TIME({bni}{fb}), {bno}{fb}/DIFF_TIME({bno}{fb}) ])", "label": "", "visible": False}])
     metrics.append([{"id": bnta, "expression": f"{bnt}/{bc}",
                    "label": "average network throughput of each broker", "visible": True}])
 
@@ -135,18 +144,43 @@ def generate_cloud_watch_source(asg_name: str, controller_ids: "list[str]", brok
 
 if __name__ == '__main__':
     # TODO
+
+    # env_id = "e4515e77801c42d5"
+    # controller_list = [
+    #     "i-0e9ee8a4a8d7af852",
+    #     "i-078c6a3cd026c5c1f",
+    #     "i-0401f68481bb45da0",
+    # ]
+    # client_list = [
+    #     "i-00353c49a6dd864e6",
+    #     "i-00463a3b17b3ff4c5",
+    # ]
+
+    env_id = "7c871601f2ef135d"
     controller_list = [
-        "i-0e7b082b5a6d70446",
-        "i-01c48a60456c0b2a5",
-        "i-046c4b4da8efd2e79",
+        "i-06cacd5db1f77ffee",
+        "i-0e6d4a99c3b10893c",
+        "i-017621fe7c6ab4799"
     ]
     client_list = [
-        "i-00353c49a6dd864e6",
-        "i-00463a3b17b3ff4c5",
+        "i-0a4a6984a6bc264d6",
+        "i-0f1c208d5c6abfc7a",
     ]
-    asg_name = "stack-kos-broker-asg-cn-northwest-1-e4515e77801c42d5-spot-stack-group-kos-lp-cn-northwest-1-e4515e77801c42d5-broker-zone-0"
 
-    broker_list = list(reversed(list(get_all_instances_in_asg(asg_name))))
+    # env_id = "dbebae07ac9ae5c8"
+    # controller_list = [
+    #     "i-0a8a1bdc350d5895e",
+    # ]
+    # client_list = [
+    #     "i-085a3e05225bc4284",
+    #     "i-000aabed84e6f4c19",
+    # ]
+
+    spot_group_name = f"stack-kos-broker-asg-cn-northwest-1-{env_id}-spot-stack-group-kos-lp-cn-northwest-1-{env_id}-broker-zone-0"
+    fall_back_group_name = f"stack-kos-broker-asg-cn-northwest-1-{env_id}-fallback-stack-group-kos-lp-cn-northwest-1-{env_id}-broker-zone-0"
+
+    broker_list = list(reversed(list(get_all_instances_in_asg(spot_group_name)))) + \
+        list(reversed(list(get_all_instances_in_asg(fall_back_group_name))))
     source = generate_cloud_watch_source(
-        asg_name, controller_list, broker_list, client_list, 83859236, False)
+        spot_group_name, fall_back_group_name, controller_list, broker_list, client_list, 83859236, False)
     print(json.dumps(source))
