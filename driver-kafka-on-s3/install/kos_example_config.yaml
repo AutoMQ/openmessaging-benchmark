@@ -57,7 +57,7 @@ kos:
       - s3.object.part.size=33554432
       - s3.object.compaction.cache.size=536870912
   scaling:
-    cooldown: 10
+    cooldown: 60
     alarmPeriod: 60
     scalingAlarmEvaluationTimes: 1
     fallbackAlarmEvaluationTimes: 2
