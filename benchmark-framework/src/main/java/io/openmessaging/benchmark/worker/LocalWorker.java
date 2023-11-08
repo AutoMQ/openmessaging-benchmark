@@ -111,7 +111,8 @@ public class LocalWorker implements Worker, ConsumerCallback {
             topicInfos =
                     IntStream.range(0, topicsInfo.numberOfTopics)
                             .mapToObj(
-                                    i -> new TopicInfo(generateTopicName(i, topicsInfo.numberOfPartitionsPerTopic), topicsInfo.numberOfPartitionsPerTopic))
+                                    i -> new TopicInfo(generateTopicName(i, topicsInfo.numberOfPartitionsPerTopic),
+                                        topicsInfo.numberOfPartitionsPerTopic))
                             .collect(toList());
         } else {
             if (topicsInfo.numberOfPartitionsPerTopicList.size() != topicsInfo.numberOfTopics) {

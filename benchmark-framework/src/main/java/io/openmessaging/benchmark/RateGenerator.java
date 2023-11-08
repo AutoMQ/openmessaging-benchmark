@@ -1,3 +1,16 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.openmessaging.benchmark;
 
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +22,7 @@ import java.util.TreeMap;
 
 @Slf4j
 public class RateGenerator {
-    final private NavigableMap<LocalTime, Double> ratePoints = new TreeMap<>();
+    private final NavigableMap<LocalTime, Double> ratePoints = new TreeMap<>();
 
     public void put(LocalTime time, double rate) {
         ratePoints.put(time, rate);
@@ -20,8 +33,10 @@ public class RateGenerator {
             return 0;
         }
 
-        int floorTime, ceilingTime;
-        double floorRate, ceilingRate;
+        int floorTime;
+        int ceilingTime;
+        double floorRate;
+        double ceilingRate;
         Map.Entry<LocalTime, Double> floorEntry = ratePoints.floorEntry(time);
         if (null == floorEntry) {
             floorTime = ratePoints.lastKey().toSecondOfDay() - 24 * 60 * 60;
