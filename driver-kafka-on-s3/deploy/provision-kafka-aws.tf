@@ -290,6 +290,10 @@ output "client_ssh_host" {
   value = var.instance_cnt["client"] > 0 ? aws_instance.client[0].public_ip : null
 }
 
+output "client_ids" {
+  value = [for i in aws_instance.client : i.id]
+}
+
 resource "local_file" "hosts_ini" {
   content = templatefile("${path.module}/hosts.ini.tpl",
     {
