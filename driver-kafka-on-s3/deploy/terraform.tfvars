@@ -16,6 +16,7 @@ instance_cnt = {
 }
 
 monitoring = true
+spot = false
 
 ebs_volume_type = "gp3"
 ebs_volume_size = 10

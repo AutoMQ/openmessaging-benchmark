@@ -8,7 +8,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "5.0.1"
+      version = "5.26.0"
     }
     random = {
       source  = "hashicorp/random"
@@ -54,6 +54,11 @@ variable "instance_cnt" {
 
 # if true, enable CloudWatch monitoring on the instances
 variable "monitoring" {
+  type = bool
+}
+
+# if true, use spot instances
+variable "spot" {
   type = bool
 }
 
@@ -215,6 +220,17 @@ resource "aws_instance" "server" {
   vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
   count                  = var.instance_cnt["server"]
 
+  dynamic "instance_market_options" {
+    for_each = var.spot ? [1] : []
+    content {
+      market_type = "spot"
+      spot_options {
+        instance_interruption_behavior = "stop"
+        spot_instance_type = "persistent"
+      }
+    }
+  }
+
   root_block_device {
     volume_type = "gp3"
     volume_size = 16
@@ -251,6 +267,17 @@ resource "aws_instance" "client" {
   subnet_id              = aws_subnet.benchmark_subnet.id
   vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
   count                  = var.instance_cnt["client"]
+
+  dynamic "instance_market_options" {
+    for_each = var.spot ? [1] : []
+    content {
+      market_type = "spot"
+      spot_options {
+        instance_interruption_behavior = "stop"
+        spot_instance_type = "persistent"
+      }
+    }
+  }
 
   root_block_device {
     volume_type = "gp3"
