@@ -20,8 +20,9 @@
   tasks:
   - set_fact:
       # Global configs
-      base_store_path: "/mnt/data-1"
-      kafka_package: "/tmp/kafka_2.13-3.4.0.tgz"
+      base_store_path: "{{ ansible_env.HOME }}/data"
+      kafka_wal_path: "/dev/nvme1n1"
+      kafka_package: "/tmp/kafka_2.13-0.7.0.tgz"
       kafka_cluster_id: "KYTvAjiLTWyRmlCHGxHKcA"
       kafka_heap_size: "6g"
       kafka_direct_memory_size: "6g"
@@ -70,25 +71,6 @@
         - tuned
     - command: >
         tuned-adm profile latency-performance
-
-    - set_fact:
-        disks: [{
-          "path": "{{ base_store_path }}",
-          "src": "/dev/nvme1n1"
-        }]
-    - name: Format disks
-      filesystem:
-        fstype: ext4
-        dev: '{{ item.src }}'
-      with_items: '{{ disks }}'
-    - name: Mount disks
-      mount:
-        path: "{{ item.path }}"
-        src: "{{ item.src }}"
-        fstype: ext4
-        opts: defaults,noatime,nodiscard,data=writeback
-        state: mounted
-      with_items: '{{ disks }}'
 
     - name: Increase hard file descriptor limit
       pam_limits:
