@@ -20,7 +20,7 @@
   tasks:
   - set_fact:
       # Global configs
-      base_store_path: "{{ ansible_env.HOME }}/data"
+      base_store_path: "/data"
       kafka_wal_path: "/dev/nvme1n1"
       kafka_package: "/tmp/kafka_2.13-0.7.0.tgz"
       kafka_cluster_id: "KYTvAjiLTWyRmlCHGxHKcA"
@@ -100,7 +100,7 @@
 
 
 - name: Prepare Kafka servers
-  tags: [prepare]
+  tags: [prepare, run]
   any_errors_fatal: true
   hosts: [server]
   connection: ssh
