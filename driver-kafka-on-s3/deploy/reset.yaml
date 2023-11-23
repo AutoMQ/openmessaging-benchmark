@@ -12,6 +12,16 @@
 # limitations under the License.
 #
 
+- name: Set common facts
+  tags: [always]
+  hosts: all
+  connection: ssh
+  tasks:
+  - set_fact:
+      kafka_cluster_id: "KYTvAjiLTWyRmlCHGxHKcA"
+      base_store_path: "/data"
+      kafka_wal_path: "/dev/nvme1n1"
+
 
 - name: Reboot
   tags: [never]
@@ -44,9 +54,6 @@
   hosts: [server]
   connection: ssh
   become: true
-  vars:
-    kafka_cluster_id: "KYTvAjiLTWyRmlCHGxHKcA"
-    base_store_path: "/mnt/data-1"
   tasks:
     - name: Stop server
       systemd:
@@ -63,9 +70,8 @@
         path: "{{ base_store_path }}/data"
         state: absent
     - name: Remove WAL
-      file:
-        path: "{{ base_store_path }}/s3wal"
-        state: absent
+      shell: "dd if=/dev/zero of={{ kafka_wal_path }} bs=1M count=1 oflag=direct"
+      ignore_errors: yes
     - name: Format Log Directories
       shell: bin/kafka-storage.sh format --cluster-id {{ kafka_cluster_id }} --config config/kraft/server.properties --ignore-formatted
       args:
