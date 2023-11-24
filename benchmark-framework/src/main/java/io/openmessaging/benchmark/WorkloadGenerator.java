@@ -137,7 +137,7 @@ public class WorkloadGenerator implements AutoCloseable {
 
         if (workload.warmupDurationMinutes > 0) {
             log.info("----- Starting warm-up traffic ({}m) ------", workload.warmupDurationMinutes);
-            printAndCollectStats(workload.warmupDurationMinutes, TimeUnit.MINUTES);
+            printAndCollectStats(workload.warmupDurationMinutes, TimeUnit.MINUTES, workload.logIntervalMillis);
         }
 
         if (workload.consumerBacklogSizeGB > 0) {
@@ -154,7 +154,7 @@ public class WorkloadGenerator implements AutoCloseable {
         worker.resetStats();
         log.info("----- Starting benchmark traffic ({}m)------", workload.testDurationMinutes);
 
-        TestResult result = printAndCollectStats(workload.testDurationMinutes, TimeUnit.MINUTES);
+        TestResult result = printAndCollectStats(workload.testDurationMinutes, TimeUnit.MINUTES, workload.logIntervalMillis);
         runCompleted = true;
 
         worker.stopAll();
@@ -376,7 +376,7 @@ public class WorkloadGenerator implements AutoCloseable {
     }
 
     @SuppressWarnings({"checkstyle:LineLength", "checkstyle:MethodLength"})
-    private TestResult printAndCollectStats(long testDurations, TimeUnit unit) throws IOException {
+    private TestResult printAndCollectStats(long testDurations, TimeUnit unit, long logIntervalMillis) throws IOException {
         long startTime = System.nanoTime();
 
         // Print report stats
@@ -395,7 +395,7 @@ public class WorkloadGenerator implements AutoCloseable {
 
         while (true) {
             try {
-                Thread.sleep(10000);
+                Thread.sleep(logIntervalMillis);
             } catch (InterruptedException e) {
                 break;
             }

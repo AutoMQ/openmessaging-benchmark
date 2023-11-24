@@ -84,4 +84,6 @@ public class Workload {
     public int testDurationMinutes;
 
     public int warmupDurationMinutes = 1;
+
+    public int logIntervalMillis = 10000;
 }
