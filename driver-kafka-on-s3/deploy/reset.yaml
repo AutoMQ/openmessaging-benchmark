@@ -49,6 +49,37 @@
     delay: 5
 
 
+- name: Stop Kafka broker
+  tags: [stop]
+  hosts: [broker]
+  connection: ssh
+  become: true
+  tasks:
+    - name: Stop broker
+      systemd:
+        state: stopped
+        name: "broker"
+    - name: Wait broker to be stopped
+      service_facts:
+      register: broker_service
+      until: broker_service.ansible_facts.services['broker.service'].state in ['stopped', 'inactive']
+      retries: 10
+      delay: 5
+    - name: Remove data dir
+      file:
+        path: "{{ base_store_path }}/data"
+        state: absent
+    - name: Remove WAL
+      shell: "dd if=/dev/zero of={{ kafka_wal_path }} bs=1M count=1 oflag=direct"
+      ignore_errors: yes
+    - name: Format Log Directories
+      shell: bin/kafka-storage.sh format --cluster-id {{ kafka_cluster_id }} --config config/kraft/broker.properties --ignore-formatted
+      args:
+        chdir: "{{ base_store_path }}/kafka"
+    - name: Clean cache
+      shell: sync; echo 3 > /proc/sys/vm/drop_caches
+
+
 - name: Stop Kafka server
   tags: [stop]
   hosts: [server]
@@ -95,6 +126,25 @@
       service_facts:
       register: server_service
       until: server_service.ansible_facts.services['server.service'].state == 'running'
+      retries: 10
+      delay: 5
+
+
+- name: Start Kafka brokers
+  tags: [run]
+  hosts: [broker]
+  connection: ssh
+  become: true
+  tasks:
+    - name: Start Kafka broker
+      systemd:
+        state: restarted
+        daemon_reload: yes
+        name: "broker"
+    - name: Wait Kafka broker to be active
+      service_facts:
+      register: broker_service
+      until: broker_service.ansible_facts.services['broker.service'].state == 'running'
       retries: 10
       delay: 5
 
