@@ -59,7 +59,7 @@
 - name: Format and mount disks for Kafka hosts
   tags: [prepare]
   any_errors_fatal: true
-  hosts: [server]
+  hosts: [server, broker]
   connection: ssh
   become: true
   tasks:
@@ -99,17 +99,13 @@
       reboot:
 
 
-- name: Prepare Kafka servers
-  tags: [prepare, run]
+- name: Prepare Kafka servers and brokers
+  tags: [prepare]
   any_errors_fatal: true
-  hosts: [server]
+  hosts: [server, broker]
   connection: ssh
   become: true
   tasks:
-    # recreate kafka dir
-    - file: path={{ kafka_dir }} state=absent
-    - file: path={{ kafka_dir }} state=directory
-
     - name: Set Kafka facts
       tags: always
       block:
@@ -131,11 +127,23 @@
       with_items:
         - openjdk-17-jdk
 
+
+- name: Install Kafka
+  tags: [install]
+  any_errors_fatal: true
+  hosts: [server, broker]
+  connection: ssh
+  become: true
+  tasks:
+    # recreate kafka dir
+    - file: path={{ kafka_dir }} state=absent
+    - file: path={{ kafka_dir }} state=directory
     - name: Copy Kafka package
       unarchive:
         src: "{{ kafka_package }}"
         dest: "{{ kafka_dir }}"
         extra_opts: ["--strip-components=1"]
+
 
 - name: Setup Kafka servers
   tags: [run]
@@ -163,6 +171,35 @@
     service_facts:
     register: server_service
     until: server_service.ansible_facts.services['server.service'].state == 'running'
+    retries: 10
+    delay: 5
+
+- name: Setup Kafka brokers
+  tags: [run]
+  any_errors_fatal: true
+  hosts: [broker]
+  connection: ssh
+  become: true
+  tasks:
+  - template:
+      src: "templates/broker.properties"
+      dest: "{{ kafka_dir }}/config/kraft/broker.properties"
+  - template:
+      src: "templates/broker.service"
+      dest: "/etc/systemd/system/broker.service"
+  - name: Format Log Directories
+    shell: bin/kafka-storage.sh format --cluster-id {{ kafka_cluster_id }} --config config/kraft/broker.properties --ignore-formatted
+    args:
+      chdir: "{{ kafka_dir }}"
+  - name: Start Kafka broker
+    systemd:
+      state: restarted
+      daemon_reload: yes
+      name: "broker"
+  - name: Wait Kafka broker to be active
+    service_facts:
+    register: broker_service
+    until: broker_service.ansible_facts.services['broker.service'].state == 'running'
     retries: 10
     delay: 5
 
@@ -278,6 +315,9 @@
     - debug:
         msg: "Kafka servers {{ item }}"
       with_items: "{{ groups['server'] }}"
+    - debug:
+        msg: "Kafka brokers {{ item }}"
+      with_items: "{{ groups['broker'] }}"
     - debug:
         msg: "Benchmark clients {{ item }}"
       with_items: "{{ groups['client'] }}"
