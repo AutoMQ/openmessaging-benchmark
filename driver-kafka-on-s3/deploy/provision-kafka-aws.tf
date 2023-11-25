@@ -260,6 +260,54 @@ resource "aws_instance" "server" {
   }
 }
 
+resource "aws_instance" "broker" {
+  ami                    = var.ami
+  instance_type          = var.instance_type["broker"]
+  key_name               = aws_key_pair.auth.id
+  subnet_id              = aws_subnet.benchmark_subnet.id
+  vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
+  count                  = var.instance_cnt["broker"]
+
+  dynamic "instance_market_options" {
+    for_each = var.spot ? [1] : []
+    content {
+      market_type = "spot"
+      spot_options {
+        instance_interruption_behavior = "stop"
+        spot_instance_type = "persistent"
+      }
+    }
+  }
+
+  root_block_device {
+    volume_type = "gp3"
+    volume_size = 16
+    tags = {
+      Name      = "Kafka_on_S3_Benchmark_EBS_root_broker_${count.index}_${random_id.hash.hex}"
+      Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+    }
+  }
+
+  ebs_block_device {
+    device_name = "/dev/sdf"
+    volume_type = var.ebs_volume_type
+    volume_size = var.ebs_volume_size
+    iops        = var.ebs_iops
+    tags = {
+      Name      = "Kafka_on_S3_Benchmark_EBS_data_broker_${count.index}_${random_id.hash.hex}"
+      Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+    }
+  }
+
+  iam_instance_profile = aws_iam_instance_profile.benchmark_instance_profile_s3.name
+
+  monitoring = var.monitoring
+  tags = {
+    Name      = "Kafka_on_S3_Benchmark_EC2_broker_${count.index}_${random_id.hash.hex}"
+    Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+  }
+}
+
 resource "aws_instance" "client" {
   ami                    = var.ami
   instance_type          = var.instance_type["client"]
@@ -313,6 +361,10 @@ output "server_ssh_host" {
   value = var.instance_cnt["server"] > 0 ? aws_instance.server[0].public_ip : null
 }
 
+output "broker_ssh_host" {
+  value = var.instance_cnt["broker"] > 0 ? aws_instance.broker[0].public_ip : null
+}
+
 output "client_ssh_host" {
   value = var.instance_cnt["client"] > 0 ? aws_instance.client[0].public_ip : null
 }
@@ -325,6 +377,7 @@ resource "local_file" "hosts_ini" {
   content = templatefile("${path.module}/hosts.ini.tpl",
     {
       server = aws_instance.server,
+      broker = aws_instance.broker,
       client = aws_instance.client,
 
       ssh_user = var.user,

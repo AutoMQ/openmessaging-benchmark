@@ -7,12 +7,14 @@ user            = "ubuntu"
 
 instance_type = {
   "server"              = "r6i.large"
+  "broker"              = "r6i.large"
   "client"              = "m6i.xlarge"
 }
 
 instance_cnt = {
-  "server"              = 3
-  "client"              = 4
+  "server"              = 1
+  "broker"              = 2
+  "client"              = 2
 }
 
 monitoring = true
