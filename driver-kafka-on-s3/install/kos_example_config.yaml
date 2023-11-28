@@ -60,11 +60,11 @@ kos:
       - s3.block.cache.size=1073741824
       - s3.wal.capacity=4294967296
       - s3.wal.cache.size=2147483648
-      - s3.wal.object.size=536870912
+      - s3.wal.upload.threshold=536870912
       - s3.stream.object.split.size=8388608
       - s3.object.block.size=16777216
       - s3.object.part.size=33554432
-      - s3.object.compaction.cache.size=536870912
+      - s3.stream.set.object.compaction.cache.size=536870912
   scaling:
     ## ASG 每次扩缩容的最小间隔，单位为秒
     cooldown: 60
