@@ -56,6 +56,18 @@ variable "monitoring" {
   default = true
 }
 
+variable "ebs_volume_type" {
+  type = string
+}
+
+variable "ebs_volume_size" {
+  type = number
+}
+
+variable "ebs_iops" {
+  type = number
+}
+
 # Create a VPC to launch our instances into
 resource "aws_vpc" "benchmark_vpc" {
   cidr_block = "10.0.0.0/16"
@@ -138,6 +150,16 @@ resource "aws_instance" "controller" {
     }
   }
 
+  ebs_block_device {
+    device_name = "/dev/sdb"
+    volume_type = var.ebs_volume_type
+    volume_size = var.ebs_volume_size
+    iops        = var.ebs_iops
+    tags = {
+      Name = "ctrl_${count.index}_data"
+    }
+  }
+
   monitoring = var.monitoring
   tags = {
     Name      = "kafka_controller_${count.index}"
@@ -157,6 +179,16 @@ resource "aws_instance" "broker" {
     volume_size = 64
     tags = {
       Name = "bkr_${count.index}"
+    }
+  }
+
+  ebs_block_device {
+    device_name = "/dev/sdb"
+    volume_type = var.ebs_volume_type
+    volume_size = var.ebs_volume_size
+    iops        = var.ebs_iops
+    tags = {
+      Name = "bkr_${count.index}_data"
     }
   }
 

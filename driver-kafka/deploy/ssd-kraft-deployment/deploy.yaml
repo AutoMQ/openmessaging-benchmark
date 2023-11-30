@@ -39,10 +39,6 @@
         privateIp: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
         baseStorePath: "/mnt/data-1"
         kafka_xm: "16g"
-    - name: Change locale to en_US.utf-8
-      shell: |
-        echo 'LANG=en_US.utf-8
-              LC_ALL=en_US.utf-8' > /etc/environment
 
 - name: Format and mount disks for Kafka hosts
   hosts: [controller, broker]
