@@ -56,6 +56,22 @@ variable "monitoring" {
   default = true
 }
 
+variable "ebs_volume_type" {
+  type = string
+}
+
+variable "ebs_volume_size" {
+  type = number
+}
+
+variable "ebs_iops" {
+  type = number
+}
+
+variable "ebs_throughput" {
+  type = number
+}
+
 # Create a VPC to launch our instances into
 resource "aws_vpc" "benchmark_vpc" {
   cidr_block = "10.0.0.0/16"
@@ -132,9 +148,21 @@ resource "aws_instance" "controller" {
   count                  = "${var.num_instances["controller"]}"
 
   root_block_device {
+    volume_type = "gp3"
     volume_size = 64
     tags = {
       Name = "ctrl_${count.index}"
+    }
+  }
+
+  ebs_block_device {
+    device_name = "/dev/sdb"
+    volume_type = var.ebs_volume_type
+    volume_size = var.ebs_volume_size
+    iops        = var.ebs_iops
+    throughput  = var.ebs_throughput
+    tags = {
+      Name = "ctrl_${count.index}_data"
     }
   }
 
@@ -154,9 +182,21 @@ resource "aws_instance" "broker" {
   count                  = lookup(var.num_instances, "broker", 0) # (var.num_instances["broker"]")
 
   root_block_device {
+    volume_type = "gp3"
     volume_size = 64
     tags = {
       Name = "bkr_${count.index}"
+    }
+  }
+
+  ebs_block_device {
+    device_name = "/dev/sdb"
+    volume_type = var.ebs_volume_type
+    volume_size = var.ebs_volume_size
+    iops        = var.ebs_iops
+    throughput  = var.ebs_throughput
+    tags = {
+      Name = "bkr_${count.index}_data"
     }
   }
 
@@ -176,6 +216,7 @@ resource "aws_instance" "client" {
   count                  = "${var.num_instances["client"]}"
 
   root_block_device {
+    volume_type = "gp3"
     volume_size = 64
     tags = {
       Name = "client_${count.index}"
