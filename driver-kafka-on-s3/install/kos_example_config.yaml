@@ -39,6 +39,7 @@ kos:
       - autobalancer.reporter.network.out.capacity=100000
     ## 混合节点与 broker 节点的公共配置
     commonSettings:
+      - log.index.interval.bytes=10485760
       - metric.reporters=kafka.autobalancer.metricsreporter.AutoBalancerMetricsReporter,org.apache.kafka.server.metrics.s3stream.KafkaS3MetricsLoggerReporter
       - s3.metrics.logger.interval.ms=10000
       - autobalancer.topic.num.partitions=1

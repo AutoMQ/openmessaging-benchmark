@@ -12,7 +12,7 @@
 # limitations under the License.
 #
 
-name: Kafka on S3
+name: AutoMQ-for-Kafka
 driverClass: io.openmessaging.benchmark.driver.kafka.KafkaBenchmarkDriver
 
 # Kafka client-specific configuration
@@ -30,14 +30,13 @@ commonConfig: |
 producerConfig: |
   acks=all
   linger.ms=0
-  batch.size=131072
+  batch.size=65536
   send.buffer.bytes=1048576
   receive.buffer.bytes=1048576
 
 consumerConfig: |
   auto.offset.reset=earliest
-  enable.auto.commit=false
-  auto.commit.interval.ms=0
-  max.partition.fetch.bytes=131072
+  enable.auto.commit=true
+  max.partition.fetch.bytes=1048576
   send.buffer.bytes=1048576
   receive.buffer.bytes=1048576
