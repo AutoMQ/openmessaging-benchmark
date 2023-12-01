@@ -12,8 +12,22 @@
 # limitations under the License.
 #
 
+- name: Set common facts
+  tags: [always]
+  hosts: all
+  connection: ssh
+  tasks:
+    - name: Set common facts
+      set_fact:
+        controllerServers: "{{ groups['controller'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9093') | join(',') }}"
+        brokerServers: "{{ groups['broker'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9092') | join(',') }}"
+        privateIp: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+        baseStorePath: "/mnt/data-1"
+        kafka_xm: "12g"
+
 - name: General setup for all
-  hosts: [controller, broker, client]
+  tags: [prepare]
+  hosts: all
   connection: ssh
   become: true
   tasks:
@@ -32,15 +46,9 @@
         - sysstat
         - vim
         - chrony
-    - name: Set common facts
-      set_fact:
-        controllerServers: "{{ groups['controller'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9093') | join(',') }}"
-        brokerServers: "{{ groups['broker'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9092') | join(',') }}"
-        privateIp: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
-        baseStorePath: "/mnt/data-1"
-        kafka_xm: "16g"
 
 - name: Format and mount disks for Kafka hosts
+  tags: [prepare]
   hosts: [controller, broker]
   connection: ssh
   become: true
@@ -89,24 +97,26 @@
       reboot:
 
 - name: Kafka general setup
+  tags: [prepare]
   hosts: [controller, broker]
   connection: ssh
   become: true
   tasks:
     - file: path={{ baseStorePath }}/kafka state=absent
     - file: path={{ baseStorePath }}/kafka state=directory
-    - name: Generate quorum servers
-      set_fact:
-        quorumServers: "{{ quorumServers | default('') + (itemIndex + 1) | string + '@' + item + ',' }}"
-      loop: "{{ groups['controller'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9093') }}"
-      loop_control:
-        index_var: itemIndex
     - name: Set common facts
-      set_fact:
-        quorumServers: "{{ quorumServers[:-1] }}"
-        kafkaVersion: "3.4.0"
-        KAFKA_CLUSTER_ID: "XPufKTN9T1SpE82LDKwXwA"
-        flushScheduleInterval: "9223372036854775807"
+      tags: always
+      block:
+        - set_fact:
+            quorumServers: "{{ quorumServers | default('') + (itemIndex + 1) | string + '@' + item + ',' }}"
+          loop: "{{ groups['controller'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9093') }}"
+          loop_control:
+            index_var: itemIndex
+        - set_fact:
+            quorumServers: "{{ quorumServers[:-1] }}"
+            kafkaVersion: "3.4.0"
+            KAFKA_CLUSTER_ID: "XPufKTN9T1SpE82LDKwXwA"
+            flushScheduleInterval: "9223372036854775807"
     - name: Download Kafka package
       unarchive:
         src: "https://archive.apache.org/dist/kafka/{{ kafkaVersion }}/kafka_2.13-{{ kafkaVersion }}.tgz"
@@ -116,6 +126,7 @@
 
 # setting controllers.
 - name: Setup Kafka controllers
+  tags: [run]
   hosts: controller
   connection: ssh
   become: true
@@ -142,6 +153,7 @@
 
 
 - name: Setup Kafka brokers
+  tags: [run]
   hosts: broker
   connection: ssh
   become: true
@@ -168,6 +180,7 @@
 
 
 - name: Setup Benchmark client
+  tags: [run]
   hosts: client
   connection: ssh
   become: true
@@ -252,6 +265,7 @@
 
 
 - name:  Hosts addresses
+  tags: [always]
   hosts: localhost
   become: false
   tasks:
