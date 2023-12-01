@@ -14,6 +14,6 @@ ${ instance.public_ip } ansible_user=${ ssh_user } private_ip=${ instance.privat
 %{ endfor ~}
 
 [all:vars]
-s3_endpoint=https://s3.${ s3_region }.amazonaws.com.cn
+s3_endpoint=https://s3.${ s3_region }.{ aws_domain }
 s3_region=${ s3_region }
 s3_bucket=${ s3_bucket }

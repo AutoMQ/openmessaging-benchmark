@@ -74,6 +74,10 @@ variable "ebs_iops" {
   type = number
 }
 
+variable "aws_cn" {
+  type = bool
+}
+
 # Create a VPC to launch our instances into
 resource "aws_vpc" "benchmark_vpc" {
   cidr_block = "10.0.0.0/16"
@@ -165,7 +169,7 @@ resource "aws_iam_role" "benchmark_role_s3" {
         Action = "sts:AssumeRole"
         Effect = "Allow"
         Principal = {
-          Service = "ec2.amazonaws.com.cn"
+          Service = var.aws_cn ? "ec2.amazonaws.com.cn" : "ec2.amazonaws.com"
         }
       }
     ]
@@ -186,9 +190,12 @@ resource "aws_iam_role" "benchmark_role_s3" {
             "s3:AbortMultipartUpload",
           ]
           Effect = "Allow"
-          Resource = [
+          Resource = var.aws_cn ? [
             "arn:aws-cn:s3:::${aws_s3_bucket.benchmark_bucket.id}",
             "arn:aws-cn:s3:::${aws_s3_bucket.benchmark_bucket.id}/*",
+          ] : [
+            "arn:aws:s3:::${aws_s3_bucket.benchmark_bucket.id}",
+            "arn:aws:s3:::${aws_s3_bucket.benchmark_bucket.id}/*",
           ]
         }
       ]
@@ -384,6 +391,7 @@ resource "local_file" "hosts_ini" {
 
       s3_region   = var.region,
       s3_bucket   = aws_s3_bucket.benchmark_bucket.id,
+      aws_domain = var.aws_cn ? "amazonaws.com.cn" : "amazonaws.com",
     }
   )
   filename = "${path.module}/hosts.ini"
