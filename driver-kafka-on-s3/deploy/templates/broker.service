@@ -5,7 +5,7 @@ After=network.target
 [Service]
 ExecStart={{ kafka_dir }}/bin/kafka-server-start.sh config/kraft/broker.properties
 Environment='KAFKA_HEAP_OPTS=-Xms{{ kafka_heap_size }} -Xmx{{ kafka_heap_size }} -XX:MaxDirectMemorySize={{ kafka_direct_memory_size }} -XX:MetaspaceSize=96m'
-Environment='KAFKA_JVM_PERFORMANCE_OPTS=-server -XX:+UnlockExperimentalVMOptions -XX:+UseZGC -XX:+ParallelRefProcEnabled -XX:+AggressiveOpts -XX:+DoEscapeAnalysis -XX:ParallelGCThreads=12 -XX:ConcGCThreads=12 -XX:+DisableExplicitGC -XX:-ResizePLAB -XX:MinMetaspaceFreeRatio=50 -XX:MaxMetaspaceFreeRatio=80 -Djava.awt.headless=true'
+Environment='KAFKA_JVM_PERFORMANCE_OPTS=-server -XX:+UseZGC'
 WorkingDirectory={{ kafka_dir }}
 RestartSec=1s
 Restart=on-failure
