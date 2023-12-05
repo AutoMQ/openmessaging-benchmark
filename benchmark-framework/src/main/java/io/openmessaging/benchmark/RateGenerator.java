@@ -13,12 +13,12 @@
  */
 package io.openmessaging.benchmark;
 
-import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalTime;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class RateGenerator {

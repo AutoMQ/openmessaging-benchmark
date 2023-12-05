@@ -13,11 +13,10 @@
  */
 package io.openmessaging.benchmark;
 
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalTime;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 class RateGeneratorTest {
     private final RateGenerator rateGenerator = new RateGenerator();

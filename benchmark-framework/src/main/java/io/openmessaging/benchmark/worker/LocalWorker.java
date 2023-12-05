@@ -13,6 +13,8 @@
  */
 package io.openmessaging.benchmark.worker;
 
+import static java.util.stream.Collectors.toList;
+
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -36,11 +38,6 @@ import io.openmessaging.benchmark.worker.commands.CumulativeLatencies;
 import io.openmessaging.benchmark.worker.commands.PeriodStats;
 import io.openmessaging.benchmark.worker.commands.ProducerWorkAssignment;
 import io.openmessaging.benchmark.worker.commands.TopicsInfo;
-import org.apache.bookkeeper.stats.NullStatsLogger;
-import org.apache.bookkeeper.stats.StatsLogger;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -56,8 +53,10 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
-
-import static java.util.stream.Collectors.toList;
+import org.apache.bookkeeper.stats.NullStatsLogger;
+import org.apache.bookkeeper.stats.StatsLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LocalWorker implements Worker, ConsumerCallback {
 
@@ -95,9 +94,9 @@ public class LocalWorker implements Worker, ConsumerCallback {
                     (BenchmarkDriver) Class.forName(driverConfiguration.driverClass).newInstance();
             benchmarkDriver.initialize(driverConfigFile, stats.getStatsLogger());
         } catch (InstantiationException
-                 | IllegalAccessException
-                 | ClassNotFoundException
-                 | InterruptedException e) {
+                | IllegalAccessException
+                | ClassNotFoundException
+                | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
@@ -111,8 +110,10 @@ public class LocalWorker implements Worker, ConsumerCallback {
             topicInfos =
                     IntStream.range(0, topicsInfo.numberOfTopics)
                             .mapToObj(
-                                    i -> new TopicInfo(generateTopicName(i, topicsInfo.numberOfPartitionsPerTopic),
-                                        topicsInfo.numberOfPartitionsPerTopic))
+                                    i ->
+                                            new TopicInfo(
+                                                    generateTopicName(i, topicsInfo.numberOfPartitionsPerTopic),
+                                                    topicsInfo.numberOfPartitionsPerTopic))
                             .collect(toList());
         } else {
             if (topicsInfo.numberOfPartitionsPerTopicList.size() != topicsInfo.numberOfTopics) {
@@ -267,11 +268,10 @@ public class LocalWorker implements Worker, ConsumerCallback {
     }
 
     /**
-     * This method is called by the consumer when a message is received.
-     * Note that publishTimestamp is in milliseconds, which loses precision in conversion to nanoseconds.
-     * Fix it if needed.
+     * This method is called by the consumer when a message is received. Note that publishTimestamp is
+     * in milliseconds, which loses precision in conversion to nanoseconds. Fix it if needed.
      *
-     * @param size             size of the received message
+     * @param size size of the received message
      * @param publishTimestamp publish timestamp of the received message
      */
     public void internalMessageReceived(int size, long publishTimestamp) {
@@ -279,7 +279,8 @@ public class LocalWorker implements Worker, ConsumerCallback {
         // NOTE: PublishTimestamp is expected to be using the wall-clock time across
         // machines
         Instant currentTime = Instant.now();
-        long currentTimeNanos = TimeUnit.SECONDS.toNanos(currentTime.getEpochSecond()) + currentTime.getNano();
+        long currentTimeNanos =
+                TimeUnit.SECONDS.toNanos(currentTime.getEpochSecond()) + currentTime.getNano();
         long endToEndLatencyMicros = TimeUnit.NANOSECONDS.toMicros(currentTimeNanos - publishTimeNanos);
         stats.recordMessageReceived(size, endToEndLatencyMicros);
 

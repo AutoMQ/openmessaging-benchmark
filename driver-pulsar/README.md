@@ -64,6 +64,7 @@ TF_STATE=. ansible-playbook \
 ```
 
 ### Run KOP deployment
+
 ```bash
 TF_STATE=. ansible-playbook \
   --user ubuntu \
