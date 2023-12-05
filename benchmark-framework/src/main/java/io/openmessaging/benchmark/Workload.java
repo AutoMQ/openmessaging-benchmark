@@ -15,7 +15,6 @@ package io.openmessaging.benchmark;
 
 
 import io.openmessaging.benchmark.utils.distributor.KeyDistributorType;
-
 import java.util.List;
 
 public class Workload {
@@ -57,9 +56,7 @@ public class Workload {
 
     public int producerRate;
 
-    /**
-     * For example, [11, 30, 1000] means that at 11:30, the producer rate will be 1000 msg/s.
-     */
+    /** For example, [11, 30, 1000] means that at 11:30, the producer rate will be 1000 msg/s. */
     public List<List<Integer>> producerRateList = null;
 
     /**

@@ -147,7 +147,8 @@ public class Benchmark {
         if (arguments.workers != null && !arguments.workers.isEmpty()) {
             List<Worker> workers =
                     arguments.workers.stream().map(HttpWorkerClient::new).collect(toList());
-            worker = new DistributedWorkersEnsemble(workers, arguments.extraConsumers, arguments.separate);
+            worker =
+                    new DistributedWorkersEnsemble(workers, arguments.extraConsumers, arguments.separate);
         } else {
             // Use local worker implementation
             worker = new LocalWorker();

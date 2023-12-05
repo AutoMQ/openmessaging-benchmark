@@ -96,12 +96,14 @@ public class KopBenchmarkDriver implements BenchmarkDriver {
         kafkaProducerProperties.putAll(kafkaCommonProperties);
         kafkaProducerProperties.load(new StringReader(config.kafkaProducerConfig));
         kafkaProducerProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        kafkaProducerProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
+        kafkaProducerProperties.put(
+                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
 
         kafkaConsumerProperties = new Properties();
         kafkaConsumerProperties.putAll(kafkaCommonProperties);
         kafkaConsumerProperties.load(new StringReader(config.kafkaConsumerConfig));
-        kafkaConsumerProperties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        kafkaConsumerProperties.put(
+                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         kafkaConsumerProperties.put(
                 ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
 
@@ -143,7 +145,6 @@ public class KopBenchmarkDriver implements BenchmarkDriver {
                 throw new IOException(e);
             }
         }
-
     }
 
     @Override

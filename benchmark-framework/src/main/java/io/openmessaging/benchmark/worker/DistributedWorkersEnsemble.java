@@ -44,7 +44,8 @@ public class DistributedWorkersEnsemble implements Worker {
 
     private int numberOfUsedProducerWorkers;
 
-    public DistributedWorkersEnsemble(List<Worker> workers, boolean extraConsumerWorkers, boolean separateWorkers) {
+    public DistributedWorkersEnsemble(
+            List<Worker> workers, boolean extraConsumerWorkers, boolean separateWorkers) {
         this.workers = unmodifiableList(workers);
         leader = workers.get(0);
         if (separateWorkers) {

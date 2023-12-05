@@ -78,8 +78,12 @@ class KafkaTopicCreator {
             while (succeeded.get() < topicInfos.size()) {
                 if (tries > MAX_RETRIES) {
                     throw new RuntimeException(
-                            "Failed to create topics after " + MAX_RETRIES + " retries. created: " + succeeded.get()
-                                + " of " + topicInfos.size());
+                            "Failed to create topics after "
+                                    + MAX_RETRIES
+                                    + " retries. created: "
+                                    + succeeded.get()
+                                    + " of "
+                                    + topicInfos.size());
                 }
                 AtomicBoolean anyFailed = new AtomicBoolean(false);
                 int batchSize = queue.drainTo(batch, maxBatchSize);

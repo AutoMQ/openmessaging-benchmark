@@ -13,6 +13,8 @@
  */
 package io.openmessaging.benchmark;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
+
 import io.netty.util.concurrent.DefaultThreadFactory;
 import io.openmessaging.benchmark.utils.PaddingDecimalFormat;
 import io.openmessaging.benchmark.utils.Timer;
@@ -26,10 +28,6 @@ import io.openmessaging.benchmark.worker.commands.PeriodStats;
 import io.openmessaging.benchmark.worker.commands.ProducerWorkAssignment;
 import io.openmessaging.benchmark.worker.commands.TopicSubscription;
 import io.openmessaging.benchmark.worker.commands.TopicsInfo;
-import org.apache.commons.lang.ArrayUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.time.LocalTime;
@@ -40,8 +38,9 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
-import static java.util.concurrent.TimeUnit.MINUTES;
+import org.apache.commons.lang.ArrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class WorkloadGenerator implements AutoCloseable {
 
@@ -71,8 +70,9 @@ public class WorkloadGenerator implements AutoCloseable {
     public TestResult run() throws Exception {
         Timer timer = new Timer();
         List<String> topics =
-                worker.createTopics(new TopicsInfo(workload.topics, workload.partitionsPerTopic,
-                    workload.partitionsPerTopicList));
+                worker.createTopics(
+                        new TopicsInfo(
+                                workload.topics, workload.partitionsPerTopic, workload.partitionsPerTopicList));
         log.info("Created {} topics in {} ms", topics.size(), timer.elapsedMillis());
 
         createConsumers(topics);
@@ -105,8 +105,7 @@ public class WorkloadGenerator implements AutoCloseable {
                         } catch (IOException e) {
                             log.warn("Failure in adjusting publish rate", e);
                         }
-                    }
-            );
+                    });
         }
 
         final PayloadReader payloadReader = new FilePayloadReader(workload.messageSize);
@@ -137,7 +136,8 @@ public class WorkloadGenerator implements AutoCloseable {
 
         if (workload.warmupDurationMinutes > 0) {
             log.info("----- Starting warm-up traffic ({}m) ------", workload.warmupDurationMinutes);
-            printAndCollectStats(workload.warmupDurationMinutes, TimeUnit.MINUTES, workload.logIntervalMillis);
+            printAndCollectStats(
+                    workload.warmupDurationMinutes, TimeUnit.MINUTES, workload.logIntervalMillis);
         }
 
         if (workload.consumerBacklogSizeGB > 0) {
@@ -154,7 +154,9 @@ public class WorkloadGenerator implements AutoCloseable {
         worker.resetStats();
         log.info("----- Starting benchmark traffic ({}m)------", workload.testDurationMinutes);
 
-        TestResult result = printAndCollectStats(workload.testDurationMinutes, TimeUnit.MINUTES, workload.logIntervalMillis);
+        TestResult result =
+                printAndCollectStats(
+                        workload.testDurationMinutes, TimeUnit.MINUTES, workload.logIntervalMillis);
         runCompleted = true;
 
         worker.stopAll();
@@ -376,7 +378,8 @@ public class WorkloadGenerator implements AutoCloseable {
     }
 
     @SuppressWarnings({"checkstyle:LineLength", "checkstyle:MethodLength"})
-    private TestResult printAndCollectStats(long testDurations, TimeUnit unit, long logIntervalMillis) throws IOException {
+    private TestResult printAndCollectStats(long testDurations, TimeUnit unit, long logIntervalMillis)
+            throws IOException {
         long startTime = System.nanoTime();
 
         // Print report stats
