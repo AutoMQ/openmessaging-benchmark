@@ -4,8 +4,9 @@ After=network.target
 
 [Service]
 ExecStart={{ kafka_dir }}/bin/kafka-server-start.sh config/kraft/broker.properties
+Environment='KAFKA_OPTS=-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath={{ kafka_dir }}'
 Environment='KAFKA_HEAP_OPTS=-Xms{{ kafka_heap_size }} -Xmx{{ kafka_heap_size }} -XX:MaxDirectMemorySize={{ kafka_direct_memory_size }} -XX:MetaspaceSize=96m'
-Environment='KAFKA_JVM_PERFORMANCE_OPTS=-server -XX:+UseZGC'
+Environment='KAFKA_JVM_PERFORMANCE_OPTS=-server -XX:+UseZGC -XX:ZCollectionInterval=5'
 WorkingDirectory={{ kafka_dir }}
 RestartSec=1s
 Restart=on-failure
