@@ -28,6 +28,7 @@
       kafka_direct_memory_size: "6g"
       client_worker_heap_size: "8g"
       client_bench_heap_size: "4g"
+      ec2_network_bandwidth: "104824045"
   - set_fact:
       private_ip: "{{ hostvars[inventory_hostname]['private_ip'] }}"
       kafka_dir: "{{ base_store_path }}/kafka"
