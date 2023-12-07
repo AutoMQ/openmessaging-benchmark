@@ -29,14 +29,9 @@ commonConfig: |
 
 producerConfig: |
   acks=all
-  linger.ms=0
-  batch.size=65536
-  send.buffer.bytes=1048576
-  receive.buffer.bytes=1048576
+  linger.ms=1
+  batch.size=131072
 
 consumerConfig: |
   auto.offset.reset=earliest
   enable.auto.commit=true
-  max.partition.fetch.bytes=1048576
-  send.buffer.bytes=1048576
-  receive.buffer.bytes=1048576

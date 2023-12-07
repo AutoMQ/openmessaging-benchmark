@@ -21,22 +21,16 @@ reset: true
 
 topicConfig: |
   min.insync.replicas=2
-  flush.messages=1
+  retention.ms=86400000
 
 commonConfig: |
   bootstrap.servers=localhost:9092
 
 producerConfig: |
   acks=all
-  linger.ms=0
-  batch.size=131150
-  send.buffer.bytes=1048576
-  receive.buffer.bytes=1048576
+  linger.ms=1
+  batch.size=131072
 
 consumerConfig: |
   auto.offset.reset=earliest
-  enable.auto.commit=false
-  auto.commit.interval.ms=0
-  max.partition.fetch.bytes=131150
-  send.buffer.bytes=1048576
-  receive.buffer.bytes=1048576
+  enable.auto.commit=true
