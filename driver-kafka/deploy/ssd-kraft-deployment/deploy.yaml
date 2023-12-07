@@ -49,6 +49,7 @@
 
 - name: Format and mount disks for Kafka hosts
   tags: [prepare]
+  any_errors_fatal: true
   hosts: [controller, broker]
   connection: ssh
   become: true
@@ -114,7 +115,7 @@
             index_var: itemIndex
         - set_fact:
             quorumServers: "{{ quorumServers[:-1] }}"
-            kafkaVersion: "3.4.0"
+            kafkaVersion: "3.6.0"
             KAFKA_CLUSTER_ID: "XPufKTN9T1SpE82LDKwXwA"
             flushScheduleInterval: "9223372036854775807"
     - name: Download Kafka package
