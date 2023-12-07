@@ -12,13 +12,21 @@
 # limitations under the License.
 #
 
+- name: Set common facts
+  tags: [always]
+  hosts: all
+  connection: ssh
+  tasks:
+  - set_fact:
+      kafka_cluster_id: "XPufKTN9T1SpE82LDKwXwA"
+      base_data_path: "/mnt/data-1"
+      base_code_path: "/opt"
+
+
 - name: stop broker nodes
   hosts: [broker]
   connection: ssh
   become: true
-  vars:
-    KAFKA_CLUSTER_ID: "XPufKTN9T1SpE82LDKwXwA"
-    baseStorePath: "/mnt/data-1"
   tasks:
     - name: Stop broker
       systemd:
@@ -33,15 +41,15 @@
     - name: remove data dir
       shell: rm -rf data
       args:
-        chdir: "{{ baseStorePath }}"
+        chdir: "{{ base_data_path }}"
     - name: remove logs
       shell: rm -f *
       args:
-        chdir: "{{ baseStorePath }}/kafka/logs"
+        chdir: "{{ base_code_path }}/kafka/logs"
     - name: Format Log Directories
-      shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/broker.properties --ignore-formatted
+      shell: bin/kafka-storage.sh format -t {{ kafka_cluster_id }} -c config/kraft/broker.properties --ignore-formatted
       args:
-        chdir: "{{ baseStorePath }}/kafka"
+        chdir: "{{ base_code_path }}/kafka"
     - name: Clean cache
       shell: sync; echo 3 > /proc/sys/vm/drop_caches
 
@@ -50,9 +58,6 @@
   hosts: [controller]
   connection: ssh
   become: true
-  vars:
-    KAFKA_CLUSTER_ID: "XPufKTN9T1SpE82LDKwXwA"
-    baseStorePath: "/mnt/data-1"
   tasks:
     - name: stop controller
       systemd:
@@ -67,17 +72,18 @@
     - name: remove data dir
       shell: rm -rf data
       args:
-        chdir: "{{ baseStorePath }}"
+        chdir: "{{ base_data_path }}"
     - name: remove logs
       shell: rm -f *
       args:
-        chdir: "{{ baseStorePath }}/kafka/logs"
+        chdir: "{{ base_code_path }}/kafka/logs"
     - name: Format Log Directories
-      shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/controller.properties --ignore-formatted
+      shell: bin/kafka-storage.sh format -t {{ kafka_cluster_id }} -c config/kraft/controller.properties --ignore-formatted
       args:
-        chdir: "{{ baseStorePath }}/kafka"
+        chdir: "{{ base_code_path }}/kafka"
     - name: Clean cache
       shell: sync; echo 3 > /proc/sys/vm/drop_caches
+
 
 - name: Start Kafka controller
   tags: [run]

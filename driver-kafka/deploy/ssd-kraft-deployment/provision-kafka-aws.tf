@@ -157,10 +157,8 @@ resource "aws_instance" "controller" {
 
   ebs_block_device {
     device_name = "/dev/sdb"
-    volume_type = var.ebs_volume_type
-    volume_size = var.ebs_volume_size
-    iops        = var.ebs_iops
-    throughput  = var.ebs_throughput
+    volume_type = "gp3"
+    volume_size = 32
     tags = {
       Name = "ctrl_${count.index}_data"
     }

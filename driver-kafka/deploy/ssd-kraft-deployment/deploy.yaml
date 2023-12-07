@@ -22,7 +22,8 @@
         controllerServers: "{{ groups['controller'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9093') | join(',') }}"
         brokerServers: "{{ groups['broker'] | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9092') | join(',') }}"
         privateIp: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
-        baseStorePath: "/mnt/data-1"
+        base_data_path: "/mnt/data-1"
+        base_code_path: "/opt"
         kafka_xm: "12g"
         client_worker_heap_size: "8g"
         client_bench_heap_size: "4g"
@@ -72,7 +73,7 @@
         opts: defaults,noatime,nodiscard,data=writeback
         state: mounted
       with_items:
-        - { path: "{{ baseStorePath }}", src: "/dev/nvme1n1" }
+        - { path: "{{ base_data_path }}", src: "/dev/nvme1n1" }
     - name: Increase hard file descriptor limit
       pam_limits:
         domain: '*'
@@ -105,8 +106,8 @@
   connection: ssh
   become: true
   tasks:
-    - file: path={{ baseStorePath }}/kafka state=absent
-    - file: path={{ baseStorePath }}/kafka state=directory
+    - file: path={{ base_code_path }}/kafka state=absent
+    - file: path={{ base_code_path }}/kafka state=directory
     - name: Set common facts
       tags: always
       block:
@@ -124,7 +125,7 @@
       unarchive:
         src: "https://archive.apache.org/dist/kafka/{{ kafkaVersion }}/kafka_2.13-{{ kafkaVersion }}.tgz"
         remote_src: yes
-        dest: "{{ baseStorePath }}/kafka"
+        dest: "{{ base_code_path }}/kafka"
         extra_opts: ["--strip-components=1"]
 
 # setting controllers.
@@ -140,14 +141,14 @@
     - name: copy controller properties
       template:
         src: "templates/controller.properties"
-        dest: "{{ baseStorePath }}/kafka/config/kraft/controller.properties"
+        dest: "{{ base_code_path }}/kafka/config/kraft/controller.properties"
     - template:
         src: "templates/controller.service"
         dest: "/etc/systemd/system/controller.service"
     - name: Format Log Directories
       shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/controller.properties --ignore-formatted
       args:
-        chdir: "{{ baseStorePath }}/kafka/"
+        chdir: "{{ base_code_path }}/kafka"
     - systemd:
         state: restarted
         daemon_reload: yes
@@ -167,14 +168,14 @@
     - name: copy broker properties
       template:
         src: "templates/broker.properties"
-        dest: "{{ baseStorePath }}/kafka/config/kraft/broker.properties"
+        dest: "{{ base_code_path }}/kafka/config/kraft/broker.properties"
     - template:
         src: "templates/broker.service"
         dest: "/etc/systemd/system/broker.service"
     - name: Format Log Directories
       shell: bin/kafka-storage.sh format -t {{ KAFKA_CLUSTER_ID }} -c config/kraft/broker.properties --ignore-formatted
       args:
-        chdir: "{{ baseStorePath }}/kafka/"
+        chdir: "{{ base_code_path }}/kafka"
     - systemd:
         state: restarted
         daemon_reload: yes
