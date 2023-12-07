@@ -5,9 +5,9 @@ ami             = "ami-03f65b8614a860c29" // Ubuntu 22.04 LTS for x86_64
 // ami = "ami-08133f9f7ea98ef23" Ubuntu 22.04 LTS for arm64
 
 instance_types = {
-  "broker"     = "r6i.large"
-  "controller" = "r6i.large"
-  "client"     = "m6i.2xlarge"
+  "broker"     = "r6in.large"
+  "controller" = "r6in.large"
+  "client"     = "m6in.xlarge"
 }
 
 num_instances = {
