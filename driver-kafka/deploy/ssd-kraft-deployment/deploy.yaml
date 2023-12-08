@@ -28,6 +28,39 @@
         client_worker_heap_size: "8g"
         client_bench_heap_size: "4g"
 
+- name: Increase file descriptor limit and reboot
+  tags: [prepare]
+  any_errors_fatal: true
+  hosts: [controller, broker]
+  connection: ssh
+  become: true
+  tasks:
+    - name: Increase hard file descriptor limit
+      pam_limits:
+        domain: '*'
+        limit_type: 'hard'
+        limit_item: nofile
+        value: 500000
+    - name: Increase soft file descriptor limit
+      pam_limits:
+        domain: '*'
+        limit_type: 'soft'
+        limit_item: nofile
+        value: 500000
+    - name: Enable pam_limits.so
+      lineinfile:
+        path: /etc/pam.d/login
+        insertafter: EOF
+        line: 'session required pam_limits.so'
+    - name: set vm.max_map_count
+      sysctl:
+        name: vm.max_map_count
+        value: '262144'
+        state: present
+        reload: yes
+    - name: Reboot the machine with all defaults
+      reboot:
+
 - name: General setup for all
   tags: [prepare]
   hosts: all
@@ -35,13 +68,12 @@
   become: true
   tasks:
     - name: Update and upgrade apt packages
-      become: true
       apt:
         upgrade: yes
         update_cache: yes
         cache_valid_time: 86400
     - name: Install packages
-      apt: pkg={{ item }} state=latest
+      apt: pkg={{ item }} state=present
       with_items:
         - wget
         - tuned
@@ -74,31 +106,6 @@
         state: mounted
       with_items:
         - { path: "{{ base_data_path }}", src: "/dev/nvme1n1" }
-    - name: Increase hard file descriptor limit
-      pam_limits:
-        domain: '*'
-        limit_type: 'hard'
-        limit_item: nofile
-        value: 500000
-    - name: Increase soft file descriptor limit
-      pam_limits:
-        domain: '*'
-        limit_type: 'soft'
-        limit_item: nofile
-        value: 500000
-    - name: Enable pam_limits.so
-      lineinfile:
-        path: /etc/pam.d/login
-        insertafter: EOF
-        line: 'session required pam_limits.so'
-    - name: set vm.max_map_count
-      sysctl:
-        name: vm.max_map_count
-        value: '262144'
-        state: present
-        reload: yes
-    - name: Reboot the machine with all defaults
-      reboot:
 
 - name: Kafka general setup
   tags: [prepare]
