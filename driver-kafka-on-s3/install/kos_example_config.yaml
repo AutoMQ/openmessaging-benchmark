@@ -19,6 +19,7 @@ kos:
   vpcID: vpc-0b807bf632452cc59
   ## 网段不能超过指定 VPC 的范围，网段内的 IP 数需要大于等于 256，建议使用 xxx/24
   cidr: 10.0.1.0/24
+  region: us-west-2
   ## 部署到该 AZ 列表，支持多 AZ 部署，但是为了避免跨 AZ 流量费用，建议部署在同一个 AZ
   zoneNameList: us-west-2a
   kafka:
@@ -31,8 +32,8 @@ kos:
     heapOpts: "-Xms6g -Xmx6g -XX:MetaspaceSize=96m -XX:MaxDirectMemorySize=6g"
     ## 混合节点的配置，将会覆盖 commonSettings 中的同名配置
     controllerSettings:
-      - autobalancer.reporter.network.in.capacity=0
-      - autobalancer.reporter.network.out.capacity=0
+      - autobalancer.reporter.network.in.capacity=20000
+      - autobalancer.reporter.network.out.capacity=80000
     ## broker 节点的配置，将会覆盖 commonSettings 中的同名配置
     brokerSettings:
       - autobalancer.reporter.network.in.capacity=100000
