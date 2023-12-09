@@ -97,7 +97,7 @@ kos:
     enableDetailedMonitor: true
     ## 实例终止时是否删除 EBS 卷
     deleteEbsOnTermination: true
-    amiID: ami-0add29f370ae8ca95
+    amiID: ami-01bd09893bb72a715
     ## 需要有ec2、asg、s3的权限，用于安装资源以及kafka写入s3使用
   accessKey:
   secretKey:
