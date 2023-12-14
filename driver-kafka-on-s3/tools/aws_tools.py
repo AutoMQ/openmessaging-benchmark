@@ -12,6 +12,7 @@
 # limitations under the License.
 #
 
+import argparse
 import json
 import re
 from typing import Generator
@@ -157,44 +158,29 @@ def generate_cloud_watch_source(spot_asg_name: str, fall_back_asg_name: str, con
 
 
 if __name__ == '__main__':
-    # TODO
+    parser = argparse.ArgumentParser(
+        description="Generate CloudWatch Source")
+    parser.add_argument("-r", "--region", type=str,
+                        required=True, help="AWS region")
+    parser.add_argument("-e", "--env", type=str,
+                        required=True, help="Environment ID")
+    parser.add_argument("-C", "--controller", type=str, action='append',
+                        help="Controller instance id")
+    parser.add_argument("-c", "--client", type=str, action='append',
+                        help="Client instance id")
+    args = parser.parse_args()
 
-    # env_id = "e4515e77801c42d5"
-    # controller_list = [
-    #     "i-0e9ee8a4a8d7af852",
-    #     "i-078c6a3cd026c5c1f",
-    #     "i-0401f68481bb45da0",
-    # ]
-    # client_list = [
-    #     "i-00353c49a6dd864e6",
-    #     "i-00463a3b17b3ff4c5",
-    # ]
+    region = args.region
+    env_id = args.env
+    controller_list = args.controller
+    client_list = args.client
+    threshold = 146800640
 
-    env_id = "7c871601f2ef135d"
-    controller_list = [
-        "i-06cacd5db1f77ffee",
-        "i-0e6d4a99c3b10893c",
-        "i-017621fe7c6ab4799"
-    ]
-    client_list = [
-        "i-0a4a6984a6bc264d6",
-        "i-0f1c208d5c6abfc7a",
-    ]
-
-    # env_id = "dbebae07ac9ae5c8"
-    # controller_list = [
-    #     "i-0a8a1bdc350d5895e",
-    # ]
-    # client_list = [
-    #     "i-085a3e05225bc4284",
-    #     "i-000aabed84e6f4c19",
-    # ]
-
-    spot_group_name = f"stack-kos-broker-asg-cn-northwest-1-{env_id}-spot-stack-group-kos-lp-cn-northwest-1-{env_id}-broker-zone-0"
-    fall_back_group_name = f"stack-kos-broker-asg-cn-northwest-1-{env_id}-fallback-stack-group-kos-lp-cn-northwest-1-{env_id}-broker-zone-0"
+    spot_group_name = f"stack-kos-broker-asg-{region}-{env_id}-spot-stack-group-kos-lp-{region}-{env_id}-broker-zone-0"
+    fall_back_group_name = f"stack-kos-broker-asg-{region}-{env_id}-fallback-stack-group-kos-lp-{region}-{env_id}-broker-zone-0"
 
     broker_list = list(reversed(list(get_all_instances_in_asg(spot_group_name)))) + \
         list(reversed(list(get_all_instances_in_asg(fall_back_group_name))))
     source = generate_cloud_watch_source(
-        spot_group_name, fall_back_group_name, controller_list, broker_list, client_list, 83859236, False)
+        spot_group_name, fall_back_group_name, controller_list, broker_list, client_list, threshold, True)
     print(json.dumps(source))

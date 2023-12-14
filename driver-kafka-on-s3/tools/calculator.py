@@ -300,16 +300,11 @@ if __name__ == "__main__":
     kafka = KafkaCluster()
     print(kos.info())
     print(kafka.info())
-    # for throughput in range(0, 1000, 10):
-    #     cost, detailed_info = cluster.instance_cost_hourly(throughput)
-    #     detailed_info = {
-    #         "Throughput": f"{throughput:4d} MB/s", **detailed_info}
-    #     print(detailed_info)
 
     kos_instance_cost_total = 0
     data_size_bytes = 0
-    throughput_list = [100, 800, 400, 100, 100, 100, 100, 100, 100, 100,
-                       100, 100, 800, 100, 100, 100, 100, 100, 100, 1200, 100, 100, 100, 100]
+    throughput_list = [40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40,
+                       800, 40, 40, 40, 40, 40, 1200, 40, 40, 40, 40, 40]
     for throughput in throughput_list:
         data_size_bytes += hours_to_seconds(1) * megabyte_to_bytes(throughput)
 
