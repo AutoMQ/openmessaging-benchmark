@@ -1,20 +1,20 @@
 public_key_path = "~/.ssh/kafka_on_s3_aws.pub"
-region          = "cn-northwest-1"
-az              = "cn-northwest-1a"
+region          = "us-west-2"
+az              = "us-west-2a"
 
-ami             = "ami-04c77a27ae5156100" // Canonical, Ubuntu, 22.04 LTS, amd64 jammy image build on 2023-03-03
+ami             = "ami-03f65b8614a860c29" // Ubuntu 22.04 LTS for x86_64
 user            = "ubuntu"
 
 instance_type = {
-  "server"              = "r6i.large"
-  "broker"              = "r6i.large"
-  "client"              = "m6i.xlarge"
+  "server"              = "r6in.large"
+  "broker"              = "r6in.large"
+  "client"              = "m6in.xlarge"
 }
 
 instance_cnt = {
-  "server"              = 1
-  "broker"              = 2
-  "client"              = 2
+  "server"              = 0
+  "broker"              = 0
+  "client"              = 8
 }
 
 monitoring = true
@@ -24,4 +24,4 @@ ebs_volume_type = "gp3"
 ebs_volume_size = 10
 ebs_iops = 3000
 
-aws_cn = true
+aws_cn = false

@@ -124,7 +124,12 @@ def create_and_launch_servers(scenario, terraform_output):
         },
     )
     subprocess.run(
-        args=["amq-installer", "install-kos", "-f", f"{scenario}.yaml"],
+        args=[
+            f"{base_path}/amq-installer",
+            "install-kos",
+            "-f",
+            f"{scenario}.yaml",
+        ],
         check=True,
         cwd=base_path,
     )
@@ -173,7 +178,7 @@ def launch_clients(bootstrap_servers):
 
 def launch_all(scenario):
     may_be_download_amq_installer()
-    check_tools(["ansible-playbook", "terraform", "aws", "mvn", "amq-installer"])
+    check_tools(["ansible-playbook", "terraform", "aws", "mvn"])
     print("=== step 1/4: package the whole project ===")
     pkg_whole_project()
     print("=== step 2/4: create VPC and clients ===")
@@ -190,7 +195,12 @@ def launch_all(scenario):
 def destroy_servers(scenario):
     base_path = get_afk_long_running_path().joinpath("amq-install")
     subprocess.run(
-        args=["amq-installer", "uninstall-kos", "-f", f"{scenario}.yaml"],
+        args=[
+            f"{base_path}/amq-installer",
+            "uninstall-kos",
+            "-f",
+            f"{scenario}.yaml",
+        ],
         check=True,
         cwd=base_path,
     )
@@ -205,7 +215,7 @@ def destroy_clients():
 
 def destroy_all(scenario):
     may_be_download_amq_installer()
-    check_tools(["terraform", "aws", "amq-installer"])
+    check_tools(["terraform", "aws"])
     print("=== step 1/2: destroy servers ===")
     destroy_servers(scenario)
     print("=== step 2/2: destroy clients and VPC ===")
@@ -215,31 +225,28 @@ def destroy_all(scenario):
 def may_be_download_amq_installer():
     base_path = get_afk_long_running_path().joinpath("amq-install")
 
-    if not base_path.joinpath("amq-installer").exists():
-        download_amq_installer()
-    # Add amq-installer to PATH to make it available for the rest of the script
-    os.environ["PATH"] = "%s:%s" % (base_path, os.environ["PATH"])
+    if base_path.joinpath("amq-installer").exists():
+        return
 
-    def download_amq_installer():
-        print("=== download amq-installer ===")
-        if os.uname().sysname == "Darwin" and os.uname().machine == "arm64":
-            url = "https://download.automq.com/automq-for-kafka/0.0.1/amq-installer_darwin_arm64.tar.gz"
-        elif os.uname().sysname == "Darwin" and os.uname().machine == "x86_64":
-            url = "https://download.automq.com/automq-for-kafka/0.0.1/amq-installer_darwin_amd64.tar.gz"
-        elif os.uname().sysname == "Linux" and os.uname().machine == "x86_64":
-            url = "https://download.automq.com/automq-for-kafka/0.0.1/amq-installer_linux_amd64.tar.gz"
-        else:
-            raise Exception("unsupported OS and machine type")
+    print("=== download amq-installer ===")
+    if os.uname().sysname == "Darwin" and os.uname().machine == "arm64":
+        url = "https://download.automq.com/automq-for-kafka/0.0.1/amq-installer_darwin_arm64.tar.gz"
+    elif os.uname().sysname == "Darwin" and os.uname().machine == "x86_64":
+        url = "https://download.automq.com/automq-for-kafka/0.0.1/amq-installer_darwin_amd64.tar.gz"
+    elif os.uname().sysname == "Linux" and os.uname().machine == "x86_64":
+        url = "https://download.automq.com/automq-for-kafka/0.0.1/amq-installer_linux_amd64.tar.gz"
+    else:
+        raise Exception("unsupported OS and machine type")
 
-        subprocess.run(
-            args=["curl", "-L", url, "-o", "amq-installer.tar.gz"],
-            check=True,
-            cwd=base_path,
-        )
-        subprocess.run(
-            args=["tar", "-xzf", "amq-installer.tar.gz"], check=True, cwd=base_path
-        )
-        base_path.joinpath("amq-installer.tar.gz").unlink()
+    subprocess.run(
+        args=["curl", "-L", url, "-o", "amq-installer.tar.gz"],
+        check=True,
+        cwd=base_path,
+    )
+    subprocess.run(
+        args=["tar", "-xzf", "amq-installer.tar.gz"], check=True, cwd=base_path
+    )
+    base_path.joinpath("amq-installer.tar.gz").unlink()
 
 
 if __name__ == "__main__":
