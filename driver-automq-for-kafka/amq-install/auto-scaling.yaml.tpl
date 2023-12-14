@@ -13,32 +13,21 @@
 #
 
 kos:
-  ## 一个 region 下不同资源唯一标识会用 installID 区分，请确保唯一性
-  installID: 72c8bcf32c4feb49
-  ## 部署到该 VPC
-  vpcID: vpc-0b807bf632452cc59
-  ## 网段不能超过指定 VPC 的范围，网段内的 IP 数需要大于等于 256，建议使用 xxx/24
+  installID: xxxxxxxxxxxxxxxx
+  vpcID: vpc-xxxxxxxxxxxxxxxxx
   cidr: 10.0.1.0/24
   region: us-west-2
-  ## 部署到该 AZ 列表，支持多 AZ 部署，但是为了避免跨 AZ 流量费用，建议部署在同一个 AZ
   zoneNameList: us-west-2a
   kafka:
-    ## Kafka 集群中混合节点（broker + controller）的数量，支持 1 或 3 个
     controllerCount: 1
-    ## Kafka 返回的 advertise address 是否为公网地址，如果 client 与 Kafka 集群不在同一个 VPC，需要开启该配置
-    ## 但为了避免公网流量费用，建议关闭该选项
     enablePublic: false
-    ## Kafka 启动时 JVM 堆相关配置
     heapOpts: "-Xms6g -Xmx6g -XX:MetaspaceSize=96m -XX:MaxDirectMemorySize=6g"
-    ## 混合节点的配置，将会覆盖 commonSettings 中的同名配置
     controllerSettings:
       - autobalancer.reporter.network.in.capacity=20000
       - autobalancer.reporter.network.out.capacity=80000
-    ## broker 节点的配置，将会覆盖 commonSettings 中的同名配置
     brokerSettings:
       - autobalancer.reporter.network.in.capacity=100000
       - autobalancer.reporter.network.out.capacity=400000
-    ## 混合节点与 broker 节点的公共配置
     commonSettings:
       - log.index.interval.bytes=10485760
       - metric.reporters=kafka.autobalancer.metricsreporter.AutoBalancerMetricsReporter,org.apache.kafka.server.metrics.s3stream.KafkaS3MetricsLoggerReporter
@@ -66,39 +55,22 @@ kos:
       - s3.stream.object.split.size=8388608
       - s3.object.part.size=33554432
   scaling:
-    ## ASG 每次扩缩容的最小间隔，单位为秒
     scaleOutCooldownSec: 60
     scaleInCooldownSec: 60
-    ## CloudWatch 告警的周期，单位为秒。即每隔多久更新一次告警状态
-    ## 如果开启了 `kos.ec2.enableDetailedMonitor`，则该值需为 60 的整数倍
-    ## 如果没有开启，则该值需为 300 的整数倍
     alarmPeriod: 60
-    ## spot 组 CloudWatch 告警的评估次数，即连续几个周期达到告警条件才会进行扩缩容
     scalingAlarmEvaluationTimes: 1
-    ## on-demand 组 CloudWatch 告警的评估次数，需要大于 `scalingAlarmEvaluationTimes`
     fallbackAlarmEvaluationTimes: 2
-    ## 触发扩容告警的平均网络占用超过总网络容量的比例
-    ## 即平均网络占用超过总网络容量的 40% 时，会进行扩容
-    scalingNetworkUpBoundRatio: 0.4
-    ## 触发缩容告警的平均网络占用低于总网络容量的比例
-    ## 即平均网络占用低于总网络容量的 40% 时，会进行缩容
-    scalingNetworkLowerBoundRatio: 0.4
-    brokerOnDemandPercentage: 100
-    maxBrokerSize: 50
+    scalingNetworkUpBoundRatio: 0.35
+    scalingNetworkLowerBoundRatio: 0.35
+    brokerOnDemandPercentage: 0
+    maxBrokerSize: 30
   ec2:
-    ## EC2 实例的类型
     instanceType: r6in.large
-    ## 混合节点是否使用 spot 实例，建议关闭
     controllerSpotEnabled: false
-    ## SSH 密钥对的名称，用于登录 EC2 实例
-    keyPairName: kafka_on_s3_benchmark_key-72c8bcf32c4feb49
-    ## 是否分配 EC2 的 public IP，开启后即可从公网 SSH 登录 EC2 实例
+    keyPairName: kafka_on_s3_benchmark_key-xxxxxxxxxxxxxxxx
     enablePublic: true
-    ## 是否开启 EC2 的详细监控，开启后会产生额外的费用，但配合 `ec2.scaling.alarmPeriod` 可以提高扩缩容的敏感度
     enableDetailedMonitor: true
-    ## 实例终止时是否删除 EBS 卷
     deleteEbsOnTermination: true
-    amiID: ami-01bd09893bb72a715
-    ## 需要有ec2、asg、s3的权限，用于安装资源以及kafka写入s3使用
-  accessKey:
-  secretKey:
+    amiID: ami-05c9d64f683dcf6df
+  accessKey: xxxxxxxxxxxxxxxxxxxx
+  secretKey: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

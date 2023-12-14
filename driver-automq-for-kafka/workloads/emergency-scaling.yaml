@@ -12,26 +12,17 @@
 # limitations under the License.
 #
 
-name: AutoMQ-for-Kafka
-driverClass: io.openmessaging.benchmark.driver.kafka.KafkaBenchmarkDriver
+name: 1-topic-1000-partitions-4kb-4p4c-1024m
 
-# Kafka client-specific configuration
-replicationFactor: 3
-reset: false
-
-topicConfig: |
-  min.insync.replicas=2
-  flush.messages=1
-  retention.ms=86400000
-
-commonConfig: |
-  bootstrap.servers=localhost:9092
-
-producerConfig: |
-  acks=all
-  linger.ms=1
-  batch.size=65536
-
-consumerConfig: |
-  auto.offset.reset=earliest
-  enable.auto.commit=true
+topics: 1
+partitionsPerTopic: 1000
+messageSize: 4096
+payloadFile: "payload/payload-4Kb.data"
+subscriptionsPerTopic: 1
+consumerPerSubscription: 4
+producersPerTopic: 4
+producerRate: 262144
+consumerBacklogSizeGB: 0
+warmupDurationMinutes: 0
+testDurationMinutes: 20
+logIntervalMillis: 1000
