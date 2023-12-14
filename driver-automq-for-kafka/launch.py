@@ -87,16 +87,13 @@ def pkg_whole_project():
     )
 
 
-def modify_amq_install_yaml(file_path, dicts):
-    # get tpl file path
-    tpl_file_path = (
-        get_afk_long_running_path().joinpath("amq-install").joinpath("deploy.yaml.tpl")
-    )
-    with open(tpl_file_path) as tpl:
+def modify_amq_install_yaml(scenario, dicts):
+    base_path = get_afk_long_running_path().joinpath("amq-install")
+    with open(base_path.joinpath(f"{scenario}.yaml.tpl")) as tpl:
         data = yaml.safe_load(tpl)
     for key, value in dicts.items():
         update_nested_dict(data["kos"], key, value)
-    with open(file_path, "w") as f:
+    with open(base_path.joinpath(f"{scenario}.yaml"), "w") as f:
         yaml.dump(data, f, default_flow_style=False)
 
 
@@ -112,13 +109,12 @@ def update_nested_dict(data, key, value):
     current[keys[-1]] = value
 
 
-def create_and_launch_servers(vpc_id):
+def create_and_launch_servers(scenario, vpc_id):
     base_path = get_afk_long_running_path().joinpath("amq-install")
     ak = os.environ["AWS_ACCESS_KEY_ID"]
     sk = os.environ["AWS_SECRET_ACCESS_KEY"]
-    # update VPC ID in deploy.yaml
     modify_amq_install_yaml(
-        base_path.joinpath("deploy.yaml"),
+        scenario,
         {
             "vpcID": vpc_id,
             "accessKey": ak,
@@ -126,7 +122,7 @@ def create_and_launch_servers(vpc_id):
         },
     )
     subprocess.run(
-        args=["amq-installer", "install-kos", "-f", "deploy.yaml"],
+        args=["amq-installer", "install-kos", "-f", f"{scenario}.yaml"],
         check=True,
         cwd=base_path,
     )
@@ -173,7 +169,7 @@ def launch_clients(bootstrap_servers):
     )
 
 
-def launch_all():
+def launch_all(scenario):
     may_be_download_amq_installer()
     check_tools(["ansible-playbook", "terraform", "aws", "mvn", "amq-installer"])
     print("=== step 1/4: package the whole project ===")
@@ -182,17 +178,17 @@ def launch_all():
     terraform_output = create_clients()
     print("clients info: %s" % terraform_output)
     print("=== step 3/4: create and launch servers ===")
-    bootstrap_servers = create_and_launch_servers(terraform_output["vpc_id"])
+    bootstrap_servers = create_and_launch_servers(scenario, terraform_output["vpc_id"])
     print("servers info: %s" % bootstrap_servers)
     print("=== step 4/4: deploy and launch clients ===")
     launch_clients(bootstrap_servers)
     print("=== cluster ready now!!! ===")
 
 
-def destroy_servers():
+def destroy_servers(scenario):
     base_path = get_afk_long_running_path().joinpath("amq-install")
     subprocess.run(
-        args=["amq-installer", "uninstall-kos", "-f", "deploy.yaml"],
+        args=["amq-installer", "uninstall-kos", "-f", f"{scenario}.yaml"],
         check=True,
         cwd=base_path,
     )
@@ -205,11 +201,11 @@ def destroy_clients():
     )
 
 
-def destroy_all():
+def destroy_all(scenario):
     may_be_download_amq_installer()
     check_tools(["terraform", "aws", "amq-installer"])
     print("=== step 1/2: destroy servers ===")
-    destroy_servers()
+    destroy_servers(scenario)
     print("=== step 2/2: destroy clients and VPC ===")
     destroy_clients()
 
@@ -253,12 +249,24 @@ if __name__ == "__main__":
             "AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must be set in the environment"
         )
     parser = argparse.ArgumentParser(description="start or destroy the whole cluster")
+    parser.add_argument(
+        "--scenario",
+        help="benchmark scenario name",
+        choices=[
+            "auto-scaling",
+            "catch-up-read",
+            "emergency-scaling",
+            "partition-reassignment",
+            "tail-read",
+        ],
+        required=True,
+    )
     parser.add_argument("--up", help="launch all", action="store_true")
     parser.add_argument("--down", help="destroy all", action="store_true")
     args, leftovers = parser.parse_known_args()
     if args.up:
-        launch_all()
+        launch_all(args.scenario)
     elif args.down:
-        destroy_all()
+        destroy_all(args.scenario)
     else:
         parser.print_help()
