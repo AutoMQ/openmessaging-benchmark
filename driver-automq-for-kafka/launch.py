@@ -125,7 +125,7 @@ def create_and_launch_servers(scenario, terraform_output):
     )
     subprocess.run(
         args=[
-            f"{base_path}/amq-installer",
+            f"{os.path.abspath(base_path)}/amq-installer",
             "install-kos",
             "-f",
             f"{scenario}.yaml",
@@ -196,7 +196,7 @@ def destroy_servers(scenario):
     base_path = get_afk_long_running_path().joinpath("amq-install")
     subprocess.run(
         args=[
-            f"{base_path}/amq-installer",
+            f"{os.path.abspath(base_path)}/amq-installer",
             "uninstall-kos",
             "-f",
             f"{scenario}.yaml",
@@ -247,6 +247,15 @@ def may_be_download_amq_installer():
         args=["tar", "-xzf", "amq-installer.tar.gz"], check=True, cwd=base_path
     )
     base_path.joinpath("amq-installer.tar.gz").unlink()
+
+    subprocess.run(
+        args=[
+            f"{os.path.abspath(base_path)}/amq-installer",
+            "install-dependency",
+        ],
+        check=True,
+        cwd=base_path,
+    )
 
 
 if __name__ == "__main__":
