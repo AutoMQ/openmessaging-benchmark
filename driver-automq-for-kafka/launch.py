@@ -109,14 +109,16 @@ def update_nested_dict(data, key, value):
     current[keys[-1]] = value
 
 
-def create_and_launch_servers(scenario, vpc_id):
+def create_and_launch_servers(scenario, terraform_output):
     base_path = get_afk_long_running_path().joinpath("amq-install")
     ak = os.environ["AWS_ACCESS_KEY_ID"]
     sk = os.environ["AWS_SECRET_ACCESS_KEY"]
     modify_amq_install_yaml(
         scenario,
         {
-            "vpcID": vpc_id,
+            "installID": terraform_output["env_id"],
+            "vpcID": terraform_output["vpc_id"],
+            "ec2.keyPairName": terraform_output["ssh_key_name"],
             "accessKey": ak,
             "secretKey": sk,
         },
@@ -178,7 +180,7 @@ def launch_all(scenario):
     terraform_output = create_clients()
     print("clients info: %s" % terraform_output)
     print("=== step 3/4: create and launch servers ===")
-    bootstrap_servers = create_and_launch_servers(scenario, terraform_output["vpc_id"])
+    bootstrap_servers = create_and_launch_servers(scenario, terraform_output)
     print("servers info: %s" % bootstrap_servers)
     print("=== step 4/4: deploy and launch clients ===")
     launch_clients(bootstrap_servers)
