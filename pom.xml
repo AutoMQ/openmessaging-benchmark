@@ -46,8 +46,7 @@
         <module>driver-pravega</module>
         <module>driver-pulsar</module>
         <module>driver-kafka</module>
-        <module>driver-kafka-on-es</module>
-        <module>driver-kafka-on-s3</module>
+        <module>driver-automq-for-kafka</module>
         <module>driver-rabbitmq</module>
         <module>driver-artemis</module>
         <module>driver-bookkeeper</module>
