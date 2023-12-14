@@ -44,7 +44,9 @@ def get_all_instances_in_asg(asg_name: str) -> Generator[str, None, None]:
             yield instance_id
 
 
-def generate_cloud_watch_source(spot_asg_name: str, fall_back_asg_name: str, controller_ids: "list[str]", broker_ids: "list[str]", client_ids: "list[str]", threshold: int, detailed: bool = False):
+def generate_cloud_watch_source(
+        spot_asg_name: str, fall_back_asg_name: str, controller_ids: "list[str]", broker_ids: "list[str]",
+        client_ids: "list[str]", threshold: int, detailed: bool = False):
     # TODO: colorize the metrics
     cloud_watch_source = {
         "title": "Kafka on S3 Metrics",
@@ -114,7 +116,8 @@ def generate_cloud_watch_source(spot_asg_name: str, fall_back_asg_name: str, con
                         {"id": f"{cni}{i}", "label": "", "stat": "Sum", "visible": False}])
         metrics.append(["AWS/EC2", "NetworkOut", "InstanceId", cid,
                         {"id": f"{cno}{i}", "label": "", "stat": "Sum", "visible": False}])
-        metrics.append([{"id": f"{cnt}{i}", "expression": f"MAX([ {cni}{i}/DIFF_TIME({cni}{i}), {cno}{i}/DIFF_TIME({cno}{i}) ])",
+        metrics.append([{"id": f"{cnt}{i}",
+                         "expression": f"MAX([ {cni}{i}/DIFF_TIME({cni}{i}), {cno}{i}/DIFF_TIME({cno}{i}) ])",
                          "label": f"network throughput of controller {i}", "visible": detailed}])
         cnt_list.append(f"{cnt}{i}")
     # controller group
@@ -147,7 +150,11 @@ def generate_cloud_watch_source(spot_asg_name: str, fall_back_asg_name: str, con
                     {"id": f"{bni}{fb}", "label": "", "stat": "Sum", "visible": False}])
     metrics.append(["AWS/EC2", "NetworkOut", "AutoScalingGroupName", fall_back_asg_name,
                     {"id": f"{bno}{fb}", "label": "", "stat": "Sum", "visible": False}])
-    metrics.append([{"id": bnt, "expression": f"MAX([ {bni}{sp}/DIFF_TIME({bni}{sp}), {bno}{sp}/DIFF_TIME({bno}{sp}) ]) + MAX([ {bni}{fb}/DIFF_TIME({bni}{fb}), {bno}{fb}/DIFF_TIME({bno}{fb}) ])", "label": "", "visible": False}])
+    metrics.append(
+        [{"id": bnt,
+          "expression":
+          f"MAX([ {bni}{sp}/DIFF_TIME({bni}{sp}), {bno}{sp}/DIFF_TIME({bno}{sp}) ]) + MAX([ {bni}{fb}/DIFF_TIME({bni}{fb}), {bno}{fb}/DIFF_TIME({bno}{fb}) ])",
+          "label": "", "visible": False}])
     metrics.append([{"id": bnta, "expression": f"{bnt}/{bc}",
                    "label": "average network throughput of each broker", "visible": True}])
 
