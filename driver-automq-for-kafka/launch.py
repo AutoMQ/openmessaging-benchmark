@@ -114,7 +114,6 @@ def update_nested_dict(data, key, value):
 
 def create_and_launch_servers(vpc_id):
     base_path = get_afk_long_running_path().joinpath("amq-install")
-    ami_id = find_latest_ami()
     ak = os.environ["AWS_ACCESS_KEY_ID"]
     sk = os.environ["AWS_SECRET_ACCESS_KEY"]
     # update VPC ID in deploy.yaml
@@ -124,7 +123,6 @@ def create_and_launch_servers(vpc_id):
             "vpcID": vpc_id,
             "accessKey": ak,
             "secretKey": sk,
-            "ec2.amiID": ami_id,
         },
     )
     subprocess.run(
@@ -173,42 +171,6 @@ def launch_clients(bootstrap_servers):
         check=True,
         cwd=base_path,
     )
-
-
-def find_latest_ami():
-    """Find the latest AMI for development"""
-    ec2_client = boto3.client(
-        "ec2", region_name="cn-northwest-1"
-    )  # Change as appropriate
-    images = ec2_client.describe_images(
-        Filters=[
-            {
-                "Name": "architecture",
-                "Values": [
-                    "x86_64",
-                ],
-            },
-            {
-                "Name": "state",
-                "Values": [
-                    "available",
-                ],
-            },
-            {
-                "Name": "tag:install",
-                "Values": [
-                    "AutoMQ Kafka",
-                ],
-            },
-        ],
-        Owners=["self"],
-    )
-    images = images["Images"]
-    # filter by name
-    images = [image for image in images if image["Name"].startswith(ami_prefix)]
-    # sort by creation date in descending order
-    images = sorted(images, key=lambda image: image["CreationDate"], reverse=True)
-    return images[0]["ImageId"]
 
 
 def launch_all():
