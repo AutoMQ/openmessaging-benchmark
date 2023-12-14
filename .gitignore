@@ -22,3 +22,5 @@ core/*.json
 *.iml
 
 *.log
+
+.vscode/
