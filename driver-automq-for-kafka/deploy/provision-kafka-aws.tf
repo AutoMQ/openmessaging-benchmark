@@ -380,6 +380,18 @@ output "client_ids" {
   value = [for i in aws_instance.client : i.id]
 }
 
+output "env_id" {
+  value = random_id.hash.hex
+}
+
+output "vpc_id" {
+  value = aws_vpc.benchmark_vpc.id
+}
+
+output "ssh_key_name" {
+  value = aws_key_pair.auth.key_name
+}
+
 resource "local_file" "hosts_ini" {
   content = templatefile("${path.module}/hosts.ini.tpl",
     {
