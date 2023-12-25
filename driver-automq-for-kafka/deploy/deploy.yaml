@@ -48,13 +48,12 @@
         cache_valid_time: 86400
     - name: Install tools
       apt:
-        name: "{{ item }}"
+        pkg:
+          - sysstat
+          - vim
+          - nload
+          - net-tools
         state: present
-      with_items:
-        - sysstat
-        - vim
-        - nload
-        - net-tools
 
 
 - name: Prepare Telemetry
@@ -68,12 +67,11 @@
       block:
         - name: Install dependencies
           apt:
-            name: "{{ item }}"
+            pkg:
+              - ca-certificates
+              - curl
+              - gnupg
             state: present
-          with_items:
-            - ca-certificates
-            - curl
-            - gnupg
         - name: Add Docker official GPG key
           apt_key:
             url: https://download.docker.com/linux/ubuntu/gpg
@@ -84,14 +82,13 @@
             state: present
         - name: Install Docker
           apt:
-            name: "{{ item }}"
+            pkg:
+              - docker-ce
+              - docker-ce-cli
+              - containerd.io
+              - docker-compose-plugin
             state: present
             update_cache: yes
-          with_items:
-            - docker-ce
-            - docker-ce-cli
-            - containerd.io
-            - docker-compose-plugin
 
 
 - name: Format and mount disks for Kafka hosts
@@ -103,10 +100,9 @@
   tasks:
     - name: Install dependencies
       apt:
-        name: "{{ item }}"
+        pkg:
+          - tuned
         state: present
-      with_items:
-        - tuned
     - command: >
         tuned-adm profile latency-performance
 
@@ -160,10 +156,9 @@
 
     - name: Install dependencies
       apt:
-        name: "{{ item }}"
+        pkg:
+          - openjdk-17-jdk
         state: present
-      with_items:
-        - openjdk-17-jdk
 
 
 - name: Install Kafka
@@ -251,12 +246,11 @@
   tasks:
     - name: Install dependencies
       apt:
-        name: "{{ item }}"
+        pkg:
+          - chrony
+          - openjdk-17-jdk
+          - tuned
         state: present
-      with_items:
-        - chrony
-        - openjdk-17-jdk
-        - tuned
 
 
 - name: Setup Benchmark client
