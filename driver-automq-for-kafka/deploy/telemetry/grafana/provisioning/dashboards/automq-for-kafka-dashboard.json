@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 4,
+  "id": 1,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -96,7 +96,7 @@
       },
       "gridPos": {
         "h": 12,
-        "w": 12,
+        "w": 10,
         "x": 0,
         "y": 1
       },
@@ -133,6 +133,79 @@
       ],
       "title": "S3Stream Operation Throughput",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 4,
+        "x": 10,
+        "y": 1
+      },
+      "id": 42,
+      "options": {
+        "displayLabels": [
+          "percent",
+          "name"
+        ],
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "values": []
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "expr": "sum by(status) (${namespace}_${prefix}_operation_latency_nanoseconds_count{operation_type=\"S3Request\", operation_name=~\".*\", cluster_id=\"$cluster_id\", node_id=\"$node_id\", node_type=\"$node_type\", status=~\".*\"})",
+          "fullMetaSearch": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "useBackend": false
+        }
+      ],
+      "title": "S3Stream Operation Status Distribution",
+      "type": "piechart"
     },
     {
       "datasource": {
@@ -196,8 +269,8 @@
       },
       "gridPos": {
         "h": 12,
-        "w": 12,
-        "x": 12,
+        "w": 10,
+        "x": 14,
         "y": 1
       },
       "id": 22,
@@ -1152,6 +1225,106 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ns"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 12,
+        "y": 63
+      },
+      "id": 40,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "expr": "histogram_quantile(0.99, sum by(le, operation_type, operation_name, status) (rate(${namespace}_${prefix}_operation_latency_nanoseconds_bucket{operation_type=\"S3Storage\", operation_name=\"read_ahead\", status=~\".*\", cluster_id=\"$cluster_id\", node_id=\"$node_id\", node_type=\"$node_type\"}[$__rate_interval])))",
+          "fullMetaSearch": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "{{operation_name}}_{{status}}",
+          "range": true,
+          "refId": "A",
+          "useBackend": false
+        }
+      ],
+      "title": "Read Ahead Latency P99",
+      "type": "timeseries"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
@@ -1278,7 +1451,7 @@
           "useBackend": false
         }
       ],
-      "title": "S3Stream network throughput",
+      "title": "S3Stream Network Throughput",
       "type": "timeseries"
     },
     {
@@ -1395,7 +1568,7 @@
           "useBackend": false
         }
       ],
-      "title": "S3 network throughput",
+      "title": "S3 Network Throughput",
       "type": "timeseries"
     },
     {
@@ -1512,7 +1685,7 @@
           "useBackend": false
         }
       ],
-      "title": "S3Stream network available bandwidth",
+      "title": "S3Stream Network Available Bandwidth",
       "type": "timeseries"
     },
     {
@@ -1573,32 +1746,7 @@
           },
           "unit": "none"
         },
-        "overrides": [
-          {
-            "__systemRef": "hideSeriesFrom",
-            "matcher": {
-              "id": "byNames",
-              "options": {
-                "mode": "exclude",
-                "names": [
-                  "outbound"
-                ],
-                "prefix": "All except:",
-                "readOnly": true
-              }
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": true
-                }
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 12,
@@ -1654,7 +1802,7 @@
           "useBackend": false
         }
       ],
-      "title": "S3 network limiter",
+      "title": "S3 Network Limiter",
       "type": "timeseries"
     },
     {
@@ -1715,32 +1863,7 @@
           },
           "unit": "none"
         },
-        "overrides": [
-          {
-            "__systemRef": "hideSeriesFrom",
-            "matcher": {
-              "id": "byNames",
-              "options": {
-                "mode": "exclude",
-                "names": [
-                  "read"
-                ],
-                "prefix": "All except:",
-                "readOnly": true
-              }
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": true
-                }
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 12,
@@ -1798,6 +1921,123 @@
         }
       ],
       "title": "Available S3 Inflight Quota",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ns"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 12,
+        "y": 100
+      },
+      "id": 41,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "expr": "histogram_quantile(0.99, sum by(le, cluster_id, node_id, node_type) (rate(${namespace}_${prefix}_network_inbound_limiter_queue_time_nanoseconds_bucket{cluster_id=\"$cluster_id\", node_id=\"$node_id\", node_type=\"$node_type\"}[$__rate_interval])))",
+          "fullMetaSearch": false,
+          "includeNullMetadata": false,
+          "instant": false,
+          "legendFormat": "inbound",
+          "range": true,
+          "refId": "A",
+          "useBackend": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "expr": "histogram_quantile(0.99, sum by(le, cluster_id, node_id, node_type) (rate(${namespace}_${prefix}_network_outbound_limiter_queue_time_nanoseconds_bucket{cluster_id=\"$cluster_id\", node_id=\"$node_id\", node_type=\"$node_type\"}[$__rate_interval])))",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": false,
+          "instant": false,
+          "legendFormat": "outbound",
+          "range": true,
+          "refId": "B",
+          "useBackend": false
+        }
+      ],
+      "title": "S3Stream Network Queue Time",
       "type": "timeseries"
     },
     {
@@ -2514,7 +2754,7 @@
       "type": "timeseries"
     }
   ],
-  "refresh": "5s",
+  "refresh": "auto",
   "schemaVersion": 38,
   "tags": [],
   "templating": {
@@ -2529,7 +2769,7 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "label_values(default_kafka_stream_operation_latency_nanoseconds_count,cluster_id)",
+        "definition": "label_values(default_kafka_stream_network_inbound_available_bandwidth_bytes,cluster_id)",
         "hide": 0,
         "includeAll": false,
         "label": "cluster_id",
@@ -2538,7 +2778,7 @@
         "options": [],
         "query": {
           "qryType": 1,
-          "query": "label_values(default_kafka_stream_operation_latency_nanoseconds_count,cluster_id)",
+          "query": "label_values(default_kafka_stream_network_inbound_available_bandwidth_bytes,cluster_id)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
@@ -2631,17 +2871,17 @@
         "current": {
           "selected": true,
           "text": [
-            "0"
+            "All"
           ],
           "value": [
-            "0"
+            "$__all"
           ]
         },
         "datasource": {
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "label_values(default_kafka_stream_operation_latency_nanoseconds_count,node_id)",
+        "definition": "label_values(default_kafka_stream_network_inbound_available_bandwidth_bytes,node_id)",
         "hide": 0,
         "includeAll": true,
         "multi": true,
@@ -2649,7 +2889,7 @@
         "options": [],
         "query": {
           "qryType": 1,
-          "query": "label_values(default_kafka_stream_operation_latency_nanoseconds_count,node_id)",
+          "query": "label_values(default_kafka_stream_network_inbound_available_bandwidth_bytes,node_id)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
@@ -2672,7 +2912,7 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "label_values(default_kafka_stream_operation_latency_nanoseconds_count,node_type)",
+        "definition": "label_values(default_kafka_stream_network_inbound_available_bandwidth_bytes,node_type)",
         "hide": 0,
         "includeAll": true,
         "multi": true,
@@ -2680,7 +2920,7 @@
         "options": [],
         "query": {
           "qryType": 1,
-          "query": "label_values(default_kafka_stream_operation_latency_nanoseconds_count,node_type)",
+          "query": "label_values(default_kafka_stream_network_inbound_available_bandwidth_bytes,node_type)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,
@@ -2693,7 +2933,7 @@
         "current": {
           "selected": false,
           "text": "Prometheus",
-          "value": "a8bd63e6-89c1-448a-96fe-04a677477b4c"
+          "value": "PBFA97CFB590B2093"
         },
         "hide": 0,
         "includeAll": false,
@@ -2701,6 +2941,7 @@
         "name": "datasource",
         "options": [],
         "query": "prometheus",
+        "queryValue": "",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -2709,13 +2950,13 @@
     ]
   },
   "time": {
-    "from": "now-3h",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "automq-for-kafka",
   "uid": "c25319fc-1031-4843-aaca-813f9d2b8438",
-  "version": 15,
+  "version": 2,
   "weekStart": ""
 }
