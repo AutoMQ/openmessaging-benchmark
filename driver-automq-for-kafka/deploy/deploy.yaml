@@ -91,6 +91,37 @@
             update_cache: yes
 
 
+- name: Install Telemetry
+  tags: [install]
+  any_errors_fatal: true
+  hosts: telemetry
+  connection: ssh
+  become: true
+  tasks:
+    - name: Copy Telemetry package
+      synchronize:
+        src: "telemetry/"
+        dest: "/opt/telemetry"
+    - name: Make install script executable
+      file:
+        path: /opt/telemetry/install.bash
+        mode: 0755
+
+
+- name: Start Telemetry
+  tags: [run]
+  any_errors_fatal: true
+  hosts: telemetry
+  connection: ssh
+  become: true
+  tasks:
+    - name: Start Telemetry
+      shell: ./install.bash start
+      args:
+        chdir: /opt/telemetry
+        executable: /bin/bash
+
+
 - name: Format and mount disks for Kafka hosts
   tags: [prepare]
   any_errors_fatal: true
