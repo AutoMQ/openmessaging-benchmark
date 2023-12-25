@@ -128,6 +128,14 @@ resource "aws_security_group" "benchmark_security_group" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # Grafana access from anywhere
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   # All ports open within the VPC
   ingress {
     from_port   = 0
@@ -398,6 +406,8 @@ resource "local_file" "hosts_ini" {
       server = aws_instance.server,
       broker = aws_instance.broker,
       client = aws_instance.client,
+      # use the first client (if exist) for telemetry
+      telemetry = var.instance_cnt["client"] > 0 ? slice(aws_instance.client, 0, 1) : [],
 
       ssh_user = var.user,
 

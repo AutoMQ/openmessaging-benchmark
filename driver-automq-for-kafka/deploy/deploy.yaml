@@ -22,7 +22,7 @@
       # Global configs
       base_store_path: "/data"
       kafka_wal_path: "/dev/nvme1n1"
-      kafka_package: "/tmp/kafka_2.13-0.7.0.tgz"
+      kafka_package: "/tmp/kafka_2.13-1.0.0.tgz"
       kafka_cluster_id: "KYTvAjiLTWyRmlCHGxHKcA"
       kafka_heap_size: "6g"
       kafka_direct_memory_size: "6g"
@@ -48,13 +48,78 @@
         cache_valid_time: 86400
     - name: Install tools
       apt:
-        name: "{{ item }}"
+        pkg:
+          - sysstat
+          - vim
+          - nload
+          - net-tools
         state: present
-      with_items:
-        - sysstat
-        - vim
-        - nload
-        - net-tools
+
+
+- name: Prepare Telemetry
+  tags: [prepare]
+  any_errors_fatal: true
+  hosts: telemetry
+  connection: ssh
+  become: true
+  tasks:
+    - name: Install Docker
+      block:
+        - name: Install dependencies
+          apt:
+            pkg:
+              - ca-certificates
+              - curl
+              - gnupg
+            state: present
+        - name: Add Docker official GPG key
+          apt_key:
+            url: https://download.docker.com/linux/ubuntu/gpg
+            state: present
+        - name: Add Docker apt repository
+          apt_repository:
+            repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+            state: present
+        - name: Install Docker
+          apt:
+            pkg:
+              - docker-ce
+              - docker-ce-cli
+              - containerd.io
+              - docker-compose-plugin
+            state: present
+            update_cache: yes
+
+
+- name: Install Telemetry
+  tags: [install]
+  any_errors_fatal: true
+  hosts: telemetry
+  connection: ssh
+  become: true
+  tasks:
+    - name: Copy Telemetry package
+      synchronize:
+        src: "telemetry/"
+        dest: "/opt/telemetry"
+    - name: Make install script executable
+      file:
+        path: /opt/telemetry/install.bash
+        mode: 0755
+
+
+- name: Start Telemetry
+  tags: [run]
+  any_errors_fatal: true
+  hosts: telemetry
+  connection: ssh
+  become: true
+  tasks:
+    - name: Start Telemetry
+      shell: ./install.bash start
+      args:
+        chdir: /opt/telemetry
+        executable: /bin/bash
 
 
 - name: Format and mount disks for Kafka hosts
@@ -66,10 +131,9 @@
   tasks:
     - name: Install dependencies
       apt:
-        name: "{{ item }}"
+        pkg:
+          - tuned
         state: present
-      with_items:
-        - tuned
     - command: >
         tuned-adm profile latency-performance
 
@@ -118,15 +182,16 @@
             node_id: "{{ hostvars[inventory_hostname]['kafka_id'] }}"
             server_ids: "{{ groups.get('server') | map('extract', hostvars, 'kafka_id') | list }}"
             server_addrs: "{{ groups.get('server') | map('extract', hostvars, 'private_ip') | map('regex_replace', '^(.*)$', '\\1:9093') | list }}"
+
+            telemetry_ip: "{{ groups.get('telemetry') | map('extract', hostvars, 'private_ip') | first }}"
         - set_fact:
             quorum_servers: "{{ server_ids | zip(server_addrs) | map('join', '@') | join(',') }}"
 
     - name: Install dependencies
       apt:
-        name: "{{ item }}"
+        pkg:
+          - openjdk-17-jdk
         state: present
-      with_items:
-        - openjdk-17-jdk
 
 
 - name: Install Kafka
@@ -214,12 +279,11 @@
   tasks:
     - name: Install dependencies
       apt:
-        name: "{{ item }}"
+        pkg:
+          - chrony
+          - openjdk-17-jdk
+          - tuned
         state: present
-      with_items:
-        - chrony
-        - openjdk-17-jdk
-        - tuned
 
 
 - name: Setup Benchmark client
@@ -322,3 +386,6 @@
     - debug:
         msg: "Benchmark clients {{ item }}"
       with_items: "{{ groups['client'] }}"
+    - debug:
+        msg: "Grafana: http://{{ item }}:3000"
+      with_items: "{{ groups['telemetry'] }}"
