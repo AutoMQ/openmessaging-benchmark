@@ -36,7 +36,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -116,11 +116,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "disableTextWrap": false,
-          "editorMode": "builder",
-          "expr": "default_jvm_cpu_recent_utilization_ratio{service_namespace=\"$cluster_id\", service_name=~\"$node_type\", service_instance_id=~\"$node_id\"}",
+          "editorMode": "code",
+          "expr": "${namespace}_jvm_cpu_recent_utilization_ratio{service_namespace=\"$cluster_id\", service_name=~\"$node_type\", service_instance_id=~\"$node_id\"}",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
@@ -137,7 +137,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -234,11 +234,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "disableTextWrap": false,
-          "editorMode": "builder",
-          "expr": "sum by(service_namespace, service_name, service_instance_id) (default_jvm_memory_used_bytes{service_namespace=\"$cluster_id\", service_name=~\"$node_type\", service_instance_id=~\"$node_id\"})",
+          "editorMode": "code",
+          "expr": "sum by(service_namespace, service_name, service_instance_id) (${namespace}_jvm_memory_used_bytes{service_namespace=\"$cluster_id\", service_name=~\"$node_type\", service_instance_id=~\"$node_id\"})",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
@@ -251,11 +251,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "disableTextWrap": false,
-          "editorMode": "builder",
-          "expr": "sum by(service_name, service_instance_id, service_namespace) (default_jvm_memory_limit_bytes{service_namespace=\"$cluster_id\", service_name=~\"$node_type\", service_instance_id=~\"$node_id\"})",
+          "editorMode": "code",
+          "expr": "sum by(service_name, service_instance_id, service_namespace) (${namespace}_jvm_memory_limit_bytes{service_namespace=\"$cluster_id\", service_name=~\"$node_type\", service_instance_id=~\"$node_id\"})",
           "fullMetaSearch": false,
           "hide": true,
           "includeNullMetadata": true,
@@ -283,7 +283,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -385,11 +385,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "disableTextWrap": false,
-          "editorMode": "builder",
-          "expr": "histogram_quantile(0.99, sum by(le, service_name, service_instance_id, jvm_gc_action) (rate(default_jvm_gc_duration_seconds_bucket{service_namespace=\"$cluster_id\", service_name=~\"$node_type\", service_instance_id=~\"$node_id\"}[$__rate_interval])))",
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.99, sum by(le, service_name, service_instance_id, jvm_gc_action) (rate(${namespace}_jvm_gc_duration_seconds_bucket{service_namespace=\"$cluster_id\", service_name=~\"$node_type\", service_instance_id=~\"$node_id\"}[$__rate_interval])))",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": false,
@@ -402,11 +402,11 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "uid": "${datasource}"
           },
           "disableTextWrap": false,
-          "editorMode": "builder",
-          "expr": "sum by(jvm_gc_action, service_name, service_instance_id) (rate(default_jvm_gc_duration_seconds_count{service_namespace=\"$cluster_id\", service_name=~\"$node_type\", service_instance_id=~\"$node_id\"}[$__rate_interval]))",
+          "editorMode": "code",
+          "expr": "sum by(jvm_gc_action, service_name, service_instance_id) (rate(${namespace}_jvm_gc_duration_seconds_count{service_namespace=\"$cluster_id\", service_name=~\"$node_type\", service_instance_id=~\"$node_id\"}[$__rate_interval]))",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": false,
@@ -1015,8 +1015,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1114,8 +1113,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1214,8 +1212,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1369,8 +1366,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1468,8 +1464,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1568,8 +1563,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1669,8 +1663,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1782,8 +1775,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1899,8 +1891,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2016,8 +2007,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2133,8 +2123,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2250,8 +2239,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2368,8 +2356,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2498,8 +2485,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2597,8 +2583,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2770,8 +2755,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2943,8 +2927,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -3056,8 +3039,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -3127,16 +3109,17 @@
       "type": "timeseries"
     }
   ],
-  "refresh": "auto",
+  "refresh": "5s",
   "schemaVersion": 39,
   "tags": [],
   "templating": {
     "list": [
       {
         "current": {
+          "isNone": true,
           "selected": false,
-          "text": "xJGnLhprSXareHmTpNkpHg",
-          "value": "xJGnLhprSXareHmTpNkpHg"
+          "text": "None",
+          "value": ""
         },
         "datasource": {
           "type": "prometheus",
@@ -3323,13 +3306,13 @@
     ]
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-15m",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "automq-for-kafka",
   "uid": "c25319fc-1031-4843-aaca-813f9d2b8438",
-  "version": 10,
+  "version": 11,
   "weekStart": ""
 }
