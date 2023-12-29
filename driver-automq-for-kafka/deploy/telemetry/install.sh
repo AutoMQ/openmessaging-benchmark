@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Set the environment variables
 if [ -z "$DATA_PATH" ]; then
@@ -44,6 +44,6 @@ case "$1" in
     remove_containers
     ;;
   *)
-    echo "Usage: $0 {start|stop|restart}"
+    echo "Usage: $0 {start|stop|restart|remove}"
     exit 1
 esac

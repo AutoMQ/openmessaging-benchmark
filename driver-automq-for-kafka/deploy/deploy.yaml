@@ -104,7 +104,7 @@
         dest: "/opt/telemetry"
     - name: Make install script executable
       file:
-        path: /opt/telemetry/install.bash
+        path: /opt/telemetry/install.sh
         mode: 0755
 
 
@@ -116,7 +116,7 @@
   become: true
   tasks:
     - name: Start Telemetry
-      shell: ./install.bash start
+      shell: ./install.sh start
       args:
         chdir: /opt/telemetry
         executable: /bin/bash
