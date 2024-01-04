@@ -268,7 +268,7 @@ public class WorkloadGenerator implements AutoCloseable {
 
         for (String topic : topics) {
             for (int i = 0; i < workload.subscriptionsPerTopic; i++) {
-                String subscriptionName = String.format("sub-%03d", i);
+                String subscriptionName = String.format("sub-%s-%03d", topic, i);
                 for (int j = 0; j < workload.consumerPerSubscription; j++) {
                     consumerAssignment.topicsSubscriptions.add(
                             new TopicSubscription(topic, subscriptionName));
