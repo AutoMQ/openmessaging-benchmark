@@ -56,7 +56,17 @@ public class Workload {
 
     public int producerRate;
 
-    /** For example, [11, 30, 1000] means that at 11:30, the producer rate will be 1000 msg/s. */
+    /**
+     * If not null, producerRate will be ignored and the producer will use the list to set the rate
+     * at different times. It supports two formats:
+     * <li>[[hour, minute, rate], [hour, minute, rate], ...] - the rate will be set at the given
+     * hour and minute. For example, [[0, 0, 1000], [1, 30, 2000]] will set the rate to 1000 msg/s
+     * at 00:00 and 2000 msg/s at 01:30.
+     * <li>[[duration, rate], [duration, rate], ...] - the rate will be set at the given duration
+     * (in minutes) after the test starts. For example, [[0, 1000], [10, 2000], [20, 4000]] will
+     * set the rate to 1000 msg/s at the beginning, 2000 msg/s after 10 minutes, and 4000 msg/s
+     * after 20 minutes (from the start of the test).
+     */
     public List<List<Integer>> producerRateList = null;
 
     /**
