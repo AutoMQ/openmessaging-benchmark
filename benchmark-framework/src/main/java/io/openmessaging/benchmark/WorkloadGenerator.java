@@ -240,10 +240,28 @@ public class WorkloadGenerator implements AutoCloseable {
     }
 
     private void adjustPublishRate(List<List<Integer>> rateList) throws IOException {
+        boolean sameLength = rateList.stream()
+                .map(List::size)
+                .distinct()
+                .limit(2)
+                .count() <= 1;
+        if (!sameLength) {
+            throw new IllegalArgumentException("rateList should have the same length");
+        }
+
         RateGenerator rateGenerator = new RateGenerator();
         for (List<Integer> l : rateList) {
-            LocalTime t = LocalTime.of(l.get(0), l.get(1));
-            rateGenerator.put(t, l.get(2));
+            if (l.size() == 3) {
+                // [hour, minute, rate]
+                LocalTime t = LocalTime.of(l.get(0), l.get(1));
+                rateGenerator.put(t, l.get(2));
+            } else if (l.size() == 2) {
+                // [minutes, rate]
+                LocalTime t = LocalTime.now().plusMinutes(l.get(0));
+                rateGenerator.put(t, l.get(1));
+            } else {
+                throw new IllegalArgumentException("rateList should have 2 or 3 elements");
+            }
         }
 
         while (!runCompleted) {
