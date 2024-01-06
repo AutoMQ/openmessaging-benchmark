@@ -29,6 +29,7 @@ import io.openmessaging.benchmark.driver.BenchmarkDriver.ProducerInfo;
 import io.openmessaging.benchmark.driver.BenchmarkDriver.TopicInfo;
 import io.openmessaging.benchmark.driver.BenchmarkProducer;
 import io.openmessaging.benchmark.driver.ConsumerCallback;
+import io.openmessaging.benchmark.utils.RandomGenerator;
 import io.openmessaging.benchmark.utils.Timer;
 import io.openmessaging.benchmark.utils.UniformRateLimiter;
 import io.openmessaging.benchmark.utils.distributor.KeyDistributor;
@@ -106,14 +107,13 @@ public class LocalWorker implements Worker, ConsumerCallback {
         Timer timer = new Timer();
 
         List<TopicInfo> topicInfos;
+        String topicSuffix = topicsInfo.randomName ? RandomGenerator.getRandomString() : null;
         if (null == topicsInfo.numberOfPartitionsPerTopicList) {
             topicInfos =
                     IntStream.range(0, topicsInfo.numberOfTopics)
-                            .mapToObj(
-                                    i ->
-                                            new TopicInfo(
-                                                    generateTopicName(i, topicsInfo.numberOfPartitionsPerTopic),
-                                                    topicsInfo.numberOfPartitionsPerTopic))
+                            .mapToObj(i -> new TopicInfo(
+                                    generateTopicName(i, topicsInfo.numberOfPartitionsPerTopic, topicSuffix),
+                                    topicsInfo.numberOfPartitionsPerTopic))
                             .collect(toList());
         } else {
             if (topicsInfo.numberOfPartitionsPerTopicList.size() != topicsInfo.numberOfTopics) {
@@ -123,7 +123,7 @@ public class LocalWorker implements Worker, ConsumerCallback {
             topicInfos = new ArrayList<>();
             for (int i = 0; i < topicsInfo.numberOfTopics; i++) {
                 int partitions = topicsInfo.numberOfPartitionsPerTopicList.get(i);
-                topicInfos.add(new TopicInfo(generateTopicName(i, partitions), partitions));
+                topicInfos.add(new TopicInfo(generateTopicName(i, partitions, topicSuffix), partitions));
             }
         }
 
@@ -135,8 +135,13 @@ public class LocalWorker implements Worker, ConsumerCallback {
         return topics;
     }
 
-    private String generateTopicName(int i, int p) {
-        return String.format("%s-%07d-%04d", benchmarkDriver.getTopicNamePrefix(), i, p);
+    private String generateTopicName(int i, int p, String suffix) {
+        return String.format("%s-%07d-%04d%s",
+                benchmarkDriver.getTopicNamePrefix(),
+                i,
+                p,
+                suffix == null ? "" : "-" + suffix
+        );
     }
 
     @Override

@@ -32,6 +32,12 @@ public class Workload {
      */
     public List<Integer> partitionsPerTopicList = null;
 
+    /**
+     * If true, the topic names will have a random suffix. This is useful to avoid conflicts when
+     * running multiple tests against the same cluster.
+     */
+    public boolean randomTopicNames = true;
+
     public KeyDistributorType keyDistributor = KeyDistributorType.NO_KEY;
 
     public int messageSize;

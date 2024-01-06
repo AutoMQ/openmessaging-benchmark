@@ -19,16 +19,20 @@ import java.util.List;
 public class TopicsInfo {
     public int numberOfTopics;
     public int numberOfPartitionsPerTopic;
-    public List<Integer> numberOfPartitionsPerTopicList = null;
+    public List<Integer> numberOfPartitionsPerTopicList;
+    public boolean randomName;
 
     public TopicsInfo() {}
 
     public TopicsInfo(
             int numberOfTopics,
             int numberOfPartitionsPerTopic,
-            List<Integer> numberOfPartitionsPerTopicList) {
+            List<Integer> numberOfPartitionsPerTopicList,
+            boolean randomName
+    ) {
         this.numberOfTopics = numberOfTopics;
         this.numberOfPartitionsPerTopic = numberOfPartitionsPerTopic;
         this.numberOfPartitionsPerTopicList = numberOfPartitionsPerTopicList;
+        this.randomName = randomName;
     }
 }

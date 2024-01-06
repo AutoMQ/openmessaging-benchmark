@@ -268,7 +268,7 @@
                         <exclude>.github/**</exclude>
                         <exclude>driver-redpanda/**</exclude>
                         <exclude>**/result-*/**</exclude>
-                        <exclude>**/install/**</exclude>
+                        <exclude>**/amq-install/**</exclude>
                     </excludes>
                     <mapping>
                         <benchmark>SCRIPT_STYLE</benchmark>
