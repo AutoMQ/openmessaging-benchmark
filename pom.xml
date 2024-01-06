@@ -269,6 +269,7 @@
                         <exclude>driver-redpanda/**</exclude>
                         <exclude>**/result-*/**</exclude>
                         <exclude>**/amq-install/**</exclude>
+                        <exclude>**/telemetry/**</exclude>
                     </excludes>
                     <mapping>
                         <benchmark>SCRIPT_STYLE</benchmark>
