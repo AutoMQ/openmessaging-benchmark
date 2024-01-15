@@ -9,7 +9,6 @@
 - [AWS CLI Tool](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
   - [Configure AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html)
 
-
 ## Deployments
 
 ### Generate SSH Keys
@@ -43,3 +42,4 @@ To destroy the infrastructure, simply run the following command:
 ```bash
 python3 launch.py --scenario partition-reassignment --down
 ```
+

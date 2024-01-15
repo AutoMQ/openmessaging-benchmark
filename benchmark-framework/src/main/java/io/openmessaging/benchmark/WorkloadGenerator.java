@@ -69,12 +69,13 @@ public class WorkloadGenerator implements AutoCloseable {
 
     public TestResult run() throws Exception {
         Timer timer = new Timer();
-        List<String> topics = worker.createTopics(new TopicsInfo(
-                workload.topics,
-                workload.partitionsPerTopic,
-                workload.partitionsPerTopicList,
-                workload.randomTopicNames
-        ));
+        List<String> topics =
+                worker.createTopics(
+                        new TopicsInfo(
+                                workload.topics,
+                                workload.partitionsPerTopic,
+                                workload.partitionsPerTopicList,
+                                workload.randomTopicNames));
         log.info("Created {} topics in {} ms", topics.size(), timer.elapsedMillis());
 
         createConsumers(topics);
@@ -240,11 +241,7 @@ public class WorkloadGenerator implements AutoCloseable {
     }
 
     private void adjustPublishRate(List<List<Integer>> rateList) throws IOException {
-        boolean sameLength = rateList.stream()
-                .map(List::size)
-                .distinct()
-                .limit(2)
-                .count() <= 1;
+        boolean sameLength = rateList.stream().map(List::size).distinct().limit(2).count() <= 1;
         if (!sameLength) {
             throw new IllegalArgumentException("rateList should have the same length");
         }
