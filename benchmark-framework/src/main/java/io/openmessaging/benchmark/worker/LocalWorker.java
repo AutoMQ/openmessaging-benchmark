@@ -53,7 +53,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
 import org.apache.bookkeeper.stats.NullStatsLogger;
 import org.apache.bookkeeper.stats.StatsLogger;
 import org.slf4j.Logger;
@@ -109,12 +108,15 @@ public class LocalWorker implements Worker, ConsumerCallback {
         List<TopicInfo> topicInfos;
         String topicSuffix = topicsInfo.randomName ? RandomGenerator.getRandomString() : null;
         if (null == topicsInfo.numberOfPartitionsPerTopicList) {
-            topicInfos =
-                    IntStream.range(0, topicsInfo.numberOfTopics)
-                            .mapToObj(i -> new TopicInfo(
-                                    generateTopicName(i, topicsInfo.numberOfPartitionsPerTopic, topicSuffix),
-                                    topicsInfo.numberOfPartitionsPerTopic))
-                            .collect(toList());
+            topicInfos = new ArrayList<>();
+            int bound = topicsInfo.numberOfTopics;
+            for (int i = 0; i < bound; i++) {
+                TopicInfo topicInfo =
+                        new TopicInfo(
+                                generateTopicName(i, topicsInfo.numberOfPartitionsPerTopic, topicSuffix),
+                                topicsInfo.numberOfPartitionsPerTopic);
+                topicInfos.add(topicInfo);
+            }
         } else {
             if (topicsInfo.numberOfPartitionsPerTopicList.size() != topicsInfo.numberOfTopics) {
                 throw new IllegalArgumentException(
@@ -136,12 +138,9 @@ public class LocalWorker implements Worker, ConsumerCallback {
     }
 
     private String generateTopicName(int i, int p, String suffix) {
-        return String.format("%s-%07d-%04d%s",
-                benchmarkDriver.getTopicNamePrefix(),
-                i,
-                p,
-                suffix == null ? "" : "-" + suffix
-        );
+        return String.format(
+                "%s-%07d-%04d%s",
+                benchmarkDriver.getTopicNamePrefix(), i, p, suffix == null ? "" : "-" + suffix);
     }
 
     @Override

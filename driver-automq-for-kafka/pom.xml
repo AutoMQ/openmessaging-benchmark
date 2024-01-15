@@ -22,6 +22,6 @@
         <artifactId>messaging-benchmark</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
-    <artifactId>driver-kafka-on-s3</artifactId>
+    <artifactId>driver-automq-for-kafka</artifactId>
 
 </project>

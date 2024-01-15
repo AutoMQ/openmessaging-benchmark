@@ -208,6 +208,9 @@
                         <includes>
                             <include>**/*.md</include>
                         </includes>
+                        <excludes>
+                            <exclude>**/telemetry/README.md</exclude>
+                        </excludes>
                         <flexmark/>
                     </markdown>
                     <formats>

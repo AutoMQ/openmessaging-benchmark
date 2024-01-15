@@ -28,8 +28,7 @@ public class TopicsInfo {
             int numberOfTopics,
             int numberOfPartitionsPerTopic,
             List<Integer> numberOfPartitionsPerTopicList,
-            boolean randomName
-    ) {
+            boolean randomName) {
         this.numberOfTopics = numberOfTopics;
         this.numberOfPartitionsPerTopic = numberOfPartitionsPerTopic;
         this.numberOfPartitionsPerTopicList = numberOfPartitionsPerTopicList;
