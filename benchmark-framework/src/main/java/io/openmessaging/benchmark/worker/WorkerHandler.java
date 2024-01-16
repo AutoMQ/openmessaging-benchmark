@@ -20,7 +20,9 @@ import com.google.common.io.Files;
 import io.javalin.Context;
 import io.javalin.Javalin;
 import io.openmessaging.benchmark.worker.commands.ConsumerAssignment;
+import io.openmessaging.benchmark.worker.commands.DetailedTopic;
 import io.openmessaging.benchmark.worker.commands.ProducerWorkAssignment;
+import io.openmessaging.benchmark.worker.commands.RateAdjustInfo;
 import io.openmessaging.benchmark.worker.commands.TopicsInfo;
 import io.openmessaging.benchmark.worker.jackson.ObjectMappers;
 import java.io.File;
@@ -84,7 +86,7 @@ public class WorkerHandler {
     }
 
     private void handleCreateProducers(Context ctx) throws Exception {
-        List<String> topics = (List<String>) mapper.readValue(ctx.body(), List.class);
+        List<DetailedTopic> topics = (List<DetailedTopic>) mapper.readValue(ctx.body(), List.class);
         log.info("Received create producers request for topics: {}", topics);
         localWorker.createProducers(topics);
     }
@@ -122,9 +124,9 @@ public class WorkerHandler {
     }
 
     private void handleAdjustPublishRate(Context ctx) throws Exception {
-        Double publishRate = mapper.readValue(ctx.body(), Double.class);
-        log.info("Adjust publish-rate: {} msg/s", publishRate);
-        localWorker.adjustPublishRate(publishRate);
+        RateAdjustInfo info = mapper.readValue(ctx.body(), RateAdjustInfo.class);
+        log.info("Adjust publish-rate: {} msg/s", info.publishRate);
+        localWorker.adjustPublishRate(info);
     }
 
     private void handleStopAll(Context ctx) throws Exception {

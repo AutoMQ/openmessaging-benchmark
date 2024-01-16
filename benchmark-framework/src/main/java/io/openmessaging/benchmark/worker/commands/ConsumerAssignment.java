@@ -18,5 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ConsumerAssignment {
+    public String topicGroup;
     public List<TopicSubscription> topicsSubscriptions = new ArrayList<>();
 }

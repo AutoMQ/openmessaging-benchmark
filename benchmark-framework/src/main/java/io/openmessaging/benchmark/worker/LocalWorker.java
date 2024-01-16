@@ -36,23 +36,29 @@ import io.openmessaging.benchmark.utils.distributor.KeyDistributor;
 import io.openmessaging.benchmark.worker.commands.ConsumerAssignment;
 import io.openmessaging.benchmark.worker.commands.CountersStats;
 import io.openmessaging.benchmark.worker.commands.CumulativeLatencies;
+import io.openmessaging.benchmark.worker.commands.DetailedTopic;
 import io.openmessaging.benchmark.worker.commands.PeriodStats;
 import io.openmessaging.benchmark.worker.commands.ProducerWorkAssignment;
+import io.openmessaging.benchmark.worker.commands.RateAdjustInfo;
 import io.openmessaging.benchmark.worker.commands.TopicsInfo;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
+
 import org.apache.bookkeeper.stats.NullStatsLogger;
 import org.apache.bookkeeper.stats.StatsLogger;
 import org.slf4j.Logger;
@@ -63,7 +69,8 @@ public class LocalWorker implements Worker, ConsumerCallback {
     private BenchmarkDriver benchmarkDriver = null;
     private final List<BenchmarkProducer> producers = new ArrayList<>();
     private final List<BenchmarkConsumer> consumers = new ArrayList<>();
-    private volatile MessageProducer messageProducer;
+    private Map<String/* topic group */, MessageProducer> messageProducers = new ConcurrentHashMap<>();
+    private Map<String/* topic group */, List<BenchmarkProducer>> producersMap = new ConcurrentHashMap<>();
     private final ExecutorService executor =
             Executors.newCachedThreadPool(new DefaultThreadFactory("local-worker"));
     private final WorkerStats stats;
@@ -76,7 +83,6 @@ public class LocalWorker implements Worker, ConsumerCallback {
 
     public LocalWorker(StatsLogger statsLogger) {
         stats = new WorkerStats(statsLogger);
-        updateMessageProducer(1.0);
     }
 
     @Override
@@ -113,7 +119,8 @@ public class LocalWorker implements Worker, ConsumerCallback {
             for (int i = 0; i < bound; i++) {
                 TopicInfo topicInfo =
                         new TopicInfo(
-                                generateTopicName(i, topicsInfo.numberOfPartitionsPerTopic, topicSuffix),
+                                generateTopicName(topicsInfo.groupName, i,
+                                        topicsInfo.numberOfPartitionsPerTopic, topicSuffix),
                                 topicsInfo.numberOfPartitionsPerTopic);
                 topicInfos.add(topicInfo);
             }
@@ -125,7 +132,8 @@ public class LocalWorker implements Worker, ConsumerCallback {
             topicInfos = new ArrayList<>();
             for (int i = 0; i < topicsInfo.numberOfTopics; i++) {
                 int partitions = topicsInfo.numberOfPartitionsPerTopicList.get(i);
-                topicInfos.add(new TopicInfo(generateTopicName(i, partitions, topicSuffix), partitions));
+                topicInfos.add(new TopicInfo(generateTopicName(topicsInfo.groupName, i, partitions,
+                        topicSuffix), partitions));
             }
         }
 
@@ -137,26 +145,37 @@ public class LocalWorker implements Worker, ConsumerCallback {
         return topics;
     }
 
-    private String generateTopicName(int i, int p, String suffix) {
+    private String generateTopicName(String mid, int i, int p, String suffix) {
         return String.format(
-                "%s-%07d-%04d%s",
-                benchmarkDriver.getTopicNamePrefix(), i, p, suffix == null ? "" : "-" + suffix);
+                "%s-%s-%07d-%04d%s",
+                benchmarkDriver.getTopicNamePrefix(), mid, i, p, suffix == null ? "" : "-" + suffix);
     }
 
     @Override
-    public void createProducers(List<String> topics) {
+    public void createProducers(List<DetailedTopic> detailedTopicList) {
         Timer timer = new Timer();
-        AtomicInteger index = new AtomicInteger();
+        Map<String, List<DetailedTopic>> topicsMap = new HashMap<>();
+        detailedTopicList.forEach(topic -> topicsMap.computeIfAbsent(topic.topicGroup, x -> new ArrayList<>()).add(topic));
 
-        producers.addAll(
-                benchmarkDriver
-                        .createProducers(
-                                topics.stream()
-                                        .map(t -> new ProducerInfo(index.getAndIncrement(), t))
-                                        .collect(toList()))
-                        .join());
+        AtomicInteger createdNum = new AtomicInteger();
+        topicsMap.forEach((topicGroup, topics) -> {
+            List<ProducerInfo> producerInfoList = IntStream.range(0, topics.size())
+                    .mapToObj(i -> new ProducerInfo(i, topics.get(i).topic))
+                    .collect(toList());
+            List<BenchmarkProducer> createdProducers = benchmarkDriver.createProducers(producerInfoList).join();
+            createdNum.addAndGet(createdProducers.size());
+            producers.addAll(createdProducers);
+            producersMap.computeIfAbsent(topicGroup, x -> new ArrayList<>()).addAll(createdProducers);
+        });
 
-        log.info("Created {} producers in {} ms", producers.size(), timer.elapsedMillis());
+        // init publish rate.
+        detailedTopicList.stream().map(g -> g.topicGroup).distinct().forEach(topicGroup -> {
+            if (!messageProducers.containsKey(topicGroup)) {
+                updateMessageProducer(topicGroup, 1.0);
+            }
+        });
+
+        log.info("Created {} producers in {} ms", createdNum.get(), timer.elapsedMillis());
     }
 
     @Override
@@ -180,16 +199,19 @@ public class LocalWorker implements Worker, ConsumerCallback {
 
     @Override
     public void startLoad(ProducerWorkAssignment producerWorkAssignment) {
+        if (!producersMap.containsKey(producerWorkAssignment.topicGroup)) {
+            log.info("No producers for topic group {}. Just ignore it.", producerWorkAssignment.topicGroup);
+        }
         int processors = Runtime.getRuntime().availableProcessors();
 
-        updateMessageProducer(producerWorkAssignment.publishRate);
+        updateMessageProducer(producerWorkAssignment.topicGroup, producerWorkAssignment.publishRate);
 
         Map<Integer, List<BenchmarkProducer>> processorAssignment = new TreeMap<>();
 
         int processorIdx = 0;
-        for (BenchmarkProducer p : producers) {
+        for (BenchmarkProducer p : producersMap.get(producerWorkAssignment.topicGroup)) {
             processorAssignment
-                    .computeIfAbsent(processorIdx, x -> new ArrayList<BenchmarkProducer>())
+                    .computeIfAbsent(processorIdx, x -> new ArrayList<>())
                     .add(p);
 
             processorIdx = (processorIdx + 1) % processors;
@@ -200,6 +222,7 @@ public class LocalWorker implements Worker, ConsumerCallback {
                 .forEach(
                         producers ->
                                 submitProducersToExecutor(
+                                        producerWorkAssignment.topicGroup,
                                         producers,
                                         KeyDistributor.build(producerWorkAssignment.keyDistributorType),
                                         producerWorkAssignment.payloadData));
@@ -212,8 +235,8 @@ public class LocalWorker implements Worker, ConsumerCallback {
                         producer.sendAsync(Optional.of("key"), new byte[10]).thenRun(stats::recordMessageSent));
     }
 
-    private void submitProducersToExecutor(
-            List<BenchmarkProducer> producers, KeyDistributor keyDistributor, List<byte[]> payloads) {
+    private void submitProducersToExecutor(String topicGroup, List<BenchmarkProducer> producers,
+                                           KeyDistributor keyDistributor, List<byte[]> payloads) {
         ThreadLocalRandom r = ThreadLocalRandom.current();
         int payloadCount = payloads.size();
         executor.submit(
@@ -222,7 +245,7 @@ public class LocalWorker implements Worker, ConsumerCallback {
                         while (!testCompleted) {
                             producers.forEach(
                                     p ->
-                                            messageProducer.sendMessage(
+                                            messageProducers.get(topicGroup).sendMessage(
                                                     p,
                                                     Optional.ofNullable(keyDistributor.next()),
                                                     payloads.get(r.nextInt(payloadCount))));
@@ -234,16 +257,17 @@ public class LocalWorker implements Worker, ConsumerCallback {
     }
 
     @Override
-    public void adjustPublishRate(double publishRate) {
-        if (publishRate < 1.0) {
-            updateMessageProducer(1.0);
+    public void adjustPublishRate(RateAdjustInfo rateAdjustInfo) {
+        if (rateAdjustInfo.publishRate < 1.0) {
+            updateMessageProducer(rateAdjustInfo.topicGroup, 1.0);
             return;
         }
-        updateMessageProducer(publishRate);
+        updateMessageProducer(rateAdjustInfo.topicGroup, rateAdjustInfo.publishRate);
     }
 
-    private void updateMessageProducer(double publishRate) {
-        messageProducer = new MessageProducer(new UniformRateLimiter(publishRate), stats);
+    private void updateMessageProducer(String topicGroup, double publishRate) {
+        double modifiedRate = Math.max(publishRate, 1.0);
+        messageProducers.put(topicGroup, new MessageProducer(new UniformRateLimiter(modifiedRate), stats));
     }
 
     @Override
@@ -327,6 +351,7 @@ public class LocalWorker implements Worker, ConsumerCallback {
                 producer.close();
             }
             producers.clear();
+            messageProducers.clear();
 
             for (BenchmarkConsumer consumer : consumers) {
                 consumer.close();

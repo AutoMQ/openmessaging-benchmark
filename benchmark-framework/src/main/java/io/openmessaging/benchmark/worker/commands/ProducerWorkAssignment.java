@@ -25,8 +25,11 @@ public class ProducerWorkAssignment {
 
     public KeyDistributorType keyDistributorType;
 
+    public String topicGroup;
+
     public ProducerWorkAssignment withPublishRate(double publishRate) {
         ProducerWorkAssignment copy = new ProducerWorkAssignment();
+        copy.topicGroup = this.topicGroup;
         copy.keyDistributorType = this.keyDistributorType;
         copy.payloadData = this.payloadData;
         copy.publishRate = publishRate;
