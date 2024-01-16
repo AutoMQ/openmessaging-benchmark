@@ -35,8 +35,10 @@ import com.google.common.base.Preconditions;
 import io.openmessaging.benchmark.worker.commands.ConsumerAssignment;
 import io.openmessaging.benchmark.worker.commands.CountersStats;
 import io.openmessaging.benchmark.worker.commands.CumulativeLatencies;
+import io.openmessaging.benchmark.worker.commands.DetailedTopic;
 import io.openmessaging.benchmark.worker.commands.PeriodStats;
 import io.openmessaging.benchmark.worker.commands.ProducerWorkAssignment;
+import io.openmessaging.benchmark.worker.commands.RateAdjustInfo;
 import io.openmessaging.benchmark.worker.commands.TopicsInfo;
 import io.openmessaging.benchmark.worker.jackson.ObjectMappers;
 import java.io.File;
@@ -79,8 +81,8 @@ public class HttpWorkerClient implements Worker {
     }
 
     @Override
-    public void createProducers(List<String> topics) throws IOException {
-        sendPost(CREATE_PRODUCERS, writer.writeValueAsBytes(topics));
+    public void createProducers(List<DetailedTopic> detailedTopicList) throws IOException {
+        sendPost(CREATE_PRODUCERS, writer.writeValueAsBytes(detailedTopicList));
     }
 
     @Override
@@ -101,9 +103,9 @@ public class HttpWorkerClient implements Worker {
     }
 
     @Override
-    public void adjustPublishRate(double publishRate) throws IOException {
-        log.debug("Adjusting worker publish rate to {} msgs/sec", publishRate);
-        sendPost(ADJUST_PUBLISH_RATE, writer.writeValueAsBytes(publishRate));
+    public void adjustPublishRate(RateAdjustInfo rateAdjustInfo) throws IOException {
+        log.debug("Adjusting worker publish rate to {} msgs/sec", rateAdjustInfo.publishRate);
+        sendPost(ADJUST_PUBLISH_RATE, writer.writeValueAsBytes(rateAdjustInfo));
     }
 
     @Override
