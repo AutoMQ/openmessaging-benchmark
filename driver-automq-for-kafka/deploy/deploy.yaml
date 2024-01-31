@@ -22,7 +22,7 @@
       # Global configs
       base_store_path: "/data"
       kafka_wal_path: "/dev/nvme1n1"
-      kafka_package: "/tmp/kafka_2.13-1.0.0.tgz"
+      kafka_package: "/tmp/kafka-3.4.0.tgz"
       kafka_cluster_id: "KYTvAjiLTWyRmlCHGxHKcA"
       kafka_heap_size: "6g"
       kafka_direct_memory_size: "6g"
