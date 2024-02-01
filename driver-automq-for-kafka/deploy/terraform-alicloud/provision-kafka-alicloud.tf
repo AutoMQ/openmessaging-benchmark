@@ -81,7 +81,7 @@ resource "alicloud_vpc" "benchmark_vpc" {
 }
 
 # Create an internet gateway to give our subnet access to the outside world
-resource "alicloud_vpc_ipv4_gateway" "kafka_on_s3" {
+resource "alicloud_vpc_ipv4_gateway" "benchmark_gateway" {
   vpc_id  = alicloud_vpc.benchmark_vpc.id
   enabled = true
 
@@ -98,10 +98,17 @@ resource "alicloud_route_table" "benchmark_route_table" {
   tags             = local.alicloud_tags
 }
 
+resource "alicloud_route_entry" "benchmark_route_entry" {
+  route_table_id        = alicloud_route_table.benchmark_route_table.id
+  destination_cidrblock = "0.0.0.0/0"
+  nexthop_type          = "Ipv4Gateway"
+  nexthop_id            = alicloud_vpc_ipv4_gateway.benchmark_gateway.id
+}
+
 # Grant the VPC internet access on its default route table
 resource "alicloud_vpc_gateway_route_table_attachment" "internet_access" {
   route_table_id  = alicloud_route_table.benchmark_route_table.id
-  ipv4_gateway_id = alicloud_vpc_ipv4_gateway.kafka_on_s3.id
+  ipv4_gateway_id = alicloud_vpc_ipv4_gateway.benchmark_gateway.id
 }
 
 # Create a vswitch to launch our instances into
@@ -169,7 +176,7 @@ resource "alicloud_instance" "server" {
   security_groups = [alicloud_security_group.benchmark_security_group.id]
   count           = var.instance_cnt["server"]
 
-  internet_charge_type  = "PayByBandwidth"
+  internet_charge_type       = "PayByBandwidth"
   internet_max_bandwidth_out = "1"
 
   system_disk_category          = "cloud_essd"
@@ -197,7 +204,7 @@ resource "alicloud_instance" "broker" {
   security_groups = [alicloud_security_group.benchmark_security_group.id]
   count           = var.instance_cnt["broker"]
 
-  internet_charge_type  = "PayByBandwidth"
+  internet_charge_type       = "PayByBandwidth"
   internet_max_bandwidth_out = "1"
 
   system_disk_category          = "cloud_essd"
@@ -225,7 +232,7 @@ resource "alicloud_instance" "client" {
   security_groups = [alicloud_security_group.benchmark_security_group.id]
   count           = var.instance_cnt["client"]
 
-  internet_charge_type  = "PayByBandwidth"
+  internet_charge_type       = "PayByBandwidth"
   internet_max_bandwidth_out = "1"
 
   system_disk_category          = "cloud_essd"
