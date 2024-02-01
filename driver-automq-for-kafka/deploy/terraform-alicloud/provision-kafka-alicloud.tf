@@ -242,7 +242,7 @@ output "client_ssh_host" {
 }
 
 resource "local_file" "hosts_ini" {
-  content = templatefile("${path.module}/hosts-alicloud.ini.tpl",
+  content = templatefile("${path.module}/hosts.ini.tpl",
     {
       server = alicloud_instance.server,
       broker = alicloud_instance.broker,
