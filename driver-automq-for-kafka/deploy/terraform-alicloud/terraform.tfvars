@@ -3,7 +3,7 @@ region          = "cn-hangzhou"
 az              = "cn-hangzhou-b"
 
 ami             = "ubuntu_22_04_x64_20G_alibase_20231221.vhd"
-user            = "ubuntu"
+user            = "root"
 
 instance_type = {
   "server"              = "ecs.r7.large"
