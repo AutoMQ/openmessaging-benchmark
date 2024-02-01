@@ -77,41 +77,41 @@ resource "alicloud_vpc" "benchmark_vpc" {
   cidr_block = "10.0.0.0/16"
 
   vpc_name = "Kafka_on_S3_Benchmark_VPC_${random_id.hash.hex}"
-  tags = local.alicloud_tags
+  tags     = local.alicloud_tags
 }
 
 # Create an internet gateway to give our subnet access to the outside world
 resource "alicloud_vpc_ipv4_gateway" "kafka_on_s3" {
-  vpc_id = alicloud_vpc.benchmark_vpc.id
+  vpc_id  = alicloud_vpc.benchmark_vpc.id
   enabled = true
 
   ipv4_gateway_name = "Kafka_on_S3_Benchmark_Gateway_${random_id.hash.hex}"
-  tags = local.alicloud_tags
+  tags              = local.alicloud_tags
 }
 
 # Create a route table for our VPC
 resource "alicloud_route_table" "benchmark_route_table" {
-  vpc_id = alicloud_vpc.benchmark_vpc.id
-  associate_type ="Gateway"
+  vpc_id         = alicloud_vpc.benchmark_vpc.id
+  associate_type = "Gateway"
 
   route_table_name = "Kafka_on_S3_Benchmark_Route_Table_${random_id.hash.hex}"
-  tags = local.alicloud_tags
+  tags             = local.alicloud_tags
 }
 
 # Grant the VPC internet access on its default route table
 resource "alicloud_vpc_gateway_route_table_attachment" "internet_access" {
-  route_table_id = alicloud_vpc.benchmark_vpc.route_table_id
+  route_table_id  = alicloud_vpc.benchmark_vpc.route_table_id
   ipv4_gateway_id = alicloud_vpc_ipv4_gateway.kafka_on_s3.id
 }
 
 # Create a vswitch to launch our instances into
 resource "alicloud_vswitch" "benchmark_vswitch" {
-  vpc_id = alicloud_vpc.benchmark_vpc.id
+  vpc_id     = alicloud_vpc.benchmark_vpc.id
   cidr_block = "10.0.0.0/24"
-  zone_id = var.az
+  zone_id    = var.az
 
   vswitch_name = "Kafka_on_S3_Benchmark_Vswitch_${random_id.hash.hex}"
-  tags = local.alicloud_tags
+  tags         = local.alicloud_tags
 }
 
 # Create security group
@@ -123,110 +123,110 @@ resource "alicloud_security_group" "benchmark_security_group" {
 }
 
 resource "alicloud_security_group_rule" "benchmark_security_group_rule_ssh" {
-    type              = "ingress"
-    ip_protocol       = "tcp"
-    port_range        = "22/22"
-    security_group_id = alicloud_security_group.benchmark_security_group.id
-    cidr_ip           = "0.0.0.0/0"
+  type              = "ingress"
+  ip_protocol       = "tcp"
+  port_range        = "22/22"
+  security_group_id = alicloud_security_group.benchmark_security_group.id
+  cidr_ip           = "0.0.0.0/0"
 }
 
 resource "alicloud_security_group_rule" "benchmark_security_group_rule_grafana" {
-    type              = "ingress"
-    ip_protocol       = "tcp"
-    port_range        = "3000/3000"
-    security_group_id = alicloud_security_group.benchmark_security_group.id
-    cidr_ip           = "0.0.0.0/0"
+  type              = "ingress"
+  ip_protocol       = "tcp"
+  port_range        = "3000/3000"
+  security_group_id = alicloud_security_group.benchmark_security_group.id
+  cidr_ip           = "0.0.0.0/0"
 }
 
 resource "alicloud_security_group_rule" "benchmark_security_group_rule_within_vpc" {
-    type              = "ingress"
-    ip_protocol       = "tcp"
-    port_range        = "1/65535"
-    security_group_id = alicloud_security_group.benchmark_security_group.id
-    cidr_ip           = "10.0.0.0/16"
+  type              = "ingress"
+  ip_protocol       = "tcp"
+  port_range        = "1/65535"
+  security_group_id = alicloud_security_group.benchmark_security_group.id
+  cidr_ip           = "10.0.0.0/16"
 }
 
 resource "alicloud_security_group_rule" "benchmark_security_group_rule_outbound" {
-    type              = "egress"
-    ip_protocol       = "all"
-    port_range        = "1/65535"
-    security_group_id = alicloud_security_group.benchmark_security_group.id
-    cidr_ip           = "0.0.0.0/0"
+  type              = "egress"
+  ip_protocol       = "all"
+  port_range        = "1/65535"
+  security_group_id = alicloud_security_group.benchmark_security_group.id
+  cidr_ip           = "0.0.0.0/0"
 }
 
 resource "alicloud_key_pair" "benchmark_key_pair" {
   key_pair_name = "${var.key_name}-${random_id.hash.hex}"
-  public_key = file(var.public_key_path)
+  public_key    = file(var.public_key_path)
 
   tags = local.alicloud_tags
 }
 
 resource "alicloud_instance" "server" {
-  image_id = var.ami
-  instance_type = var.instance_type["server"]
-  key_name = alicloud_key_pair.benchmark_key_pair.id
-  vswitch_id = alicloud_vswitch.benchmark_vswitch.id
+  image_id        = var.ami
+  instance_type   = var.instance_type["server"]
+  key_name        = alicloud_key_pair.benchmark_key_pair.id
+  vswitch_id      = alicloud_vswitch.benchmark_vswitch.id
   security_groups = [alicloud_security_group.benchmark_security_group.id]
-  count = var.instance_cnt["server"]
+  count           = var.instance_cnt["server"]
 
-  system_disk_category = "cloud_essd"
+  system_disk_category          = "cloud_essd"
   system_disk_performance_level = "PL0"
-  system_disk_size = 20
-  system_disk_name = "Kafka_on_S3_Benchmark_EBS_root_server_${count.index}_${random_id.hash.hex}"
+  system_disk_size              = 20
+  system_disk_name              = "Kafka_on_S3_Benchmark_EBS_root_server_${count.index}_${random_id.hash.hex}"
 
   data_disks {
-    category = var.ebs_category
+    category          = var.ebs_category
     performance_level = var.ebs_performance_level
-    size = var.ebs_volume_size
-    name = "Kafka_on_S3_Benchmark_EBS_data_server_${count.index}_${random_id.hash.hex}"
+    size              = var.ebs_volume_size
+    name              = "Kafka_on_S3_Benchmark_EBS_data_server_${count.index}_${random_id.hash.hex}"
   }
 
   instance_name = "Kafka_on_S3_Benchmark_ECS_server_${count.index}_${random_id.hash.hex}"
-  tags = local.alicloud_tags
-  volume_tags = local.alicloud_tags
+  tags          = local.alicloud_tags
+  volume_tags   = local.alicloud_tags
 }
 
 resource "alicloud_instance" "broker" {
-  image_id = var.ami
-  instance_type = var.instance_type["broker"]
-  key_name = alicloud_key_pair.benchmark_key_pair.id
-  vswitch_id = alicloud_vswitch.benchmark_vswitch.id
+  image_id        = var.ami
+  instance_type   = var.instance_type["broker"]
+  key_name        = alicloud_key_pair.benchmark_key_pair.id
+  vswitch_id      = alicloud_vswitch.benchmark_vswitch.id
   security_groups = [alicloud_security_group.benchmark_security_group.id]
-  count = var.instance_cnt["broker"]
+  count           = var.instance_cnt["broker"]
 
-  system_disk_category = "cloud_essd"
+  system_disk_category          = "cloud_essd"
   system_disk_performance_level = "PL0"
-  system_disk_size = 20
-  system_disk_name = "Kafka_on_S3_Benchmark_EBS_root_broker_${count.index}_${random_id.hash.hex}"
+  system_disk_size              = 20
+  system_disk_name              = "Kafka_on_S3_Benchmark_EBS_root_broker_${count.index}_${random_id.hash.hex}"
 
   data_disks {
-    category = var.ebs_category
+    category          = var.ebs_category
     performance_level = var.ebs_performance_level
-    size = var.ebs_volume_size
-    name = "Kafka_on_S3_Benchmark_EBS_data_broker_${count.index}_${random_id.hash.hex}"
+    size              = var.ebs_volume_size
+    name              = "Kafka_on_S3_Benchmark_EBS_data_broker_${count.index}_${random_id.hash.hex}"
   }
 
   instance_name = "Kafka_on_S3_Benchmark_ECS_broker_${count.index}_${random_id.hash.hex}"
-  tags = local.alicloud_tags
-  volume_tags = local.alicloud_tags
+  tags          = local.alicloud_tags
+  volume_tags   = local.alicloud_tags
 }
 
 resource "alicloud_instance" "client" {
-  image_id = var.ami
-  instance_type = var.instance_type["client"]
-  key_name = alicloud_key_pair.benchmark_key_pair.id
-  vswitch_id = alicloud_vswitch.benchmark_vswitch.id
+  image_id        = var.ami
+  instance_type   = var.instance_type["client"]
+  key_name        = alicloud_key_pair.benchmark_key_pair.id
+  vswitch_id      = alicloud_vswitch.benchmark_vswitch.id
   security_groups = [alicloud_security_group.benchmark_security_group.id]
-  count = var.instance_cnt["client"]
+  count           = var.instance_cnt["client"]
 
-  system_disk_category = "cloud_essd"
+  system_disk_category          = "cloud_essd"
   system_disk_performance_level = "PL0"
-  system_disk_size = 32
-  system_disk_name = "Kafka_on_S3_Benchmark_EBS_root_client_${count.index}_${random_id.hash.hex}"
+  system_disk_size              = 32
+  system_disk_name              = "Kafka_on_S3_Benchmark_EBS_root_client_${count.index}_${random_id.hash.hex}"
 
   instance_name = "Kafka_on_S3_Benchmark_ECS_client_${count.index}_${random_id.hash.hex}"
-  tags = local.alicloud_tags
-  volume_tags = local.alicloud_tags
+  tags          = local.alicloud_tags
+  volume_tags   = local.alicloud_tags
 }
 
 
