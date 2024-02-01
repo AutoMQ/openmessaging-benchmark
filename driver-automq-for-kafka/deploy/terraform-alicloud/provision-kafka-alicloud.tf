@@ -64,9 +64,8 @@ variable "ebs_volume_size" {
   type = number
 }
 
-# a data contains tags
-data "alicloud_tags" "default" {
-  tags = {
+locals {
+  alicloud_tags = {
     Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
   }
 }
@@ -76,7 +75,7 @@ resource "alicloud_vpc" "benchmark_vpc" {
   cidr_block = "10.0.0.0/16"
 
   vpc_name = "Kafka_on_S3_Benchmark_VPC_${random_id.hash.hex}"
-  tags = data.alicloud_tags.default.tags
+  tags = local.alicloud_tags
 }
 
 # Create an internet gateway to give our subnet access to the outside world
@@ -84,7 +83,7 @@ resource "alicloud_vpc_ipv4_gateway" "kafka_on_s3" {
   vpc_id = alicloud_vpc.benchmark_vpc.id
 
   ipv4_gateway_name = "Kafka_on_S3_Benchmark_Gateway_${random_id.hash.hex}"
-  tags = data.alicloud_tags.default.tags
+  tags = local.alicloud_tags
 }
 
 # Grant the VPC internet access on its default route table
@@ -100,7 +99,7 @@ resource "alicloud_vswitch" "benchmark_subnet" {
   zone_id = var.az
 
   vswitch_name = "Kafka_on_S3_Benchmark_Subnet_${random_id.hash.hex}"
-  tags = data.alicloud_tags.default.tags
+  tags = local.alicloud_tags
 }
 
 # Create security group
@@ -108,7 +107,7 @@ resource "alicloud_security_group" "benchmark_security_group" {
   vpc_id = alicloud_vpc.benchmark_vpc.id
 
   name = "Kafka_on_S3_Benchmark_SG_${random_id.hash.hex}"
-  tags = data.alicloud_tags.default.tags
+  tags = local.alicloud_tags
 }
 
 resource "alicloud_security_group_rule" "benchmark_security_group_rule_ssh" {
@@ -147,7 +146,7 @@ resource "alicloud_key_pair" "benchmark_key_pair" {
   key_name = "${var.key_name}-${random_id.hash.hex}"
   public_key = file(var.public_key_path)
 
-  tags = data.alicloud_tags.default.tags
+  tags = local.alicloud_tags
 }
 
 resource "alicloud_instance" "server" {
@@ -171,8 +170,8 @@ resource "alicloud_instance" "server" {
   }
 
   instance_name = "Kafka_on_S3_Benchmark_ECS_server_${count.index}_${random_id.hash.hex}"
-  tags = data.alicloud_tags.default.tags
-  volume_tags = data.alicloud_tags.default.tags
+  tags = local.alicloud_tags
+  volume_tags = local.alicloud_tags
 }
 
 resource "alicloud_instance" "broker" {
@@ -196,8 +195,8 @@ resource "alicloud_instance" "broker" {
   }
 
   instance_name = "Kafka_on_S3_Benchmark_ECS_broker_${count.index}_${random_id.hash.hex}"
-  tags = data.alicloud_tags.default.tags
-  volume_tags = data.alicloud_tags.default.tags
+  tags = local.alicloud_tags
+  volume_tags = local.alicloud_tags
 }
 
 resource "alicloud_instance" "client" {
@@ -214,8 +213,8 @@ resource "alicloud_instance" "client" {
   system_disk_name = "Kafka_on_S3_Benchmark_EBS_root_client_${count.index}_${random_id.hash.hex}"
 
   instance_name = "Kafka_on_S3_Benchmark_ECS_client_${count.index}_${random_id.hash.hex}"
-  tags = data.alicloud_tags.default.tags
-  volume_tags = data.alicloud_tags.default.tags
+  tags = local.alicloud_tags
+  volume_tags = local.alicloud_tags
 }
 
 
@@ -223,7 +222,7 @@ resource "alicloud_oss_bucket" "benchmark_bucket" {
   bucket        = "kafka-on-s3-benchmark-${random_id.hash.hex}"
   force_destroy = true
 
-  tags = data.alicloud_tags.default.tags
+  tags = local.alicloud_tags
 }
 
 output "user" {
