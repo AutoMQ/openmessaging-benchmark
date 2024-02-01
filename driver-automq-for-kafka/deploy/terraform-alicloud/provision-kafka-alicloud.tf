@@ -169,6 +169,9 @@ resource "alicloud_instance" "server" {
   security_groups = [alicloud_security_group.benchmark_security_group.id]
   count           = var.instance_cnt["server"]
 
+  internet_charge_type  = "PayByBandwidth"
+  internet_max_bandwidth_out = "1"
+
   system_disk_category          = "cloud_essd"
   system_disk_performance_level = "PL0"
   system_disk_size              = 20
@@ -194,6 +197,9 @@ resource "alicloud_instance" "broker" {
   security_groups = [alicloud_security_group.benchmark_security_group.id]
   count           = var.instance_cnt["broker"]
 
+  internet_charge_type  = "PayByBandwidth"
+  internet_max_bandwidth_out = "1"
+
   system_disk_category          = "cloud_essd"
   system_disk_performance_level = "PL0"
   system_disk_size              = 20
@@ -218,6 +224,9 @@ resource "alicloud_instance" "client" {
   vswitch_id      = alicloud_vswitch.benchmark_vswitch.id
   security_groups = [alicloud_security_group.benchmark_security_group.id]
   count           = var.instance_cnt["client"]
+
+  internet_charge_type  = "PayByBandwidth"
+  internet_max_bandwidth_out = "1"
 
   system_disk_category          = "cloud_essd"
   system_disk_performance_level = "PL0"
