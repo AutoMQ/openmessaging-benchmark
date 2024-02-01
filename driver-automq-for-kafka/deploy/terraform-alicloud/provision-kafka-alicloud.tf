@@ -94,13 +94,13 @@ resource "alicloud_vpc_gateway_route_table_attachment" "internet_access" {
   ipv4_gateway_id = alicloud_vpc_ipv4_gateway.kafka_on_s3.id
 }
 
-# Create a subnet to launch our instances into
-resource "alicloud_vswitch" "benchmark_subnet" {
+# Create a vswitch to launch our instances into
+resource "alicloud_vswitch" "benchmark_vswitch" {
   vpc_id = alicloud_vpc.benchmark_vpc.id
   cidr_block = "10.0.0.0/24"
   zone_id = var.az
 
-  vswitch_name = "Kafka_on_S3_Benchmark_Subnet_${random_id.hash.hex}"
+  vswitch_name = "Kafka_on_S3_Benchmark_Vswitch_${random_id.hash.hex}"
   tags = local.alicloud_tags
 }
 
@@ -155,7 +155,7 @@ resource "alicloud_instance" "server" {
   image_id = var.ami
   instance_type = var.instance_type["server"]
   key_name = alicloud_key_pair.benchmark_key_pair.id
-  subnet_id = alicloud_vswitch.benchmark_subnet.id
+  vswitch_id = alicloud_vswitch.benchmark_vswitch.id
   security_groups = [alicloud_security_group.benchmark_security_group.id]
   count = var.instance_cnt["server"]
 
@@ -180,7 +180,7 @@ resource "alicloud_instance" "broker" {
   image_id = var.ami
   instance_type = var.instance_type["broker"]
   key_name = alicloud_key_pair.benchmark_key_pair.id
-  subnet_id = alicloud_vswitch.benchmark_subnet.id
+  vswitch_id = alicloud_vswitch.benchmark_vswitch.id
   security_groups = [alicloud_security_group.benchmark_security_group.id]
   count = var.instance_cnt["broker"]
 
@@ -205,7 +205,7 @@ resource "alicloud_instance" "client" {
   image_id = var.ami
   instance_type = var.instance_type["client"]
   key_name = alicloud_key_pair.benchmark_key_pair.id
-  subnet_id = alicloud_vswitch.benchmark_subnet.id
+  vswitch_id = alicloud_vswitch.benchmark_vswitch.id
   security_groups = [alicloud_security_group.benchmark_security_group.id]
   count = var.instance_cnt["client"]
 
