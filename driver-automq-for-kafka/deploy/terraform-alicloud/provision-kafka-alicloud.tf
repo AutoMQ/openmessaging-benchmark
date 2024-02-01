@@ -83,8 +83,18 @@ resource "alicloud_vpc" "benchmark_vpc" {
 # Create an internet gateway to give our subnet access to the outside world
 resource "alicloud_vpc_ipv4_gateway" "kafka_on_s3" {
   vpc_id = alicloud_vpc.benchmark_vpc.id
+  enabled = true
 
   ipv4_gateway_name = "Kafka_on_S3_Benchmark_Gateway_${random_id.hash.hex}"
+  tags = local.alicloud_tags
+}
+
+# Create a route table for our VPC
+resource "alicloud_route_table" "benchmark_route_table" {
+  vpc_id = alicloud_vpc.benchmark_vpc.id
+  associate_type ="Gateway"
+
+  route_table_name = "Kafka_on_S3_Benchmark_Route_Table_${random_id.hash.hex}"
   tags = local.alicloud_tags
 }
 
@@ -131,7 +141,7 @@ resource "alicloud_security_group_rule" "benchmark_security_group_rule_grafana" 
 resource "alicloud_security_group_rule" "benchmark_security_group_rule_within_vpc" {
     type              = "ingress"
     ip_protocol       = "tcp"
-    port_range        = "0/65535"
+    port_range        = "1/65535"
     security_group_id = alicloud_security_group.benchmark_security_group.id
     cidr_ip           = "10.0.0.0/16"
 }
@@ -139,7 +149,7 @@ resource "alicloud_security_group_rule" "benchmark_security_group_rule_within_vp
 resource "alicloud_security_group_rule" "benchmark_security_group_rule_outbound" {
     type              = "egress"
     ip_protocol       = "all"
-    port_range        = "0/0"
+    port_range        = "1/65535"
     security_group_id = alicloud_security_group.benchmark_security_group.id
     cidr_ip           = "0.0.0.0/0"
 }
@@ -161,7 +171,7 @@ resource "alicloud_instance" "server" {
 
   system_disk_category = "cloud_essd"
   system_disk_performance_level = "PL0"
-  system_disk_size = 16
+  system_disk_size = 20
   system_disk_name = "Kafka_on_S3_Benchmark_EBS_root_server_${count.index}_${random_id.hash.hex}"
 
   data_disks {
@@ -186,7 +196,7 @@ resource "alicloud_instance" "broker" {
 
   system_disk_category = "cloud_essd"
   system_disk_performance_level = "PL0"
-  system_disk_size = 16
+  system_disk_size = 20
   system_disk_name = "Kafka_on_S3_Benchmark_EBS_root_broker_${count.index}_${random_id.hash.hex}"
 
   data_disks {
