@@ -100,7 +100,7 @@ resource "alicloud_route_table" "benchmark_route_table" {
 
 # Grant the VPC internet access on its default route table
 resource "alicloud_vpc_gateway_route_table_attachment" "internet_access" {
-  route_table_id  = alicloud_vpc.benchmark_vpc.route_table_id
+  route_table_id  = alicloud_route_table.benchmark_route_table.id
   ipv4_gateway_id = alicloud_vpc_ipv4_gateway.kafka_on_s3.id
 }
 
