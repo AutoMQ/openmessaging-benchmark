@@ -1,5 +1,7 @@
 provider "alicloud" {
-  region = var.region
+  region                  = var.region
+  shared_credentials_file = "~/.aliyun/config.json"
+  profile                 = "default"
 }
 
 provider "random" {}
@@ -143,7 +145,7 @@ resource "alicloud_security_group_rule" "benchmark_security_group_rule_outbound"
 }
 
 resource "alicloud_key_pair" "benchmark_key_pair" {
-  key_name = "${var.key_name}-${random_id.hash.hex}"
+  key_pair_name = "${var.key_name}-${random_id.hash.hex}"
   public_key = file(var.public_key_path)
 
   tags = local.alicloud_tags
