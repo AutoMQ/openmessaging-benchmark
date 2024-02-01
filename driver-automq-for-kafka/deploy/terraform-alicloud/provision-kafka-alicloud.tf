@@ -99,7 +99,7 @@ resource "alicloud_route_table" "benchmark_route_table" {
 }
 
 resource "alicloud_route_entry" "benchmark_route_entry" {
-  route_table_id        = alicloud_route_table.benchmark_route_table.id
+  route_table_id        = alicloud_vpc.benchmark_vpc.route_table_id
   destination_cidrblock = "0.0.0.0/0"
   nexthop_type          = "Ipv4Gateway"
   nexthop_id            = alicloud_vpc_ipv4_gateway.benchmark_gateway.id
