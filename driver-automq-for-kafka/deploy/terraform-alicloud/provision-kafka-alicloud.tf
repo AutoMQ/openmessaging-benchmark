@@ -187,7 +187,7 @@ resource "alicloud_instance" "server" {
   count           = var.instance_cnt["server"]
 
   internet_charge_type       = "PayByTraffic"
-  internet_max_bandwidth_out = "1"
+  internet_max_bandwidth_out = "32"
 
   system_disk_category          = "cloud_essd"
   system_disk_performance_level = "PL0"
@@ -216,7 +216,7 @@ resource "alicloud_instance" "broker" {
   count           = var.instance_cnt["broker"]
 
   internet_charge_type       = "PayByTraffic"
-  internet_max_bandwidth_out = "1"
+  internet_max_bandwidth_out = "32"
 
   system_disk_category          = "cloud_essd"
   system_disk_performance_level = "PL0"
@@ -245,7 +245,7 @@ resource "alicloud_instance" "client" {
   count           = var.instance_cnt["client"]
 
   internet_charge_type       = "PayByTraffic"
-  internet_max_bandwidth_out = "1"
+  internet_max_bandwidth_out = "32"
 
   system_disk_category          = "cloud_essd"
   system_disk_performance_level = "PL0"
