@@ -73,7 +73,7 @@ locals {
 }
 
 resource "alicloud_resource_manager_resource_group" "benchmark_resource_group" {
-  resource_group_name = "Kafka_on_S3_Benchmark_Resource_Group_${random_id.hash.hex}"
+  resource_group_name = "Kafka-on-S3-Benchmark-${random_id.hash.hex}"
   display_name        = "Kafka-on-S3-Benchmark-${random_id.hash.hex}"
 }
 
@@ -101,7 +101,6 @@ resource "alicloud_route_table" "benchmark_route_table" {
   vpc_id         = alicloud_vpc.benchmark_vpc.id
   associate_type = "Gateway"
 
-  resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
   route_table_name = "Kafka_on_S3_Benchmark_Route_Table_${random_id.hash.hex}"
   tags             = local.alicloud_tags
 }
