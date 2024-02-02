@@ -22,3 +22,4 @@ ${ instance.public_ip } ansible_user=${ ssh_user } private_ip=${ instance.privat
 s3_endpoint=https://s3.${ s3_region }.${ aws_domain }
 s3_region=${ s3_region }
 s3_bucket=${ s3_bucket }
+kafka_wal_path=/dev/nvme1n1

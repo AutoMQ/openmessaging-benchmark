@@ -20,7 +20,7 @@
   - set_fact:
       kafka_cluster_id: "KYTvAjiLTWyRmlCHGxHKcA"
       base_store_path: "/data"
-      kafka_wal_path: "/dev/nvme1n1"
+      kafka_wal_path: "{{ hostvars[inventory_hostname]['kafka_wal_path'] }}"
 
 
 - name: Reboot
