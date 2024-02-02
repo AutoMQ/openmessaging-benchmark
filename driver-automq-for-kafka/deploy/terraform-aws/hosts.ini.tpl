@@ -23,3 +23,4 @@ s3_endpoint=https://s3.${ s3_region }.${ aws_domain }
 s3_region=${ s3_region }
 s3_bucket=${ s3_bucket }
 kafka_wal_path=/dev/nvme1n1
+kafka_wal_iops=3000
