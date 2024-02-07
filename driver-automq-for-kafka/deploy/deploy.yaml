@@ -184,7 +184,7 @@
             server_ids: "{{ groups.get('server') | map('extract', hostvars, 'kafka_id') | list }}"
             server_addrs: "{{ groups.get('server') | map('extract', hostvars, 'private_ip') | map('regex_replace', '^(.*)$', '\\1:9093') | list }}"
 
-            telemetry_ip: "{{ groups.get('telemetry') | map('extract', hostvars, 'private_ip') | first }}"
+            telemetry_ip: "{{ groups.get('telemetry') | map('extract', hostvars, 'private_ip') | first | default('') }}"
         - set_fact:
             quorum_servers: "{{ server_ids | zip(server_addrs) | map('join', '@') | join(',') }}"
 
