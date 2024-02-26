@@ -20,7 +20,6 @@
   - set_fact:
       kafka_cluster_id: "KYTvAjiLTWyRmlCHGxHKcA"
       base_store_path: "/data"
-      kafka_wal_path: "{{ hostvars[inventory_hostname]['kafka_wal_path'] }}"
 
 
 - name: Reboot
@@ -55,6 +54,8 @@
   connection: ssh
   become: true
   tasks:
+    - set_fact:
+        kafka_wal_path: "{{ hostvars[inventory_hostname]['data_volume'] }}"
     - name: Stop broker
       systemd:
         state: stopped
@@ -86,6 +87,8 @@
   connection: ssh
   become: true
   tasks:
+    - set_fact:
+        kafka_wal_path: "{{ hostvars[inventory_hostname]['data_volume'] }}"
     - name: Stop server
       systemd:
         state: stopped
