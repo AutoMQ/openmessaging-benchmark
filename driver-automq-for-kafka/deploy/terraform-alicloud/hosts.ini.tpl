@@ -1,11 +1,11 @@
 [server]
 %{ for i, instance in server ~}
-${ instance.public_ip } ansible_user=${ ssh_user } private_ip=${ instance.primary_ip_address } index=${ i } kafka_id=${ i + 1 }
+${ instance.public_ip } ansible_user=${ ssh_user } private_ip=${ instance.primary_ip_address } index=${ i } kafka_id=${ i + 1 } data_volume=/dev/vdb data_volume_iops=2800
 %{ endfor ~}
 
 [broker]
 %{ for i, instance in broker ~}
-${ instance.public_ip } ansible_user=${ ssh_user } private_ip=${ instance.primary_ip_address } index=${ i } kafka_id=${ i + 1 + length(server) }
+${ instance.public_ip } ansible_user=${ ssh_user } private_ip=${ instance.primary_ip_address } index=${ i } kafka_id=${ i + 1 + length(server) } data_volume=/dev/vdb data_volume_iops=2800
 %{ endfor ~}
 
 [client]
@@ -22,5 +22,3 @@ ${ instance.public_ip } ansible_user=${ ssh_user } private_ip=${ instance.primar
 s3_endpoint=https://${ oss_endpoint }
 s3_region=${ oss_region }
 s3_bucket=${ oss_bucket }
-kafka_wal_path=/dev/vdb
-kafka_wal_iops=2800

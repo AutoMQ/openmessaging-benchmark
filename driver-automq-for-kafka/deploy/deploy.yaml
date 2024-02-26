@@ -177,8 +177,8 @@
             s3_endpoint: "{{ hostvars[inventory_hostname]['s3_endpoint'] }}"
             s3_region: "{{ hostvars[inventory_hostname]['s3_region'] }}"
             s3_bucket: "{{ hostvars[inventory_hostname]['s3_bucket'] }}"
-            kafka_wal_path: "{{ hostvars[inventory_hostname]['kafka_wal_path'] }}"
-            kafka_wal_iops: "{{ hostvars[inventory_hostname]['kafka_wal_iops'] }}"
+            kafka_wal_path: "{{ hostvars[inventory_hostname]['data_volume'] }}"
+            kafka_wal_iops: "{{ hostvars[inventory_hostname]['data_volume_iops'] }}"
 
             node_id: "{{ hostvars[inventory_hostname]['kafka_id'] }}"
             server_ids: "{{ groups.get('server') | map('extract', hostvars, 'kafka_id') | list }}"
