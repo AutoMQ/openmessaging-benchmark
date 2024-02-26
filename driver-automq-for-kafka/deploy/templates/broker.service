@@ -12,6 +12,7 @@ RestartSec=1s
 Restart=on-failure
 Type=simple
 LimitNOFILE=300000
+KillSignal=SIGKILL
 
 [Install]
 WantedBy=multi-user.target
