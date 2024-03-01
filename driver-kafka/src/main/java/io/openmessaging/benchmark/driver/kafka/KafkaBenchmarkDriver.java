@@ -104,6 +104,8 @@ public class KafkaBenchmarkDriver implements BenchmarkDriver {
             ListTopicsResult result = admin.listTopics();
             try {
                 Set<String> topics = result.names().get();
+                // filter out internal topics
+                topics.removeIf(topic -> topic.startsWith("__"));
                 // Delete all existing topics
                 DeleteTopicsResult deletes = admin.deleteTopics(topics);
                 deletes.all().get();
