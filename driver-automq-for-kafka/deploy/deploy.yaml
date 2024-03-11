@@ -75,9 +75,11 @@
           apt_key:
             url: https://download.docker.com/linux/ubuntu/gpg
             state: present
+        - command: dpkg --print-architecture
+          register: dpkg_arch
         - name: Add Docker apt repository
           apt_repository:
-            repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+            repo: deb [arch={{ dpkg_arch.stdout }}] https://download.docker.com/linux/ubuntu focal stable
             state: present
         - name: Install Docker
           apt:
