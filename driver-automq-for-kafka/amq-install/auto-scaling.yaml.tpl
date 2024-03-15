@@ -54,6 +54,7 @@ kos:
       - s3.wal.upload.threshold=536870912
       - s3.stream.object.split.size=8388608
       - s3.object.part.size=33554432
+      - s3.stream.allocator.policy=POOLED_DIRECT
   scaling:
     scaleOutCooldownSec: 60
     scaleInCooldownSec: 60
