@@ -316,7 +316,8 @@ resource "aws_instance" "broker" {
     tags = {
       Name            = "Kafka_on_S3_Benchmark_EBS_root_broker_${count.index}_${random_id.hash.hex}"
       Benchmark       = "Kafka_on_S3_${random_id.hash.hex}"
-      firstBindNodeID = local.broker_kafka_ids[count.index]
+      volumeType    = "system"
+      vendor        = "automq"
       clusterInstID   = local.cluster_id
     }
   }
@@ -329,6 +330,9 @@ resource "aws_instance" "broker" {
     tags = {
       Name          = "Kafka_on_S3_Benchmark_EBS_data_broker_${count.index}_${random_id.hash.hex}"
       Benchmark     = "Kafka_on_S3_${random_id.hash.hex}"
+      firstBindNodeID = local.broker_kafka_ids[count.index]
+      volumeType      = "wal"
+      vendor          = "automq"
       clusterInstID = local.cluster_id
     }
   }
@@ -340,6 +344,7 @@ resource "aws_instance" "broker" {
     Name          = "Kafka_on_S3_Benchmark_EC2_broker_${count.index}_${random_id.hash.hex}"
     Benchmark     = "Kafka_on_S3_${random_id.hash.hex}"
     nodeID        = local.broker_kafka_ids[count.index]
+    vendor        = "automq"
     clusterInstID = local.cluster_id
   }
 }
