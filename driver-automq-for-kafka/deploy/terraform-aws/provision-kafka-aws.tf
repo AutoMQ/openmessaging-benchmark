@@ -78,6 +78,10 @@ variable "aws_cn" {
   type = bool
 }
 
+locals {
+  cluster_id = "Benchmark___mlCHGxHKcA"
+}
+
 # Create a VPC to launch our instances into
 resource "aws_vpc" "benchmark_vpc" {
   cidr_block = "10.0.0.0/16"
@@ -250,8 +254,9 @@ resource "aws_instance" "server" {
     volume_type = "gp3"
     volume_size = 16
     tags = {
-      Name      = "Kafka_on_S3_Benchmark_EBS_root_server_${count.index}_${random_id.hash.hex}"
-      Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+      Name          = "Kafka_on_S3_Benchmark_EBS_root_server_${count.index}_${random_id.hash.hex}"
+      Benchmark     = "Kafka_on_S3_${random_id.hash.hex}"
+      clusterInstID = local.cluster_id
     }
   }
 
@@ -261,8 +266,9 @@ resource "aws_instance" "server" {
     volume_size = var.ebs_volume_size
     iops        = var.ebs_iops
     tags = {
-      Name      = "Kafka_on_S3_Benchmark_EBS_data_server_${count.index}_${random_id.hash.hex}"
-      Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+      Name          = "Kafka_on_S3_Benchmark_EBS_data_server_${count.index}_${random_id.hash.hex}"
+      Benchmark     = "Kafka_on_S3_${random_id.hash.hex}"
+      clusterInstID = local.cluster_id
     }
   }
 
@@ -270,8 +276,9 @@ resource "aws_instance" "server" {
 
   monitoring = var.monitoring
   tags = {
-    Name      = "Kafka_on_S3_Benchmark_EC2_server_${count.index}_${random_id.hash.hex}"
-    Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+    Name          = "Kafka_on_S3_Benchmark_EC2_server_${count.index}_${random_id.hash.hex}"
+    Benchmark     = "Kafka_on_S3_${random_id.hash.hex}"
+    clusterInstID = local.cluster_id
   }
 }
 
@@ -298,8 +305,9 @@ resource "aws_instance" "broker" {
     volume_type = "gp3"
     volume_size = 16
     tags = {
-      Name      = "Kafka_on_S3_Benchmark_EBS_root_broker_${count.index}_${random_id.hash.hex}"
-      Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+      Name          = "Kafka_on_S3_Benchmark_EBS_root_broker_${count.index}_${random_id.hash.hex}"
+      Benchmark     = "Kafka_on_S3_${random_id.hash.hex}"
+      clusterInstID = local.cluster_id
     }
   }
 
@@ -309,8 +317,9 @@ resource "aws_instance" "broker" {
     volume_size = var.ebs_volume_size
     iops        = var.ebs_iops
     tags = {
-      Name      = "Kafka_on_S3_Benchmark_EBS_data_broker_${count.index}_${random_id.hash.hex}"
-      Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+      Name          = "Kafka_on_S3_Benchmark_EBS_data_broker_${count.index}_${random_id.hash.hex}"
+      Benchmark     = "Kafka_on_S3_${random_id.hash.hex}"
+      clusterInstID = local.cluster_id
     }
   }
 
@@ -318,8 +327,9 @@ resource "aws_instance" "broker" {
 
   monitoring = var.monitoring
   tags = {
-    Name      = "Kafka_on_S3_Benchmark_EC2_broker_${count.index}_${random_id.hash.hex}"
-    Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+    Name          = "Kafka_on_S3_Benchmark_EC2_broker_${count.index}_${random_id.hash.hex}"
+    Benchmark     = "Kafka_on_S3_${random_id.hash.hex}"
+    clusterInstID = local.cluster_id
   }
 }
 
@@ -414,6 +424,7 @@ resource "local_file" "hosts_ini" {
       s3_region  = var.region,
       s3_bucket  = aws_s3_bucket.benchmark_bucket.id,
       aws_domain = var.aws_cn ? "amazonaws.com.cn" : "amazonaws.com",
+      cluster_id = local.cluster_id,
     }
   )
   filename = "${path.module}/hosts.ini"

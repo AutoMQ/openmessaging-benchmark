@@ -22,7 +22,6 @@
       # Global configs
       base_store_path: "/data"
       kafka_package: "/tmp/kafka-3.4.0.tgz"
-      kafka_cluster_id: "KYTvAjiLTWyRmlCHGxHKcA"
       kafka_heap_size: "6g"
       kafka_direct_memory_size: "6g"
       client_worker_heap_size: "8g"
@@ -181,6 +180,7 @@
             s3_bucket: "{{ hostvars[inventory_hostname]['s3_bucket'] }}"
             kafka_wal_path: "{{ hostvars[inventory_hostname]['data_volume'] }}"
             kafka_wal_iops: "{{ hostvars[inventory_hostname]['data_volume_iops'] }}"
+            kafka_cluster_id: "{{ hostvars[inventory_hostname]['cluster_id'] }}"
 
             node_id: "{{ hostvars[inventory_hostname]['kafka_id'] }}"
             server_ids: "{{ groups.get('server') | map('extract', hostvars, 'kafka_id') | list }}"
