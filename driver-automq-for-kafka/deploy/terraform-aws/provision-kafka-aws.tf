@@ -79,7 +79,9 @@ variable "aws_cn" {
 }
 
 locals {
-  cluster_id = "Benchmark___mlCHGxHKcA"
+  cluster_id       = "Benchmark___mlCHGxHKcA"
+  server_kafka_ids = { for i in range(var.instance_cnt["server"]) : i => i + 1 }
+  broker_kafka_ids = { for i in range(var.instance_cnt["broker"]) : i => var.var.instance_cnt["server"] + i + 1 }
 }
 
 # Create a VPC to launch our instances into
@@ -268,11 +270,12 @@ resource "aws_instance" "server" {
     volume_size = var.ebs_volume_size
     iops        = var.ebs_iops
     tags = {
-      Name          = "Kafka_on_S3_Benchmark_EBS_data_server_${count.index}_${random_id.hash.hex}"
-      Benchmark     = "Kafka_on_S3_${random_id.hash.hex}"
-      volumeType    = "wal"
-      vendor        = "automq"
-      clusterInstID = local.cluster_id
+      Name            = "Kafka_on_S3_Benchmark_EBS_data_server_${count.index}_${random_id.hash.hex}"
+      Benchmark       = "Kafka_on_S3_${random_id.hash.hex}"
+      firstBindNodeID = local.server_kafka_ids[count.index]
+      volumeType      = "wal"
+      vendor          = "automq"
+      clusterInstID   = local.cluster_id
     }
   }
 
@@ -282,6 +285,7 @@ resource "aws_instance" "server" {
   tags = {
     Name          = "Kafka_on_S3_Benchmark_EC2_server_${count.index}_${random_id.hash.hex}"
     Benchmark     = "Kafka_on_S3_${random_id.hash.hex}"
+    nodeID        = local.server_kafka_ids[count.index]
     vendor        = "automq"
     clusterInstID = local.cluster_id
   }
@@ -310,9 +314,10 @@ resource "aws_instance" "broker" {
     volume_type = "gp3"
     volume_size = 16
     tags = {
-      Name          = "Kafka_on_S3_Benchmark_EBS_root_broker_${count.index}_${random_id.hash.hex}"
-      Benchmark     = "Kafka_on_S3_${random_id.hash.hex}"
-      clusterInstID = local.cluster_id
+      Name            = "Kafka_on_S3_Benchmark_EBS_root_broker_${count.index}_${random_id.hash.hex}"
+      Benchmark       = "Kafka_on_S3_${random_id.hash.hex}"
+      firstBindNodeID = local.broker_kafka_ids[count.index]
+      clusterInstID   = local.cluster_id
     }
   }
 
@@ -334,6 +339,7 @@ resource "aws_instance" "broker" {
   tags = {
     Name          = "Kafka_on_S3_Benchmark_EC2_broker_${count.index}_${random_id.hash.hex}"
     Benchmark     = "Kafka_on_S3_${random_id.hash.hex}"
+    nodeID        = local.broker_kafka_ids[count.index]
     clusterInstID = local.cluster_id
   }
 }
@@ -418,9 +424,11 @@ output "ssh_key_name" {
 resource "local_file" "hosts_ini" {
   content = templatefile("${path.module}/hosts.ini.tpl",
     {
-      server = aws_instance.server,
-      broker = aws_instance.broker,
-      client = aws_instance.client,
+      server           = aws_instance.server,
+      server_kafka_ids = local.server_kafka_ids,
+      broker           = aws_instance.broker,
+      broker_kafka_ids = local.broker_kafka_ids,
+      client           = aws_instance.client,
       # use the first client (if exist) for telemetry
       telemetry = var.instance_cnt["client"] > 0 ? slice(aws_instance.client, 0, 1) : [],
 
