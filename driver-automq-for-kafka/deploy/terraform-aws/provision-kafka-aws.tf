@@ -256,6 +256,8 @@ resource "aws_instance" "server" {
     tags = {
       Name          = "Kafka_on_S3_Benchmark_EBS_root_server_${count.index}_${random_id.hash.hex}"
       Benchmark     = "Kafka_on_S3_${random_id.hash.hex}"
+      volumeType    = "system"
+      vendor        = "automq"
       clusterInstID = local.cluster_id
     }
   }
@@ -268,6 +270,8 @@ resource "aws_instance" "server" {
     tags = {
       Name          = "Kafka_on_S3_Benchmark_EBS_data_server_${count.index}_${random_id.hash.hex}"
       Benchmark     = "Kafka_on_S3_${random_id.hash.hex}"
+      volumeType    = "wal"
+      vendor        = "automq"
       clusterInstID = local.cluster_id
     }
   }
@@ -278,6 +282,7 @@ resource "aws_instance" "server" {
   tags = {
     Name          = "Kafka_on_S3_Benchmark_EC2_server_${count.index}_${random_id.hash.hex}"
     Benchmark     = "Kafka_on_S3_${random_id.hash.hex}"
+    vendor        = "automq"
     clusterInstID = local.cluster_id
   }
 }
