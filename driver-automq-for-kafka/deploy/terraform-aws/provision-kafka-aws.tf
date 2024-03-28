@@ -81,7 +81,7 @@ variable "aws_cn" {
 locals {
   cluster_id       = "Benchmark___mlCHGxHKcA"
   server_kafka_ids = { for i in range(var.instance_cnt["server"]) : i => i + 1 }
-  broker_kafka_ids = { for i in range(var.instance_cnt["broker"]) : i => var.var.instance_cnt["server"] + i + 1 }
+  broker_kafka_ids = { for i in range(var.instance_cnt["broker"]) : i => var.instance_cnt["server"] + i + 1 }
 }
 
 # Create a VPC to launch our instances into
