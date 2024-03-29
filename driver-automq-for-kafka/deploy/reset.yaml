@@ -18,7 +18,7 @@
   connection: ssh
   tasks:
   - set_fact:
-      kafka_cluster_id: "KYTvAjiLTWyRmlCHGxHKcA"
+      kafka_cluster_id: "{{ hostvars[inventory_hostname]['cluster_id'] }}"
       base_store_path: "/data"
 
 

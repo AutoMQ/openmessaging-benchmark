@@ -78,6 +78,12 @@ variable "aws_cn" {
   type = bool
 }
 
+locals {
+  cluster_id       = "Benchmark___mlCHGxHKcA"
+  server_kafka_ids = { for i in range(var.instance_cnt["server"]) : i => i + 1 }
+  broker_kafka_ids = { for i in range(var.instance_cnt["broker"]) : i => var.instance_cnt["server"] + i + 1 }
+}
+
 # Create a VPC to launch our instances into
 resource "aws_vpc" "benchmark_vpc" {
   cidr_block = "10.0.0.0/16"
@@ -201,7 +207,7 @@ resource "aws_iam_role" "benchmark_role_s3" {
           Resource = var.aws_cn ? [
             "arn:aws-cn:s3:::${aws_s3_bucket.benchmark_bucket.id}",
             "arn:aws-cn:s3:::${aws_s3_bucket.benchmark_bucket.id}/*",
-          ] : [
+            ] : [
             "arn:aws:s3:::${aws_s3_bucket.benchmark_bucket.id}",
             "arn:aws:s3:::${aws_s3_bucket.benchmark_bucket.id}/*",
           ]
@@ -241,7 +247,7 @@ resource "aws_instance" "server" {
       market_type = "spot"
       spot_options {
         instance_interruption_behavior = "stop"
-        spot_instance_type = "persistent"
+        spot_instance_type             = "persistent"
       }
     }
   }
@@ -250,8 +256,11 @@ resource "aws_instance" "server" {
     volume_type = "gp3"
     volume_size = 16
     tags = {
-      Name      = "Kafka_on_S3_Benchmark_EBS_root_server_${count.index}_${random_id.hash.hex}"
-      Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+      Name          = "Kafka_on_S3_Benchmark_EBS_root_server_${count.index}_${random_id.hash.hex}"
+      Benchmark     = "Kafka_on_S3_${random_id.hash.hex}"
+      volumeType    = "system"
+      vendor        = "automq"
+      clusterInstID = local.cluster_id
     }
   }
 
@@ -261,8 +270,12 @@ resource "aws_instance" "server" {
     volume_size = var.ebs_volume_size
     iops        = var.ebs_iops
     tags = {
-      Name      = "Kafka_on_S3_Benchmark_EBS_data_server_${count.index}_${random_id.hash.hex}"
-      Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+      Name            = "Kafka_on_S3_Benchmark_EBS_data_server_${count.index}_${random_id.hash.hex}"
+      Benchmark       = "Kafka_on_S3_${random_id.hash.hex}"
+      firstBindNodeID = local.server_kafka_ids[count.index]
+      volumeType      = "wal"
+      vendor          = "automq"
+      clusterInstID   = local.cluster_id
     }
   }
 
@@ -270,8 +283,11 @@ resource "aws_instance" "server" {
 
   monitoring = var.monitoring
   tags = {
-    Name      = "Kafka_on_S3_Benchmark_EC2_server_${count.index}_${random_id.hash.hex}"
-    Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+    Name          = "Kafka_on_S3_Benchmark_EC2_server_${count.index}_${random_id.hash.hex}"
+    Benchmark     = "Kafka_on_S3_${random_id.hash.hex}"
+    nodeID        = local.server_kafka_ids[count.index]
+    vendor        = "automq"
+    clusterInstID = local.cluster_id
   }
 }
 
@@ -289,7 +305,7 @@ resource "aws_instance" "broker" {
       market_type = "spot"
       spot_options {
         instance_interruption_behavior = "stop"
-        spot_instance_type = "persistent"
+        spot_instance_type             = "persistent"
       }
     }
   }
@@ -298,8 +314,11 @@ resource "aws_instance" "broker" {
     volume_type = "gp3"
     volume_size = 16
     tags = {
-      Name      = "Kafka_on_S3_Benchmark_EBS_root_broker_${count.index}_${random_id.hash.hex}"
-      Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+      Name            = "Kafka_on_S3_Benchmark_EBS_root_broker_${count.index}_${random_id.hash.hex}"
+      Benchmark       = "Kafka_on_S3_${random_id.hash.hex}"
+      volumeType    = "system"
+      vendor        = "automq"
+      clusterInstID   = local.cluster_id
     }
   }
 
@@ -309,8 +328,12 @@ resource "aws_instance" "broker" {
     volume_size = var.ebs_volume_size
     iops        = var.ebs_iops
     tags = {
-      Name      = "Kafka_on_S3_Benchmark_EBS_data_broker_${count.index}_${random_id.hash.hex}"
-      Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+      Name          = "Kafka_on_S3_Benchmark_EBS_data_broker_${count.index}_${random_id.hash.hex}"
+      Benchmark     = "Kafka_on_S3_${random_id.hash.hex}"
+      firstBindNodeID = local.broker_kafka_ids[count.index]
+      volumeType      = "wal"
+      vendor          = "automq"
+      clusterInstID = local.cluster_id
     }
   }
 
@@ -318,8 +341,11 @@ resource "aws_instance" "broker" {
 
   monitoring = var.monitoring
   tags = {
-    Name      = "Kafka_on_S3_Benchmark_EC2_broker_${count.index}_${random_id.hash.hex}"
-    Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+    Name          = "Kafka_on_S3_Benchmark_EC2_broker_${count.index}_${random_id.hash.hex}"
+    Benchmark     = "Kafka_on_S3_${random_id.hash.hex}"
+    nodeID        = local.broker_kafka_ids[count.index]
+    vendor        = "automq"
+    clusterInstID = local.cluster_id
   }
 }
 
@@ -337,7 +363,7 @@ resource "aws_instance" "client" {
       market_type = "spot"
       spot_options {
         instance_interruption_behavior = "stop"
-        spot_instance_type = "persistent"
+        spot_instance_type             = "persistent"
       }
     }
   }
@@ -403,17 +429,20 @@ output "ssh_key_name" {
 resource "local_file" "hosts_ini" {
   content = templatefile("${path.module}/hosts.ini.tpl",
     {
-      server = aws_instance.server,
-      broker = aws_instance.broker,
-      client = aws_instance.client,
+      server           = aws_instance.server,
+      server_kafka_ids = local.server_kafka_ids,
+      broker           = aws_instance.broker,
+      broker_kafka_ids = local.broker_kafka_ids,
+      client           = aws_instance.client,
       # use the first client (if exist) for telemetry
       telemetry = var.instance_cnt["client"] > 0 ? slice(aws_instance.client, 0, 1) : [],
 
       ssh_user = var.user,
 
-      s3_region   = var.region,
-      s3_bucket   = aws_s3_bucket.benchmark_bucket.id,
+      s3_region  = var.region,
+      s3_bucket  = aws_s3_bucket.benchmark_bucket.id,
       aws_domain = var.aws_cn ? "amazonaws.com.cn" : "amazonaws.com",
+      cluster_id = local.cluster_id,
     }
   )
   filename = "${path.module}/hosts.ini"
