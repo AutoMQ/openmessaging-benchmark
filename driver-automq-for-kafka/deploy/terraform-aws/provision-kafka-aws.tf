@@ -38,7 +38,9 @@ variable "key_name" {
 
 variable "region" {}
 
-variable "az" {}
+variable "az" {
+  type = list(string)
+}
 
 variable "ami" {}
 
@@ -112,10 +114,11 @@ resource "aws_route" "internet_access" {
 
 # Create a subnet to launch our instances into
 resource "aws_subnet" "benchmark_subnet" {
+  count = length(var.az)
   vpc_id                  = aws_vpc.benchmark_vpc.id
-  cidr_block              = "10.0.0.0/24"
+  cidr_block              = cidrsubnet("10.0.0.0/16", 8, count.index)
   map_public_ip_on_launch = true
-  availability_zone       = var.az
+  availability_zone       = element(var.az, count.index)
 
   tags = {
     Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
@@ -237,7 +240,7 @@ resource "aws_instance" "server" {
   ami                    = var.ami
   instance_type          = var.instance_type["server"]
   key_name               = aws_key_pair.auth.id
-  subnet_id              = aws_subnet.benchmark_subnet.id
+  subnet_id              = element(aws_subnet.benchmark_subnet.*.id, count.index % length(var.az))
   vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
   count                  = var.instance_cnt["server"]
 
@@ -295,7 +298,7 @@ resource "aws_instance" "broker" {
   ami                    = var.ami
   instance_type          = var.instance_type["broker"]
   key_name               = aws_key_pair.auth.id
-  subnet_id              = aws_subnet.benchmark_subnet.id
+  subnet_id              = element(aws_subnet.benchmark_subnet.*.id, count.index % length(var.az))
   vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
   count                  = var.instance_cnt["broker"]
 
@@ -353,7 +356,7 @@ resource "aws_instance" "client" {
   ami                    = var.ami
   instance_type          = var.instance_type["client"]
   key_name               = aws_key_pair.auth.id
-  subnet_id              = aws_subnet.benchmark_subnet.id
+  subnet_id              = element(aws_subnet.benchmark_subnet.*.id, count.index % length(var.az))
   vpc_security_group_ids = [aws_security_group.benchmark_security_group.id]
   count                  = var.instance_cnt["client"]
 
