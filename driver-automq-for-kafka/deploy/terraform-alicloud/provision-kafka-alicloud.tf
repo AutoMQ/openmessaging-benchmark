@@ -69,7 +69,11 @@ variable "ebs_volume_size" {
 locals {
   alicloud_tags = {
     Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+    vendor    = "automq"
   }
+  cluster_id       = "Benchmark___mlCHGxHKcA"
+  server_kafka_ids = { for i in range(var.instance_cnt["server"]) : i => i + 1 }
+  broker_kafka_ids = { for i in range(var.instance_cnt["broker"]) : i => var.instance_cnt["server"] + i + 1 }
 }
 
 resource "alicloud_resource_manager_resource_group" "benchmark_resource_group" {
@@ -82,8 +86,8 @@ resource "alicloud_vpc" "benchmark_vpc" {
   cidr_block = "10.0.0.0/16"
 
   resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
-  vpc_name = "Kafka_on_S3_Benchmark_VPC_${random_id.hash.hex}"
-  tags     = local.alicloud_tags
+  vpc_name          = "Kafka_on_S3_Benchmark_VPC_${random_id.hash.hex}"
+  tags              = local.alicloud_tags
 }
 
 # Create an internet gateway to give our subnet access to the outside world
@@ -132,9 +136,9 @@ resource "alicloud_vswitch" "benchmark_vswitch" {
 resource "alicloud_security_group" "benchmark_security_group" {
   vpc_id = alicloud_vpc.benchmark_vpc.id
 
- resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
-  name = "Kafka_on_S3_Benchmark_SG_${random_id.hash.hex}"
-  tags = local.alicloud_tags
+  resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
+  name              = "Kafka_on_S3_Benchmark_SG_${random_id.hash.hex}"
+  tags              = local.alicloud_tags
 }
 
 resource "alicloud_security_group_rule" "benchmark_security_group_rule_ssh" {
@@ -174,7 +178,22 @@ resource "alicloud_key_pair" "benchmark_key_pair" {
   public_key    = file(var.public_key_path)
 
   resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
-  tags = local.alicloud_tags
+  tags              = local.alicloud_tags
+}
+
+resource "alicloud_ecs_disk" "server_data_disk" {
+  count             = var.instance_cnt["server"]
+  zone_id           = var.az
+  category          = var.ebs_category
+  performance_level = var.ebs_performance_level
+  size              = var.ebs_volume_size
+  disk_name         = "Kafka_on_S3_Benchmark_EBS_data_server_${count.index}_${random_id.hash.hex}"
+  resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
+  tags = merge(local.alicloud_tags, {
+    firstBindNodeID = local.server_kafka_ids[count.index]
+    volumeType      = "wal"
+    clusterInstID   = local.cluster_id
+  })
 }
 
 resource "alicloud_instance" "server" {
@@ -193,17 +212,37 @@ resource "alicloud_instance" "server" {
   system_disk_size              = 20
   system_disk_name              = "Kafka_on_S3_Benchmark_EBS_root_server_${count.index}_${random_id.hash.hex}"
 
-  data_disks {
-    category          = var.ebs_category
-    performance_level = var.ebs_performance_level
-    size              = var.ebs_volume_size
-    name              = "Kafka_on_S3_Benchmark_EBS_data_server_${count.index}_${random_id.hash.hex}"
-  }
-
   resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
-  instance_name = "Kafka_on_S3_Benchmark_ECS_server_${count.index}_${random_id.hash.hex}"
-  tags          = local.alicloud_tags
-  volume_tags   = local.alicloud_tags
+  instance_name     = "Kafka_on_S3_Benchmark_ECS_server_${count.index}_${random_id.hash.hex}"
+  tags = merge(local.alicloud_tags, {
+    nodeID        = local.server_kafka_ids[count.index]
+    clusterInstID = local.cluster_id
+  })
+  volume_tags = merge(local.alicloud_tags, {
+    volumeType    = "system"
+    clusterInstID = local.cluster_id
+  })
+}
+
+resource "alicloud_disk_attachment" "server_data_disk_attachment" {
+  count       = var.instance_cnt["server"]
+  instance_id = alicloud_instance.server[count.index].id
+  disk_id     = alicloud_ecs_disk.server_data_disk[count.index].id
+}
+
+resource "alicloud_ecs_disk" "broker_data_disk" {
+  count             = var.instance_cnt["broker"]
+  zone_id           = var.az
+  category          = var.ebs_category
+  performance_level = var.ebs_performance_level
+  size              = var.ebs_volume_size
+  disk_name         = "Kafka_on_S3_Benchmark_EBS_data_broker_${count.index}_${random_id.hash.hex}"
+  resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
+  tags = merge(local.alicloud_tags, {
+    firstBindNodeID = local.broker_kafka_ids[count.index]
+    volumeType      = "wal"
+    clusterInstID   = local.cluster_id
+  })
 }
 
 resource "alicloud_instance" "broker" {
@@ -222,17 +261,22 @@ resource "alicloud_instance" "broker" {
   system_disk_size              = 20
   system_disk_name              = "Kafka_on_S3_Benchmark_EBS_root_broker_${count.index}_${random_id.hash.hex}"
 
-  data_disks {
-    category          = var.ebs_category
-    performance_level = var.ebs_performance_level
-    size              = var.ebs_volume_size
-    name              = "Kafka_on_S3_Benchmark_EBS_data_broker_${count.index}_${random_id.hash.hex}"
-  }
-
   resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
-  instance_name = "Kafka_on_S3_Benchmark_ECS_broker_${count.index}_${random_id.hash.hex}"
-  tags          = local.alicloud_tags
-  volume_tags   = local.alicloud_tags
+  instance_name     = "Kafka_on_S3_Benchmark_ECS_broker_${count.index}_${random_id.hash.hex}"
+  tags = merge(local.alicloud_tags, {
+    nodeID        = local.broker_kafka_ids[count.index]
+    clusterInstID = local.cluster_id
+  })
+  volume_tags = merge(local.alicloud_tags, {
+    volumeType    = "system"
+    clusterInstID = local.cluster_id
+  })
+}
+
+resource "alicloud_disk_attachment" "broker_data_disk_attachment" {
+  count       = var.instance_cnt["broker"]
+  instance_id = alicloud_instance.broker[count.index].id
+  disk_id     = alicloud_ecs_disk.broker_data_disk[count.index].id
 }
 
 resource "alicloud_instance" "client" {
@@ -252,9 +296,9 @@ resource "alicloud_instance" "client" {
   system_disk_name              = "Kafka_on_S3_Benchmark_EBS_root_client_${count.index}_${random_id.hash.hex}"
 
   resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
-  instance_name = "Kafka_on_S3_Benchmark_ECS_client_${count.index}_${random_id.hash.hex}"
-  tags          = local.alicloud_tags
-  volume_tags   = local.alicloud_tags
+  instance_name     = "Kafka_on_S3_Benchmark_ECS_client_${count.index}_${random_id.hash.hex}"
+  tags              = local.alicloud_tags
+  volume_tags       = local.alicloud_tags
 }
 
 
@@ -284,9 +328,11 @@ output "client_ssh_host" {
 resource "local_file" "hosts_ini" {
   content = templatefile("${path.module}/hosts.ini.tpl",
     {
-      server = alicloud_instance.server,
-      broker = alicloud_instance.broker,
-      client = alicloud_instance.client,
+      server           = alicloud_instance.server,
+      server_kafka_ids = local.server_kafka_ids,
+      broker           = alicloud_instance.broker,
+      broker_kafka_ids = local.broker_kafka_ids,
+      client           = alicloud_instance.client,
       # use the first client (if exist) for telemetry
       telemetry = var.instance_cnt["client"] > 0 ? slice(alicloud_instance.client, 0, 1) : [],
 
@@ -295,6 +341,7 @@ resource "local_file" "hosts_ini" {
       oss_endpoint = alicloud_oss_bucket.benchmark_bucket.intranet_endpoint,
       oss_region   = var.region,
       oss_bucket   = alicloud_oss_bucket.benchmark_bucket.id,
+      cluster_id   = local.cluster_id,
     }
   )
   filename = "${path.module}/hosts.ini"
