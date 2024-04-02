@@ -23,3 +23,5 @@ s3_endpoint=https://${ oss_endpoint }
 s3_region=${ oss_region }
 s3_bucket=${ oss_bucket }
 cluster_id=${ cluster_id }
+access_key=${ access_key }
+secret_key=${ secret_key }

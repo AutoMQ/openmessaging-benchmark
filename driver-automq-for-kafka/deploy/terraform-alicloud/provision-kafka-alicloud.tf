@@ -68,6 +68,10 @@ variable "ebs_volume_size" {
   type = number
 }
 
+variable "access_key" {}
+
+variable "secret_key" {}
+
 locals {
   alicloud_tags = {
     Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
@@ -345,6 +349,9 @@ resource "local_file" "hosts_ini" {
       oss_region   = var.region,
       oss_bucket   = alicloud_oss_bucket.benchmark_bucket.id,
       cluster_id   = local.cluster_id,
+
+      access_key = var.access_key,
+      secret_key = var.secret_key,
     }
   )
   filename = "${path.module}/hosts.ini"

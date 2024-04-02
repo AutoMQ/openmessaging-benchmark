@@ -23,3 +23,5 @@ s3_endpoint=https://s3.${ s3_region }.${ aws_domain }
 s3_region=${ s3_region }
 s3_bucket=${ s3_bucket }
 cluster_id=${ cluster_id }
+access_key=${ access_key }
+secret_key=${ secret_key }
