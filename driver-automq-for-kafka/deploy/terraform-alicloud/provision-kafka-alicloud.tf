@@ -40,7 +40,9 @@ variable "key_name" {
 
 variable "region" {}
 
-variable "az" {}
+variable "az" {
+  type = list(string)
+}
 
 variable "ami" {}
 
@@ -124,9 +126,10 @@ resource "alicloud_vpc_gateway_route_table_attachment" "benchmark_gateway_attach
 
 # Create a vswitch to launch our instances into
 resource "alicloud_vswitch" "benchmark_vswitch" {
+  count = length(var.az)
   vpc_id     = alicloud_vpc.benchmark_vpc.id
-  cidr_block = "10.0.0.0/24"
-  zone_id    = var.az
+  cidr_block = cidrsubnet(alicloud_vpc.benchmark_vpc.cidr_block, 8, count.index)
+  zone_id    = element(var.az, count.index)
 
   vswitch_name = "Kafka_on_S3_Benchmark_Vswitch_${random_id.hash.hex}"
   tags         = local.alicloud_tags
@@ -183,7 +186,7 @@ resource "alicloud_key_pair" "benchmark_key_pair" {
 
 resource "alicloud_ecs_disk" "server_data_disk" {
   count             = var.instance_cnt["server"]
-  zone_id           = var.az
+  zone_id           = element(var.az, count.index % length(var.az))
   category          = var.ebs_category
   performance_level = var.ebs_performance_level
   size              = var.ebs_volume_size
@@ -200,7 +203,7 @@ resource "alicloud_instance" "server" {
   image_id        = var.ami
   instance_type   = var.instance_type["server"]
   key_name        = alicloud_key_pair.benchmark_key_pair.id
-  vswitch_id      = alicloud_vswitch.benchmark_vswitch.id
+  vswitch_id      = element(alicloud_vswitch.benchmark_vswitch.*.id, count.index % length(var.az))
   security_groups = [alicloud_security_group.benchmark_security_group.id]
   count           = var.instance_cnt["server"]
 
@@ -232,7 +235,7 @@ resource "alicloud_disk_attachment" "server_data_disk_attachment" {
 
 resource "alicloud_ecs_disk" "broker_data_disk" {
   count             = var.instance_cnt["broker"]
-  zone_id           = var.az
+  zone_id           = element(var.az, count.index % length(var.az))
   category          = var.ebs_category
   performance_level = var.ebs_performance_level
   size              = var.ebs_volume_size
@@ -249,7 +252,7 @@ resource "alicloud_instance" "broker" {
   image_id        = var.ami
   instance_type   = var.instance_type["broker"]
   key_name        = alicloud_key_pair.benchmark_key_pair.id
-  vswitch_id      = alicloud_vswitch.benchmark_vswitch.id
+  vswitch_id      = element(alicloud_vswitch.benchmark_vswitch.*.id, count.index % length(var.az))
   security_groups = [alicloud_security_group.benchmark_security_group.id]
   count           = var.instance_cnt["broker"]
 
@@ -283,7 +286,7 @@ resource "alicloud_instance" "client" {
   image_id        = var.ami
   instance_type   = var.instance_type["client"]
   key_name        = alicloud_key_pair.benchmark_key_pair.id
-  vswitch_id      = alicloud_vswitch.benchmark_vswitch.id
+  vswitch_id      = element(alicloud_vswitch.benchmark_vswitch.*.id, count.index % length(var.az))
   security_groups = [alicloud_security_group.benchmark_security_group.id]
   count           = var.instance_cnt["client"]
 

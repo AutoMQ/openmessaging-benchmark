@@ -116,7 +116,7 @@ resource "aws_route" "internet_access" {
 resource "aws_subnet" "benchmark_subnet" {
   count = length(var.az)
   vpc_id                  = aws_vpc.benchmark_vpc.id
-  cidr_block              = cidrsubnet("10.0.0.0/16", 8, count.index)
+  cidr_block              = cidrsubnet(aws_vpc.benchmark_vpc.cidr_block, 8, count.index)
   map_public_ip_on_launch = true
   availability_zone       = element(var.az, count.index)
 
