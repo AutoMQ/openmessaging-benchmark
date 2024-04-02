@@ -26,3 +26,4 @@ s3_bucket=${ oss_bucket }
 cluster_id=${ cluster_id }
 access_key=${ access_key }
 secret_key=${ secret_key }
+role_name=${ role_name }
