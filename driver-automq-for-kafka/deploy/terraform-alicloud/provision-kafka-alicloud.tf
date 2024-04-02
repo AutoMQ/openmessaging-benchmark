@@ -130,7 +130,7 @@ resource "alicloud_vpc_gateway_route_table_attachment" "benchmark_gateway_attach
 
 # Create a vswitch to launch our instances into
 resource "alicloud_vswitch" "benchmark_vswitch" {
-  count = length(var.az)
+  count      = length(var.az)
   vpc_id     = alicloud_vpc.benchmark_vpc.id
   cidr_block = cidrsubnet(alicloud_vpc.benchmark_vpc.cidr_block, 8, count.index)
   zone_id    = element(var.az, count.index)
@@ -188,6 +188,65 @@ resource "alicloud_key_pair" "benchmark_key_pair" {
   tags              = local.alicloud_tags
 }
 
+resource "alicloud_ram_policy" "benchmark_policy" {
+  policy_name     = "Kafka-on-S3-Benchmark-Policy-${random_id.hash.hex}"
+  policy_document = <<EOF
+  {
+    "Version": "1",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "oss:PutObject",
+          "oss:AbortMultipartUpload",
+          "oss:GetObject",
+          "oss:DeleteObject"
+        ],
+        "Resource": [
+          "acs:oss:*:*:${alicloud_oss_bucket.benchmark_bucket.bucket}",
+          "acs:oss:*:*:${alicloud_oss_bucket.benchmark_bucket.bucket}/*"
+        ]
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "ecs:*"
+        ],
+        "Resource": [
+          "*"
+        ]
+      }
+    ]
+  }
+  EOF
+}
+
+resource "alicloud_ram_role" "benchmark_role" {
+  name     = "Kafka-on-S3-Benchmark-Role-${random_id.hash.hex}"
+  document = <<EOF
+  {
+    "Statement": [
+      {
+        "Action": "sts:AssumeRole",
+        "Effect": "Allow",
+        "Principal": {
+          "Service": [
+            "ecs.aliyuncs.com"
+          ]
+        }
+      }
+    ],
+    "Version": "1"
+  }
+  EOF
+}
+
+resource "alicloud_ram_role_policy_attachment" "benchmark_role_policy_attachment" {
+  policy_name = alicloud_ram_policy.benchmark_policy.policy_name
+  policy_type = alicloud_ram_policy.benchmark_policy.type
+  role_name   = alicloud_ram_role.benchmark_role.name
+}
+
 resource "alicloud_ecs_disk" "server_data_disk" {
   count             = var.instance_cnt["server"]
   zone_id           = element(var.az, count.index % length(var.az))
@@ -218,6 +277,8 @@ resource "alicloud_instance" "server" {
   system_disk_performance_level = "PL0"
   system_disk_size              = 20
   system_disk_name              = "Kafka_on_S3_Benchmark_EBS_root_server_${count.index}_${random_id.hash.hex}"
+
+  role_name = alicloud_ram_role.benchmark_role.name
 
   resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
   instance_name     = "Kafka_on_S3_Benchmark_ECS_server_${count.index}_${random_id.hash.hex}"
@@ -267,6 +328,8 @@ resource "alicloud_instance" "broker" {
   system_disk_performance_level = "PL0"
   system_disk_size              = 20
   system_disk_name              = "Kafka_on_S3_Benchmark_EBS_root_broker_${count.index}_${random_id.hash.hex}"
+
+  role_name = alicloud_ram_role.benchmark_role.name
 
   resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
   instance_name     = "Kafka_on_S3_Benchmark_ECS_broker_${count.index}_${random_id.hash.hex}"
