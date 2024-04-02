@@ -454,6 +454,7 @@ resource "local_file" "hosts_ini" {
 
       access_key = var.access_key,
       secret_key = var.secret_key,
+      role_name  = aws_iam_role.benchmark_role_s3.name,
     }
   )
   filename = "${path.module}/hosts.ini"

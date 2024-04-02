@@ -184,6 +184,7 @@
             kafka_cluster_id: "{{ hostvars[inventory_hostname]['cluster_id'] }}"
             kafka_access_key: "{{ hostvars[inventory_hostname]['access_key'] }}"
             kafka_secret_key: "{{ hostvars[inventory_hostname]['secret_key'] }}"
+            kafka_role_name: "{{ hostvars[inventory_hostname]['role_name'] }}"
 
             node_id: "{{ hostvars[inventory_hostname]['kafka_id'] }}"
             server_ids: "{{ groups.get('server') | map('extract', hostvars, 'kafka_id') | list }}"

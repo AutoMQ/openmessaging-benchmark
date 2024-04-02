@@ -415,6 +415,7 @@ resource "local_file" "hosts_ini" {
 
       access_key = var.access_key,
       secret_key = var.secret_key,
+      role_name  = alicloud_ram_role.benchmark_role.name,
     }
   )
   filename = "${path.module}/hosts.ini"
