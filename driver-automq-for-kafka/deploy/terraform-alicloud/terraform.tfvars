@@ -20,3 +20,6 @@ instance_cnt = {
 ebs_category = "cloud_essd"
 ebs_performance_level = "PL1"
 ebs_volume_size = 20
+
+access_key = "your_access_key"
+secret_key = "your_secret_key"

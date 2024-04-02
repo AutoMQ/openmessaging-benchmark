@@ -80,6 +80,10 @@ variable "aws_cn" {
   type = bool
 }
 
+variable "access_key" {}
+
+variable "secret_key" {}
+
 locals {
   cluster_id       = "Benchmark___mlCHGxHKcA"
   server_kafka_ids = { for i in range(var.instance_cnt["server"]) : i => i + 1 }
@@ -446,6 +450,9 @@ resource "local_file" "hosts_ini" {
       s3_bucket  = aws_s3_bucket.benchmark_bucket.id,
       aws_domain = var.aws_cn ? "amazonaws.com.cn" : "amazonaws.com",
       cluster_id = local.cluster_id,
+
+      access_key = var.access_key,
+      secret_key = var.secret_key,
     }
   )
   filename = "${path.module}/hosts.ini"

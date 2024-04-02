@@ -24,4 +24,7 @@ ebs_volume_type = "gp3"
 ebs_volume_size = 10
 ebs_iops = 3000
 
+access_key = "your_access_key"
+secret_key = "your_secret_key"
+
 aws_cn = false
