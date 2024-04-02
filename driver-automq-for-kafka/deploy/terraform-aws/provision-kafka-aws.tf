@@ -446,6 +446,7 @@ resource "local_file" "hosts_ini" {
 
       ssh_user = var.user,
 
+      cloud_provider = var.aws_cn ? "aws-cn" : "aws",
       s3_region  = var.region,
       s3_bucket  = aws_s3_bucket.benchmark_bucket.id,
       aws_domain = var.aws_cn ? "amazonaws.com.cn" : "amazonaws.com",

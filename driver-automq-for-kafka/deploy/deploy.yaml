@@ -175,6 +175,7 @@
       tags: always
       block:
         - set_fact:
+            cloud_provider: "{{ hostvars[inventory_hostname]['cloud_provider'] }}"
             s3_endpoint: "{{ hostvars[inventory_hostname]['s3_endpoint'] }}"
             s3_region: "{{ hostvars[inventory_hostname]['s3_region'] }}"
             s3_bucket: "{{ hostvars[inventory_hostname]['s3_bucket'] }}"

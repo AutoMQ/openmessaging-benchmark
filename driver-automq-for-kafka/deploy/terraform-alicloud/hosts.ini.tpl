@@ -19,6 +19,7 @@ ${ instance.public_ip } ansible_user=${ ssh_user } private_ip=${ instance.primar
 %{ endfor ~}
 
 [all:vars]
+cloud_provider=aliyun
 s3_endpoint=https://${ oss_endpoint }
 s3_region=${ oss_region }
 s3_bucket=${ oss_bucket }
