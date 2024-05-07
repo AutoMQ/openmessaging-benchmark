@@ -74,8 +74,8 @@ variable "secret_key" {}
 
 locals {
   alicloud_tags = {
-    Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
-    vendor    = "automq"
+    Benchmark    = "Kafka_on_S3_${random_id.hash.hex}"
+    automqVendor = "automq"
   }
   cluster_id       = "Benchmark___mlCHGxHKcA"
   server_kafka_ids = { for i in range(var.instance_cnt["server"]) : i => i + 1 }
@@ -256,9 +256,8 @@ resource "alicloud_ecs_disk" "server_data_disk" {
   disk_name         = "Kafka_on_S3_Benchmark_EBS_data_server_${count.index}_${random_id.hash.hex}"
   resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
   tags = merge(local.alicloud_tags, {
-    firstBindNodeID = local.server_kafka_ids[count.index]
-    volumeType      = "wal"
-    clusterInstID   = local.cluster_id
+    automqNodeID    = local.server_kafka_ids[count.index]
+    automqClusterID = local.cluster_id
   })
 }
 
@@ -283,12 +282,11 @@ resource "alicloud_instance" "server" {
   resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
   instance_name     = "Kafka_on_S3_Benchmark_ECS_server_${count.index}_${random_id.hash.hex}"
   tags = merge(local.alicloud_tags, {
-    nodeID        = local.server_kafka_ids[count.index]
-    clusterInstID = local.cluster_id
+    nodeID          = local.server_kafka_ids[count.index]
+    automqClusterID = local.cluster_id
   })
   volume_tags = merge(local.alicloud_tags, {
-    volumeType    = "system"
-    clusterInstID = local.cluster_id
+    automqClusterID = local.cluster_id
   })
 }
 
@@ -307,9 +305,9 @@ resource "alicloud_ecs_disk" "broker_data_disk" {
   disk_name         = "Kafka_on_S3_Benchmark_EBS_data_broker_${count.index}_${random_id.hash.hex}"
   resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
   tags = merge(local.alicloud_tags, {
-    firstBindNodeID = local.broker_kafka_ids[count.index]
-    volumeType      = "wal"
-    clusterInstID   = local.cluster_id
+    automqNodeID          = local.broker_kafka_ids[count.index]
+    automqFailoverEnabled = "true"
+    automqClusterID       = local.cluster_id
   })
 }
 
@@ -334,12 +332,11 @@ resource "alicloud_instance" "broker" {
   resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
   instance_name     = "Kafka_on_S3_Benchmark_ECS_broker_${count.index}_${random_id.hash.hex}"
   tags = merge(local.alicloud_tags, {
-    nodeID        = local.broker_kafka_ids[count.index]
-    clusterInstID = local.cluster_id
+    nodeID          = local.broker_kafka_ids[count.index]
+    automqClusterID = local.cluster_id
   })
   volume_tags = merge(local.alicloud_tags, {
-    volumeType    = "system"
-    clusterInstID = local.cluster_id
+    automqClusterID = local.cluster_id
   })
 }
 
