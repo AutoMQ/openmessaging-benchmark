@@ -27,6 +27,14 @@ ls ~/.ssh/kafka_on_s3_aws*
 
 Note: `~/.ssh/kafka_on_s3_aws` is the default key name used in the `terraform.tfvars` file. If you want to use a different key name, you will need to update the `terraform.tfvars` file accordingly.
 
+### Build the Project
+
+Before you can deploy the resources, you need to build the project:
+
+```bash
+mvn clean package -Dlicense.skip=true -Dcheckstyle.skip -DskipTests -Dspotless.check.skip
+```
+
 ### Create Resource Using Terraform
 
 Currently, we support deploying AutoMQ for Apache Kafka on AWS and Alibaba Cloud.
