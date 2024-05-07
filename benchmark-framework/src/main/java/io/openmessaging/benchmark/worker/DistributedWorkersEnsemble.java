@@ -24,20 +24,14 @@ import io.openmessaging.benchmark.utils.ListPartition;
 import io.openmessaging.benchmark.worker.commands.ConsumerAssignment;
 import io.openmessaging.benchmark.worker.commands.CountersStats;
 import io.openmessaging.benchmark.worker.commands.CumulativeLatencies;
-import io.openmessaging.benchmark.worker.commands.DetailedTopic;
 import io.openmessaging.benchmark.worker.commands.PeriodStats;
 import io.openmessaging.benchmark.worker.commands.ProducerWorkAssignment;
-import io.openmessaging.benchmark.worker.commands.RateAdjustInfo;
 import io.openmessaging.benchmark.worker.commands.TopicSubscription;
 import io.openmessaging.benchmark.worker.commands.TopicsInfo;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +42,7 @@ public class DistributedWorkersEnsemble implements Worker {
     private final List<Worker> consumerWorkers;
     private final Worker leader;
 
-    private Map<String, Set<Worker>> producerWorkersForTopicGroup = new ConcurrentHashMap<>();
+    private int numberOfUsedProducerWorkers;
 
     public DistributedWorkersEnsemble(
             List<Worker> workers, boolean extraConsumerWorkers, boolean separateWorkers) {
@@ -105,20 +99,21 @@ public class DistributedWorkersEnsemble implements Worker {
     }
 
     @Override
-    public void createProducers(List<DetailedTopic> detailedTopicList) {
-        List<List<DetailedTopic>> topicsPerProducer =
-                ListPartition.partitionList(detailedTopicList, producerWorkers.size());
-        Map<Worker, List<DetailedTopic>> topicsPerWorkerMap = Maps.newHashMap();
+    public void createProducers(List<String> topics) {
+        List<List<String>> topicsPerProducer =
+                ListPartition.partitionList(topics, producerWorkers.size());
+        Map<Worker, List<String>> topicsPerProducerMap = Maps.newHashMap();
         int i = 0;
-        for (List<DetailedTopic> assignedTopics : topicsPerProducer) {
-            Worker worker = producerWorkers.get(i++);
-            topicsPerWorkerMap.put(worker, assignedTopics);
-            assignedTopics.stream().map(t -> t.topicGroup).distinct().forEach(
-                    topicGroup -> producerWorkersForTopicGroup.computeIfAbsent(
-                            topicGroup, k -> new HashSet<>()).add(worker));
+        for (List<String> assignedTopics : topicsPerProducer) {
+            topicsPerProducerMap.put(producerWorkers.get(i++), assignedTopics);
         }
 
-        topicsPerWorkerMap.entrySet().parallelStream()
+        // Number of actually used workers might be less than available workers
+        numberOfUsedProducerWorkers =
+                (int) topicsPerProducerMap.values().stream().filter(t -> !t.isEmpty()).count();
+        log.debug(
+                "Producing worker count: {} of {}", numberOfUsedProducerWorkers, producerWorkers.size());
+        topicsPerProducerMap.entrySet().parallelStream()
                 .forEach(
                         e -> {
                             try {
@@ -131,14 +126,11 @@ public class DistributedWorkersEnsemble implements Worker {
 
     @Override
     public void startLoad(ProducerWorkAssignment producerWorkAssignment) throws IOException {
-        if (!producerWorkersForTopicGroup.containsKey(producerWorkAssignment.topicGroup)) {
-            throw new RuntimeException("Topic group " + producerWorkAssignment.topicGroup + " not found");
-        }
-        double newRate = producerWorkAssignment.publishRate /
-                producerWorkersForTopicGroup.get(producerWorkAssignment.topicGroup).size();
+        // Reduce the publish rate across all the brokers
+        double newRate = producerWorkAssignment.publishRate / numberOfUsedProducerWorkers;
         log.debug("Setting worker assigned publish rate to {} msgs/sec", newRate);
         // Reduce the publish rate across all the brokers
-        producerWorkersForTopicGroup.get(producerWorkAssignment.topicGroup).parallelStream()
+        producerWorkers.parallelStream()
                 .forEach(
                         w -> {
                             try {
@@ -163,18 +155,14 @@ public class DistributedWorkersEnsemble implements Worker {
     }
 
     @Override
-    public void adjustPublishRate(RateAdjustInfo rateAdjustInfo) throws IOException {
-        if (!producerWorkersForTopicGroup.containsKey(rateAdjustInfo.topicGroup)) {
-            throw new RuntimeException("Topic group " + rateAdjustInfo.topicGroup + " not found");
-        }
-        double newRate = rateAdjustInfo.publishRate /
-                producerWorkersForTopicGroup.get(rateAdjustInfo.topicGroup).size();
+    public void adjustPublishRate(double publishRate) throws IOException {
+        double newRate = publishRate / numberOfUsedProducerWorkers;
         log.debug("Adjusting producer publish rate to {} msgs/sec", newRate);
         producerWorkers.parallelStream()
                 .forEach(
                         w -> {
                             try {
-                                w.adjustPublishRate(new RateAdjustInfo(rateAdjustInfo.topicGroup, newRate));
+                                w.adjustPublishRate(newRate);
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
@@ -226,7 +214,6 @@ public class DistributedWorkersEnsemble implements Worker {
         int i = 0;
         for (List<TopicSubscription> tsl : subscriptionsPerConsumer) {
             ConsumerAssignment individualAssignment = new ConsumerAssignment();
-            individualAssignment.topicGroup = overallConsumerAssignment.topicGroup;
             individualAssignment.topicsSubscriptions = tsl;
             topicsPerWorkerMap.put(consumerWorkers.get(i++), individualAssignment);
         }

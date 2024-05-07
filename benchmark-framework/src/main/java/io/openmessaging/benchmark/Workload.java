@@ -18,11 +18,7 @@ import io.openmessaging.benchmark.utils.distributor.KeyDistributorType;
 import java.util.List;
 
 public class Workload {
-    public static final String DEFAULT_TOPIC_GROUP = "default-topic-group";
-
     public String name;
-    public int version = 0;
-    public List<TopicGroupSpec> topicGroups;
 
     /** Number of topics to create in the test. */
     public int topics;
