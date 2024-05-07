@@ -14,7 +14,6 @@
 package io.openmessaging.benchmark;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.stream.Collectors.toList;
 
 import io.netty.util.concurrent.DefaultThreadFactory;
 import io.openmessaging.benchmark.utils.PaddingDecimalFormat;
@@ -25,10 +24,8 @@ import io.openmessaging.benchmark.worker.Worker;
 import io.openmessaging.benchmark.worker.commands.ConsumerAssignment;
 import io.openmessaging.benchmark.worker.commands.CountersStats;
 import io.openmessaging.benchmark.worker.commands.CumulativeLatencies;
-import io.openmessaging.benchmark.worker.commands.DetailedTopic;
 import io.openmessaging.benchmark.worker.commands.PeriodStats;
 import io.openmessaging.benchmark.worker.commands.ProducerWorkAssignment;
-import io.openmessaging.benchmark.worker.commands.RateAdjustInfo;
 import io.openmessaging.benchmark.worker.commands.TopicSubscription;
 import io.openmessaging.benchmark.worker.commands.TopicsInfo;
 import java.io.IOException;
@@ -36,9 +33,7 @@ import java.text.DecimalFormat;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -72,36 +67,22 @@ public class WorkloadGenerator implements AutoCloseable {
         }
     }
 
-    private Map<String, List<String>> createTopics() throws IOException{
-        Map<String, List<String>> topics = new HashMap<>();
-        if (workload.version > 1) {
-            throw new UnsupportedOperationException("version > 1 not supported yet");
-        }
-        if (workload.version == 0) {
-            topics.put(Workload.DEFAULT_TOPIC_GROUP,
-                    worker.createTopics(
-                    new TopicsInfo(
-                            Workload.DEFAULT_TOPIC_GROUP,
-                            workload.topics,
-                            workload.partitionsPerTopic,
-                            workload.partitionsPerTopicList,
-                            workload.randomTopicNames)));
-        } else {
-            for (TopicGroupSpec topicGroup : workload.topicGroups) {
-                topics.put(topicGroup.groupName,
-                        worker.createTopics(
-                                new TopicsInfo(
-                                        topicGroup.groupName,
-                                        topicGroup.topics,
-                                        topicGroup.partitionsPerTopic,
-                                        null,
-                                        workload.randomTopicNames)));
-            }
-        }
-        return topics;
-    }
+    public TestResult run() throws Exception {
+        Timer timer = new Timer();
+        List<String> topics =
+                worker.createTopics(
+                        new TopicsInfo(
+                                workload.topics,
+                                workload.partitionsPerTopic,
+                                workload.partitionsPerTopicList,
+                                workload.randomTopicNames));
+        log.info("Created {} topics in {} ms", topics.size(), timer.elapsedMillis());
 
-    private void adjustRateV0() {
+        createConsumers(topics);
+        createProducers(topics);
+
+        ensureTopicsAreReady();
+
         if (workload.producerRate > 0) {
             targetPublishRate = workload.producerRate;
         } else {
@@ -123,40 +104,16 @@ public class WorkloadGenerator implements AutoCloseable {
             executor.execute(
                     () -> {
                         try {
-                            adjustPublishRate(Workload.DEFAULT_TOPIC_GROUP, workload.producerRateList);
+                            adjustPublishRate(workload.producerRateList);
                         } catch (IOException e) {
                             log.warn("Failure in adjusting publish rate", e);
                         }
                     });
         }
-    }
 
-    private void maybeAdjustRate() {
-        if (workload.version == 0) {
-            adjustRateV0();
-        } else if (workload.version == 1) {
-            for (TopicGroupSpec topicGroup : workload.topicGroups) {
-                if (topicGroup.producerRate > 0) {
-                    targetPublishRate = topicGroup.producerRate;
-                } else {
-                    executor.execute(
-                            () -> {
-                                try {
-                                    adjustPublishRate(topicGroup.groupName, topicGroup.producerRateList);
-                                } catch (IOException e) {
-                                    log.warn("Failure in adjusting publish rate", e);
-                                }
-                            });
-                }
-            }
-        }
-    }
-
-    private ProducerWorkAssignment generateProducerAssignmentV0() {
         final PayloadReader payloadReader = new FilePayloadReader(workload.messageSize);
 
         ProducerWorkAssignment producerWorkAssignment = new ProducerWorkAssignment();
-        producerWorkAssignment.topicGroup = Workload.DEFAULT_TOPIC_GROUP;
         producerWorkAssignment.keyDistributorType = workload.keyDistributor;
         producerWorkAssignment.publishRate = targetPublishRate;
         producerWorkAssignment.payloadData = new ArrayList<>();
@@ -177,63 +134,8 @@ public class WorkloadGenerator implements AutoCloseable {
         } else {
             producerWorkAssignment.payloadData.add(payloadReader.load(workload.payloadFile));
         }
-        return producerWorkAssignment;
-    }
 
-    private void maybeBuildBackLog() {
-        if (workload.consumerBacklogSizeGB <= 0) {
-            return;
-        }
-        if (workload.version > 0) {
-            throw new UnsupportedOperationException("version > 0 not supported yet");
-        }
-        executor.execute(
-                () -> {
-                    try {
-                        buildAndDrainBacklog(workload.testDurationMinutes);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
-    }
-
-    private List<ProducerWorkAssignment> generateProducerAssignments() {
-        if (workload.version > 1) {
-            throw new UnsupportedOperationException("version > 1 not supported yet");
-        }
-        if (workload.version == 0) {
-            return Collections.singletonList(generateProducerAssignmentV0());
-        }
-
-        return workload.topicGroups.stream().map(spec -> {
-            ProducerWorkAssignment producerWorkAssignment = new ProducerWorkAssignment();
-            producerWorkAssignment.topicGroup = spec.groupName;
-            producerWorkAssignment.keyDistributorType = workload.keyDistributor;
-            producerWorkAssignment.publishRate = spec.producerRate;
-            producerWorkAssignment.payloadData = Collections.singletonList(
-                    new FilePayloadReader(spec.messageSize).load(spec.payloadFile));
-            return producerWorkAssignment;
-        }).collect(toList());
-
-    }
-
-    public TestResult run() throws Exception {
-        Timer timer = new Timer();
-        Map<String, List<String>> topics = createTopics();
-        log.info("Created {} topic groups in {} ms", topics.size(), timer.elapsedMillis());
-        for (Map.Entry<String, List<String>> entry : topics.entrySet()) {
-            createConsumers(entry.getKey(), entry.getValue());
-            createProducers(entry.getKey(), entry.getValue());
-        }
-
-        ensureTopicsAreReady();
-
-        maybeAdjustRate();
-
-        List<ProducerWorkAssignment> producerWorkAssignments = generateProducerAssignments();
-        for (ProducerWorkAssignment producerWorkAssignment : producerWorkAssignments) {
-            worker.startLoad(producerWorkAssignment);
-        }
+        worker.startLoad(producerWorkAssignment);
 
         if (workload.warmupDurationMinutes > 0) {
             log.info("----- Starting warm-up traffic ({}m) ------", workload.warmupDurationMinutes);
@@ -241,7 +143,16 @@ public class WorkloadGenerator implements AutoCloseable {
                     workload.warmupDurationMinutes, TimeUnit.MINUTES, workload.logIntervalMillis);
         }
 
-        maybeBuildBackLog();
+        if (workload.consumerBacklogSizeGB > 0) {
+            executor.execute(
+                    () -> {
+                        try {
+                            buildAndDrainBacklog(workload.testDurationMinutes);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    });
+        }
 
         worker.resetStats();
         log.info("----- Starting benchmark traffic ({}m)------", workload.testDurationMinutes);
@@ -325,11 +236,11 @@ public class WorkloadGenerator implements AutoCloseable {
             currentRate =
                     rateController.nextRate(
                             currentRate, periodNanos, stats.messagesSent, stats.messagesReceived);
-            worker.adjustPublishRate(new RateAdjustInfo(Workload.DEFAULT_TOPIC_GROUP, currentRate));
+            worker.adjustPublishRate(currentRate);
         }
     }
 
-    private void adjustPublishRate(String topicGroup, List<List<Integer>> rateList) throws IOException {
+    private void adjustPublishRate(List<List<Integer>> rateList) throws IOException {
         boolean sameLength = rateList.stream().map(List::size).distinct().limit(2).count() <= 1;
         if (!sameLength) {
             throw new IllegalArgumentException("rateList should have the same length");
@@ -359,7 +270,7 @@ public class WorkloadGenerator implements AutoCloseable {
 
             LocalTime now = LocalTime.now();
             double targetRate = rateGenerator.get(now);
-            worker.adjustPublishRate(new RateAdjustInfo(topicGroup, targetRate));
+            worker.adjustPublishRate(targetRate);
         }
     }
 
@@ -369,57 +280,17 @@ public class WorkloadGenerator implements AutoCloseable {
         executor.shutdownNow();
     }
 
-    private ConsumerAssignment createConsumersV0(String topicGroup, List<String> topics) throws IOException {
+    private void createConsumers(List<String> topics) throws IOException {
         ConsumerAssignment consumerAssignment = new ConsumerAssignment();
-        consumerAssignment.topicGroup = topicGroup;
 
         for (String topic : topics) {
             for (int i = 0; i < workload.subscriptionsPerTopic; i++) {
                 String subscriptionName = String.format("sub-%s-%03d", topic, i);
                 for (int j = 0; j < workload.consumerPerSubscription; j++) {
-                    // Each TopicSubscription refers to a single consumer.
-                    // Thus, we have to add for ${workload.consumerPerSubscription} times.
                     consumerAssignment.topicsSubscriptions.add(
                             new TopicSubscription(topic, subscriptionName));
                 }
             }
-        }
-        return consumerAssignment;
-    }
-
-    private List<TopicSubscription> generateSubscriptionList(List<String> topics, int subscriptionPerTopic,
-                                                             int consumerPerSubscription) {
-        List<TopicSubscription> subscriptions = new ArrayList<>();
-        for (String topic : topics) {
-            for (int i = 0; i < subscriptionPerTopic; i++) {
-                String subscriptionName = String.format("sub-%s-%03d", topic, i);
-                for (int j = 0; j < consumerPerSubscription; j++) {
-                    // Each TopicSubscription refers to a single consumer.
-                    // Thus, we have to add for ${workload.consumerPerSubscription} times.
-                    subscriptions.add(new TopicSubscription(topic, subscriptionName));
-                }
-            }
-        }
-        return subscriptions;
-    }
-
-    private void createConsumers(String topicGroup, List<String> topics) throws IOException {
-        if (workload.version > 1) {
-            throw new UnsupportedOperationException("version > 1 not supported yet");
-        }
-
-        ConsumerAssignment consumerAssignment = new ConsumerAssignment();
-        consumerAssignment.topicGroup = topicGroup;
-
-        if (workload.version == 0) {
-            consumerAssignment.topicsSubscriptions.addAll(generateSubscriptionList(topics,
-                    workload.subscriptionsPerTopic, workload.consumerPerSubscription));
-        } else {
-            TopicGroupSpec topicGroupSpec = workload.topicGroups.stream().filter(spec -> spec.groupName.equals(topicGroup)).findFirst().orElseThrow(
-                    () -> new IllegalArgumentException("topicGroup not found: " + topicGroup));
-            consumerAssignment.topicsSubscriptions.addAll(generateSubscriptionList(topics,
-                    topicGroupSpec.subscriptionsPerTopic, topicGroupSpec.consumerPerSubscription));
-
         }
 
         Collections.shuffle(consumerAssignment.topicsSubscriptions);
@@ -433,41 +304,26 @@ public class WorkloadGenerator implements AutoCloseable {
                 timer.elapsedMillis());
     }
 
-    private void createProducers(String topicGroup, List<String> topics) throws IOException {
-        List<DetailedTopic> fullListOfTopics = new ArrayList<>();
+    private void createProducers(List<String> topics) throws IOException {
+        List<String> fullListOfTopics = new ArrayList<>();
 
-        if (workload.version == 0) {
-            if (null == workload.producersPerTopicList) {
-                // Add the topic multiple times, one for each producer
-                for (int i = 0; i < workload.producersPerTopic; i++) {
-                    fullListOfTopics.addAll(topics.stream()
-                            .map(topic -> new DetailedTopic(topic, topicGroup)).collect(toList()));
-                }
-            } else {
-                if (workload.producersPerTopicList.size() != topics.size()) {
-                    throw new IllegalArgumentException(
-                            "The number of topics and the number of producers per topic must match");
-                }
-                for (int i = 0; i < workload.producersPerTopicList.size(); i++) {
-                    int numProducers = workload.producersPerTopicList.get(i);
-                    for (int j = 0; j < numProducers; j++) {
-                        fullListOfTopics.add(new DetailedTopic(topics.get(i), topicGroup));
-                    }
-                }
-            }
-        } else if (workload.version == 1) {
-            TopicGroupSpec topicGroupSpec = workload.topicGroups.stream()
-                    .filter(spec -> spec.groupName.equals(topicGroup))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("topicGroup not found: " + topicGroup));
-
+        if (null == workload.producersPerTopicList) {
             // Add the topic multiple times, one for each producer
-            for (int i = 0; i < topicGroupSpec.producersPerTopic; i++) {
-                fullListOfTopics.addAll(topics.stream()
-                        .map(topic -> new DetailedTopic(topic, topicGroup)).collect(toList()));
+            for (int i = 0; i < workload.producersPerTopic; i++) {
+                fullListOfTopics.addAll(topics);
+            }
+        } else {
+            if (workload.producersPerTopicList.size() != topics.size()) {
+                throw new IllegalArgumentException(
+                        "The number of topics and the number of producers per topic must match");
+            }
+            for (int i = 0; i < workload.producersPerTopicList.size(); i++) {
+                int numProducers = workload.producersPerTopicList.get(i);
+                for (int j = 0; j < numProducers; j++) {
+                    fullListOfTopics.add(topics.get(i));
+                }
             }
         }
-
 
         Collections.shuffle(fullListOfTopics);
 

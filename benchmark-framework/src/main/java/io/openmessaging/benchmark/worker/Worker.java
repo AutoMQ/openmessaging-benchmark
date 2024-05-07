@@ -17,10 +17,8 @@ package io.openmessaging.benchmark.worker;
 import io.openmessaging.benchmark.worker.commands.ConsumerAssignment;
 import io.openmessaging.benchmark.worker.commands.CountersStats;
 import io.openmessaging.benchmark.worker.commands.CumulativeLatencies;
-import io.openmessaging.benchmark.worker.commands.DetailedTopic;
 import io.openmessaging.benchmark.worker.commands.PeriodStats;
 import io.openmessaging.benchmark.worker.commands.ProducerWorkAssignment;
-import io.openmessaging.benchmark.worker.commands.RateAdjustInfo;
 import io.openmessaging.benchmark.worker.commands.TopicsInfo;
 import java.io.File;
 import java.io.IOException;
@@ -32,7 +30,7 @@ public interface Worker extends AutoCloseable {
 
     List<String> createTopics(TopicsInfo topicsInfo) throws IOException;
 
-    void createProducers(List<DetailedTopic> detailedTopicList) throws IOException;
+    void createProducers(List<String> topics) throws IOException;
 
     void createConsumers(ConsumerAssignment consumerAssignment) throws IOException;
 
@@ -40,7 +38,7 @@ public interface Worker extends AutoCloseable {
 
     void startLoad(ProducerWorkAssignment producerWorkAssignment) throws IOException;
 
-    void adjustPublishRate(RateAdjustInfo rateAdjustInfo) throws IOException;
+    void adjustPublishRate(double publishRate) throws IOException;
 
     void pauseConsumers() throws IOException;
 

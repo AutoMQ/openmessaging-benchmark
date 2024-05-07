@@ -16,10 +16,7 @@ package io.openmessaging.benchmark.worker.commands;
 
 import java.util.List;
 
-import static io.openmessaging.benchmark.Workload.DEFAULT_TOPIC_GROUP;
-
 public class TopicsInfo {
-    public String groupName;
     public int numberOfTopics;
     public int numberOfPartitionsPerTopic;
     public List<Integer> numberOfPartitionsPerTopicList;
@@ -32,17 +29,6 @@ public class TopicsInfo {
             int numberOfPartitionsPerTopic,
             List<Integer> numberOfPartitionsPerTopicList,
             boolean randomName) {
-        this(DEFAULT_TOPIC_GROUP, numberOfTopics, numberOfPartitionsPerTopic,
-                numberOfPartitionsPerTopicList, randomName);
-    }
-
-    public TopicsInfo(
-            String groupName,
-            int numberOfTopics,
-            int numberOfPartitionsPerTopic,
-            List<Integer> numberOfPartitionsPerTopicList,
-            boolean randomName) {
-        this.groupName = groupName;
         this.numberOfTopics = numberOfTopics;
         this.numberOfPartitionsPerTopic = numberOfPartitionsPerTopic;
         this.numberOfPartitionsPerTopicList = numberOfPartitionsPerTopicList;
