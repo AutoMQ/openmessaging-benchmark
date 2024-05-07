@@ -14,7 +14,6 @@
 package io.openmessaging.benchmark.worker;
 
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.common.io.Files;
@@ -87,9 +86,7 @@ public class WorkerHandler {
     }
 
     private void handleCreateProducers(Context ctx) throws Exception {
-        List<DetailedTopic> topics = mapper.readValue(ctx.body(),
-                new TypeReference<List<DetailedTopic>>() {
-                });
+        List<DetailedTopic> topics = (List<DetailedTopic>) mapper.readValue(ctx.body(), List.class);
         log.info("Received create producers request for topics: {}", topics);
         localWorker.createProducers(topics);
     }
