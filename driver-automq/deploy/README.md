@@ -44,7 +44,10 @@ You can create the necessary AWS resources using just a few Terraform commands:
 ```bash
 cd terraform-{aws,alicloud}
 terraform init
+### aws
 terraform apply
+### aws-cn
+terraform apply -var-file terraform-aws-cn.tfvars
 ```
 
 When you run `terraform apply`, you will be prompted to type `yes`. Type `yes` to continue with the installation or anything else to quit.
