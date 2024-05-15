@@ -332,7 +332,7 @@
     - shell: tuned-adm profile latency-performance
 
     - name: Get list of driver config files
-      raw: ls -1 /opt/benchmark/driver-automq-for-kafka/*.yaml
+      raw: ls -1 /opt/benchmark/driver-automq/*.yaml
       register: drivers_list
       tags: [client-code]
     - name: Configure Bootstrap Servers

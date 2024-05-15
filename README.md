@@ -7,7 +7,7 @@
 
 This repository houses user-friendly, cloud-ready benchmarking suites for the following messaging platforms:
 
-* [AutoMQ for Kafka](./driver-automq-for-kafka/README.md)
+* [AutoMQ for Kafka](./driver-automq/README.md)
 * [Apache ActiveMQ Artemis](https://activemq.apache.org/components/artemis/)
 * [Apache Bookkeeper](https://bookkeeper.apache.org)
 * [Apache Kafka](https://kafka.apache.org)

@@ -22,6 +22,6 @@
         <artifactId>messaging-benchmark</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
-    <artifactId>driver-automq-for-kafka</artifactId>
+    <artifactId>driver-automq</artifactId>
 
 </project>
