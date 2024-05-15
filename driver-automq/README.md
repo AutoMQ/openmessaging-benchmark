@@ -13,16 +13,16 @@
 
 ### Generate SSH Keys
 
-Once you're all set up with AWS and have the necessary tools installed locally, you'll need to create both a public and a private SSH key at `~/.ssh/kafka_on_s3_aws` (private) and `~/.ssh/kafka_on_s3_aws.pub` (public), respectively. You can do this by running the following command:
+Once you're all set up with AWS and have the necessary tools installed locally, you'll need to create both a public and a private SSH key at `~/.ssh/automq_aws` (private) and `~/.ssh/automq_aws.pub` (public), respectively. You can do this by running the following command:
 
 ```bash
-ssh-keygen -f ~/.ssh/kafka_on_s3_aws
+ssh-keygen -f ~/.ssh/automq_aws
 ```
 
 When prompted to enter a passphrase, simply hit `Enter` twice. Then, make sure that the keys have been created:
 
 ```bash
-ls ~/.ssh/kafka_on_s3_aws*
+ls ~/.ssh/automq_aws*
 ```
 
 ### Deploy Infrastructure

@@ -1,4 +1,4 @@
-public_key_path = "~/.ssh/kafka_on_s3_aws.pub"
+public_key_path = "~/.ssh/automq_aws.pub"
 region          = "us-west-2"
 az              = "us-west-2a"
 

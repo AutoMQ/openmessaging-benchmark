@@ -13,19 +13,19 @@
 
 ### Generate SSH Keys
 
-Once you're all set up with AWS and have the necessary tools installed locally, you'll need to create both a public and a private SSH key at `~/.ssh/kafka_on_s3_aws` (private) and `~/.ssh/kafka_on_s3_aws.pub` (public), respectively. You can do this by running the following command:
+Once you're all set up with AWS and have the necessary tools installed locally, you'll need to create both a public and a private SSH key at `~/.ssh/automq_aws` (private) and `~/.ssh/automq_aws.pub` (public), respectively. You can do this by running the following command:
 
 ```bash
-ssh-keygen -f ~/.ssh/kafka_on_s3_aws
+ssh-keygen -f ~/.ssh/automq_aws
 ```
 
 When prompted to enter a passphrase, simply hit `Enter` twice. Then, make sure that the keys have been created:
 
 ```bash
-ls ~/.ssh/kafka_on_s3_aws*
+ls ~/.ssh/automq_aws*
 ```
 
-Note: `~/.ssh/kafka_on_s3_aws` is the default key name used in the `terraform.tfvars` file. If you want to use a different key name, you will need to update the `terraform.tfvars` file accordingly.
+Note: `~/.ssh/automq_aws` is the default key name used in the `terraform.tfvars` file. If you want to use a different key name, you will need to update the `terraform.tfvars` file accordingly.
 
 ### Build the Project
 
@@ -76,9 +76,9 @@ ansible-playbook deploy.yaml -i terraform-{aws,alicloud}/hosts.ini
 You can SSH into the EC2 instances using the following command:
 
 ```bash
-ssh -i ~/.ssh/kafka_on_s3_aws $(terraform output --raw user)@$(terraform output --raw server_ssh_host)
-ssh -i ~/.ssh/kafka_on_s3_aws $(terraform output --raw user)@$(terraform output --raw broker_ssh_host)
-ssh -i ~/.ssh/kafka_on_s3_aws $(terraform output --raw user)@$(terraform output --raw client_ssh_host)
+ssh -i ~/.ssh/automq_aws $(terraform output --raw user)@$(terraform output --raw server_ssh_host)
+ssh -i ~/.ssh/automq_aws $(terraform output --raw user)@$(terraform output --raw broker_ssh_host)
+ssh -i ~/.ssh/automq_aws $(terraform output --raw user)@$(terraform output --raw client_ssh_host)
 ```
 
 ### Tear Down

@@ -25,7 +25,7 @@ Path to the SSH public key to be used for authentication.
 Ensure this keypair is added to your local SSH agent so provisioners can
 connect.
 
-Example: ~/.ssh/kafka_on_s3_aws.pub
+Example: ~/.ssh/automq_aws.pub
 DESCRIPTION
 }
 
