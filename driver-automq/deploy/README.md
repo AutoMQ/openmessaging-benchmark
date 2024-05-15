@@ -37,7 +37,7 @@ mvn clean package -Dlicense.skip=true -Dcheckstyle.skip -DskipTests -Dspotless.c
 
 ### Create Resource Using Terraform
 
-Currently, we support deploying AutoMQ for Apache Kafka on AWS and Alibaba Cloud.
+Currently, we support deploying AutoMQ on AWS and Alibaba Cloud.
 
 You can create the necessary AWS resources using just a few Terraform commands:
 
@@ -65,7 +65,7 @@ The `terraform.tfvars` file contains the following variables:
 
 ### Run Ansible Playbook
 
-Once the Terraform installation is complete, you can run the Ansible playbook to install the necessary software and start the **AutoMQ for Apache Kafka**:
+Once the Terraform installation is complete, you can run the Ansible playbook to install the necessary software and start the **AutoMQ**:
 
 ```bash
 ansible-playbook deploy.yaml -i terraform-{aws,alicloud}/hosts.ini

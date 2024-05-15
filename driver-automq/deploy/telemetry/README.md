@@ -1,10 +1,10 @@
-## Observing AutoMQ for Kafka
+## Observing AutoMQ
 
 This document provides a guide on leveraging various observability services (OTel Collector, Prometheus, Tempo, Grafana)
-to observe and monitor AutoMQ for Kafka.
+to observe and monitor AutoMQ.
 
 ### Limitations
-1. S3Stream module utilizes OpenTelemetry for instrumenting (including metrics and traces). AutoMQ for Kafka supports different methods to export them:
+1. S3Stream module utilizes OpenTelemetry for instrumenting (including metrics and traces). AutoMQ supports different methods to export them:
    - Metrics:
      - Prometheus: Metrics can be exposed via Prometheus HTTP server, which can be scraped by your own Prometheus backend.  
      - OTLP: Metrics can be exported to OTel Collector via OTLP protocol, which can be then exported to multiple backend as configured.
@@ -35,7 +35,7 @@ due to performance and security concerns.
     ./install.sh remove
     ```
    
-### Configuration for AutoMQ for Kafka
+### Configuration for AutoMQ
 1. add telemetry configuration to configuration file
     ```
     # enable metrics recording
@@ -69,4 +69,4 @@ due to performance and security concerns.
     # Metrics report interval
     s3.telemetry.exporter.report.interval.ms=5000
     ```
-2. start AutoMQ for Kafka and metrics and traces will be ready to view on Grafana
+2. start AutoMQ and metrics and traces will be ready to view on Grafana
