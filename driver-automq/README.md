@@ -1,4 +1,4 @@
-# AutoMQ for Kafka Benchmark
+# AutoMQ Benchmark
 
 ## Requirements
 

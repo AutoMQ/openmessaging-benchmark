@@ -1,4 +1,4 @@
-# AutoMQ for Apache Kafka Deployments
+# AutoMQ Deployments
 
 ## Requirements
 
