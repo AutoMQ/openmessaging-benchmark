@@ -89,7 +89,10 @@ ssh -i ~/.ssh/automq_aws $(terraform output --raw user)@$(terraform output --raw
 To tear down the resources created by Terraform, run the following command:
 
 ```bash
+## aws
 terraform destroy
+## aws-cn
+terraform destroy -var-file terraform-aws-cn.tfvars
 ```
 
 When you run `terraform destroy`, you will be prompted to type `yes`. Type `yes` to continue with the installation or anything else to quit.
