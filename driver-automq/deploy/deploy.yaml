@@ -20,8 +20,10 @@
   tasks:
   - set_fact:
       # Global configs
+      ## remote path
       base_store_path: "/data"
-      kafka_package: "/tmp/kafka-3.4.0.tgz"
+      ## local path to specify AutoMQ package
+      kafka_package: "~/tmp/automq-1.0.5_kafka-3.4.0.tgz"
       kafka_heap_size: "6g"
       kafka_direct_memory_size: "6g"
       client_worker_heap_size: "8g"
