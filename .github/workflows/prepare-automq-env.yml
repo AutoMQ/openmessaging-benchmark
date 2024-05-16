@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Apply Variables and Secrets
         working-directory: driver-automq/deploy/terraform-aws
         ## Set AK/SK and terraform s3 backend info
         run: |
