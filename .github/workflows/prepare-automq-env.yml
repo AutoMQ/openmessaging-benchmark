@@ -1,0 +1,55 @@
+name: Prepare AutoMQ Cluster
+
+on:
+  workflow_dispatch:
+    inputs:
+      cloud_provider:
+        default: aws-cn
+        required: true
+        type: string
+      region:
+        default: cn-northwest-1
+        required: true
+        type: string
+jobs:
+  prepare_env:
+    name: Prepare AWS Environment
+    runs-on: ubuntu-latest
+    environment:  ${{ inputs.cloud_provider }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        working-directory: driver-automq/deploy/terraform-aws
+        ## Set AK/SK and terraform s3 backend info
+        run: |
+          sed -i 's/\${TF_BACKEND_BUCKET}/${{ secrets.TF_BACKEND_BUCKET }}/g' ${{vars.TF_FILENAME}}
+          TIMESTAMP=$(date +%s)
+          sed -i "s/\${TF_BACKEND_BUCKET}/${{ secrets.TF_BACKEND_KEY }}.$TIMESTAMP/g" ${{vars.TF_FILENAME}}
+          sed -i "s/\${TF_BACKEND_BUCKET}/${{ inputs.region }}/g" ${{vars.TF_FILENAME}}
+          sed -i "s/\${AUTOMQ_ACCESS_KEY}/${{ secrets.AUTOMQ_ACCESS_KEY }}/g" ${{vars.TF_VAR_FILENAME}}
+          sed -i "s/\${AUTOMQ_SECRET_KEY}/${{ secrets.AUTOMQ_SECRET_KEY }}/g" ${{vars.TF_VAR_FILENAME}}
+
+      - name: Setup terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Initialize terraform
+        working-directory: driver-automq/deploy/terraform-aws
+        run: terraform init
+
+      - name: Apply terraform
+        working-directory: driver-automq/deploy/terraform-aws
+        run: terraform apply -var-file terraform-aws-cn.tfvars
+
+      - name: Install python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install ansible
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --user ansible
+          python -m pip install --user jmespath
+
+      - name: Run ansible lint
+        uses: ansible/ansible-lint@v6

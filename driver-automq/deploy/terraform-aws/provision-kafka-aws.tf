@@ -15,6 +15,12 @@ terraform {
       version = "3.5.1"
     }
   }
+  backend "s3" {
+    ## terraform s3 backend configuration  ${TF_BACKEND_BUCKET}
+    bucket = "${TF_BACKEND_BUCKET}"
+    key    = "${TF_BACKEND_KEY}"
+    region = "${TF_BACKEND_REGION}"
+  }
 }
 
 variable "public_key_path" {
