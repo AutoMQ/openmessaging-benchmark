@@ -198,6 +198,7 @@
       apt:
         pkg:
           - openjdk-17-jdk
+          - libjemalloc2
         state: present
 
 
