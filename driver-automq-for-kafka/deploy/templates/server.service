@@ -9,6 +9,9 @@ Environment='KAFKA_HEAP_OPTS=-Xms{{ kafka_heap_size }} -Xmx{{ kafka_heap_size }}
 Environment='KAFKA_JVM_PERFORMANCE_OPTS=-server -XX:+UseZGC -XX:ZCollectionInterval=5'
 Environment='KAFKA_S3_ACCESS_KEY={{ kafka_access_key }}'
 Environment='KAFKA_S3_SECRET_KEY={{ kafka_secret_key }}'
+Environment='LD_PRELOAD=/lib/x86_64-linux-gnu/libjemalloc.so.2'
+Environment='AUTOMQ_S3STREAM_STRICT=true'
+Environment='AUTOMQ_MEMORY_USAGE_DETECT=true'
 WorkingDirectory={{ kafka_dir }}
 RestartSec=1s
 Restart=on-failure
