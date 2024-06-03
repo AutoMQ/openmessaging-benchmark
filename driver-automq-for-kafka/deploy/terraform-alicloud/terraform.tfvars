@@ -17,6 +17,8 @@ instance_cnt = {
   "client"              = 2
 }
 
+instance_bandwidth_Gbps = 2.0
+
 ebs_category = "cloud_essd"
 ebs_performance_level = "PL1"
 ebs_volume_size = 20
