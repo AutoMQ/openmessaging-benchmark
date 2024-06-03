@@ -26,7 +26,6 @@
       kafka_direct_memory_size: "6g"
       client_worker_heap_size: "8g"
       client_bench_heap_size: "4g"
-      ec2_network_bandwidth: "104824045"
   - set_fact:
       private_ip: "{{ hostvars[inventory_hostname]['private_ip'] }}"
       kafka_dir: "{{ base_store_path }}/kafka"
@@ -185,6 +184,7 @@
             kafka_access_key: "{{ hostvars[inventory_hostname]['access_key'] }}"
             kafka_secret_key: "{{ hostvars[inventory_hostname]['secret_key'] }}"
             kafka_role_name: "{{ hostvars[inventory_hostname]['role_name'] }}"
+            ec2_network_bandwidth: "{{ hostvars[inventory_hostname]['network_bandwidth'] }}"
 
             node_id: "{{ hostvars[inventory_hostname]['kafka_id'] }}"
             server_ids: "{{ groups.get('server') | map('extract', hostvars, 'kafka_id') | list }}"

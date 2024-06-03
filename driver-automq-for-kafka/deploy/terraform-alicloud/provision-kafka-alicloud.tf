@@ -56,6 +56,10 @@ variable "instance_cnt" {
   type = map(string)
 }
 
+variable "instance_bandwidth_Gbps" {
+  type = number
+}
+
 variable "ebs_category" {
   type = string
 }
@@ -413,6 +417,9 @@ resource "local_file" "hosts_ini" {
       access_key = var.access_key,
       secret_key = var.secret_key,
       role_name  = alicloud_ram_role.benchmark_role.name,
+
+      # convert Gbps to Bps
+      network_bandwidth = format("%.0f", var.instance_bandwidth_Gbps * 1024 * 1024 * 1024 / 8),
     }
   )
   filename = "${path.module}/hosts.ini"
