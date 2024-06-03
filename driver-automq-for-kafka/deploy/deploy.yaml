@@ -201,6 +201,18 @@
           - libjemalloc2
         state: present
 
+    - name: Install Tsar
+      block:
+        - git:
+            repo: "https://gitee.com/mirrors/Tsar.git"
+            dest: "/tmp/tsar"
+        - command: make
+          args:
+            chdir: "/tmp/tsar"
+        - command: make install
+          args:
+            chdir: "/tmp/tsar"
+
 
 - name: Install Kafka
   tags: [install]
