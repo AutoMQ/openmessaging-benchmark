@@ -17,6 +17,8 @@ instance_cnt = {
   "client"              = 8
 }
 
+instance_bandwidth_Gbps = 3.125
+
 monitoring = true
 spot = false
 
