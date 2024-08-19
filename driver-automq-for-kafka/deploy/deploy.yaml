@@ -240,7 +240,7 @@
   become: true
   tasks:
   - template:
-      src: "templates/server.properties"
+      src: "templates/server-{{ kafka_version | replace('.', '-') }}.properties"
       dest: "{{ kafka_dir }}/config/kraft/server.properties"
   - template:
       src: "templates/server.service"
@@ -269,7 +269,7 @@
   become: true
   tasks:
   - template:
-      src: "templates/broker.properties"
+      src: "templates/broker-{{ kafka_version | replace('.', '-') }}.properties"
       dest: "{{ kafka_dir }}/config/kraft/broker.properties"
   - template:
       src: "templates/broker.service"
