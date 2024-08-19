@@ -217,7 +217,7 @@
 - name: Install Kafka
   tags: [install]
   any_errors_fatal: true
-  hosts: [server, broker]
+  hosts: [server, broker, client]
   connection: ssh
   become: true
   tasks:
@@ -307,7 +307,7 @@
 
 
 - name: Setup Benchmark client
-  tags: [never, run, client-code]
+  tags: [run, client-code]
   any_errors_fatal: true
   hosts: [client]
   connection: ssh
