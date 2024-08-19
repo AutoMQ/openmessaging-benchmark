@@ -194,6 +194,14 @@
             telemetry_ip: "{{ groups.get('telemetry') | map('extract', hostvars, 'private_ip') | first | default('') }}"
         - set_fact:
             quorum_servers: "{{ server_ids | zip(server_addrs) | map('join', '@') | join(',') }}"
+        - set_fact:
+            process_roles: "broker"
+            listeners: "PLAINTEXT://{{ private_ip }}:9092"
+            when: "'broker' in group_names"
+        - set_fact:
+            process_roles: "broker,controller"
+            listeners: "PLAINTEXT://{{ private_ip }}:9092,CONTROLLER://{{ private_ip }}:9093"
+            when: "'server' in group_names"
 
     - name: Install dependencies
       apt:
@@ -232,61 +240,32 @@
         extra_opts: ["--strip-components=1"]
 
 
-- name: Setup Kafka servers
+- name: Setup Kafka
   tags: [run]
   any_errors_fatal: true
-  hosts: [server]
+  hosts: [server, broker]
   connection: ssh
   become: true
   tasks:
   - template:
-      src: "templates/server-{{ kafka_version | replace('.', '-') }}.properties"
-      dest: "{{ kafka_dir }}/config/kraft/server.properties"
+      src: "templates/kafka-{{ kafka_version | replace('.', '-') }}.properties"
+      dest: "{{ kafka_dir }}/config/kraft/kafka.properties"
   - template:
-      src: "templates/server.service"
-      dest: "/etc/systemd/system/server.service"
+      src: "templates/kafka.service"
+      dest: "/etc/systemd/system/kafka.service"
   - name: Format Log Directories
-    shell: bin/kafka-storage.sh format --cluster-id {{ kafka_cluster_id }} --config config/kraft/server.properties --ignore-formatted
+    shell: bin/kafka-storage.sh format --cluster-id {{ kafka_cluster_id }} --config config/kraft/kafka.properties --ignore-formatted
     args:
       chdir: "{{ kafka_dir }}"
-  - name: Start Kafka server
+  - name: Start Kafka service
     systemd:
       state: restarted
       daemon_reload: yes
-      name: "server"
-  - name: Wait Kafka server to be active
+      name: "kafka"
+  - name: Wait Kafka service to be active
     service_facts:
-    register: server_service
-    until: server_service.ansible_facts.services['server.service'].state == 'running'
-    retries: 10
-    delay: 5
-
-- name: Setup Kafka brokers
-  tags: [run]
-  any_errors_fatal: true
-  hosts: [broker]
-  connection: ssh
-  become: true
-  tasks:
-  - template:
-      src: "templates/broker-{{ kafka_version | replace('.', '-') }}.properties"
-      dest: "{{ kafka_dir }}/config/kraft/broker.properties"
-  - template:
-      src: "templates/broker.service"
-      dest: "/etc/systemd/system/broker.service"
-  - name: Format Log Directories
-    shell: bin/kafka-storage.sh format --cluster-id {{ kafka_cluster_id }} --config config/kraft/broker.properties --ignore-formatted
-    args:
-      chdir: "{{ kafka_dir }}"
-  - name: Start Kafka broker
-    systemd:
-      state: restarted
-      daemon_reload: yes
-      name: "broker"
-  - name: Wait Kafka broker to be active
-    service_facts:
-    register: broker_service
-    until: broker_service.ansible_facts.services['broker.service'].state == 'running'
+    register: kafka_service
+    until: kafka_service.ansible_facts.services['kafka.service'].state == 'running'
     retries: 10
     delay: 5
 
