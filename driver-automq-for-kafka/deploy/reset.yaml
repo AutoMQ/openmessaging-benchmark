@@ -59,11 +59,11 @@
     - name: Stop broker
       systemd:
         state: stopped
-        name: "broker"
+        name: "kafka"
     - name: Wait broker to be stopped
       service_facts:
-      register: broker_service
-      until: broker_service.ansible_facts.services['broker.service'].state in ['stopped', 'inactive']
+      register: kafka_service
+      until: kafka_service.ansible_facts.services['kafka.service'].state in ['stopped', 'inactive']
       retries: 10
       delay: 5
     - name: Remove data dir
@@ -92,11 +92,11 @@
     - name: Stop server
       systemd:
         state: stopped
-        name: "server"
+        name: "kafka"
     - name: Wait server to be stopped
       service_facts:
-      register: server_service
-      until: server_service.ansible_facts.services['server.service'].state in ['stopped', 'inactive']
+      register: kafka_service
+      until: kafka_service.ansible_facts.services['kafka.service'].state in ['stopped', 'inactive']
       retries: 10
       delay: 5
     - name: Remove data dir
@@ -124,11 +124,11 @@
       systemd:
         state: restarted
         daemon_reload: yes
-        name: "server"
+        name: "kafka"
     - name: Wait Kafka server to be active
       service_facts:
-      register: server_service
-      until: server_service.ansible_facts.services['server.service'].state == 'running'
+      register: kafka_service
+      until: kafka_service.ansible_facts.services['kafka.service'].state == 'running'
       retries: 10
       delay: 5
 
@@ -143,11 +143,11 @@
       systemd:
         state: restarted
         daemon_reload: yes
-        name: "broker"
+        name: "kafka"
     - name: Wait Kafka broker to be active
       service_facts:
-      register: broker_service
-      until: broker_service.ansible_facts.services['broker.service'].state == 'running'
+      register: kafka_service
+      until: kafka_service.ansible_facts.services['kafka.service'].state == 'running'
       retries: 10
       delay: 5
 
