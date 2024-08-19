@@ -307,7 +307,7 @@
 
 
 - name: Setup Benchmark client
-  tags: [run]
+  tags: [never, run, client-code]
   any_errors_fatal: true
   hosts: [client]
   connection: ssh
@@ -334,61 +334,50 @@
         broker_servers: "{{ groups.get('server') | map('extract', hostvars, ['private_ip']) | map('regex_replace', '^(.*)$', '\\1:9092') | join(',') }}"
 
     - file: path=/opt/benchmark state=absent
-      tags: [client-code]
     - name: Copy benchmark code
       unarchive:
         src: ../../package/target/openmessaging-benchmark-0.0.1-SNAPSHOT-bin.tar.gz
         dest: /opt
-      tags: [client-code]
     - shell: mv /opt/openmessaging-benchmark-0.0.1-SNAPSHOT /opt/benchmark
-      tags: [client-code]
     - shell: tuned-adm profile latency-performance
 
     - name: Get list of driver config files
       raw: ls -1 /opt/benchmark/driver-automq-for-kafka/*.yaml
       register: drivers_list
-      tags: [client-code]
     - name: Configure Bootstrap Servers
       lineinfile:
         dest: '{{ item }}'
         regexp: '^  bootstrap.servers='
         line: '  bootstrap.servers={{ broker_servers }}'
       with_items: '{{ drivers_list.stdout_lines }}'
-      tags: [client-code]
 
     - name: Configure memory
       lineinfile:
         dest: /opt/benchmark/bin/benchmark-worker
         regexp: '^JVM_MEM='
         line: 'JVM_MEM="-Xms{{ client_worker_heap_size }} -Xmx{{ client_worker_heap_size }} -XX:+UnlockExperimentalVMOptions -XX:+UseZGC -XX:+ParallelRefProcEnabled -XX:+DoEscapeAnalysis -XX:ParallelGCThreads=12 -XX:ConcGCThreads=12 -XX:+DisableExplicitGC -XX:-ResizePLAB"'
-      tags: [client-code]
     - name: Configure memory
       lineinfile:
         dest: /opt/benchmark/bin/benchmark
         regexp: '^JVM_MEM='
         line: 'JVM_MEM="-Xmx{{ client_bench_heap_size }}"'
-      tags: [client-code]
     - template:
         src: "templates/workers.yaml"
         dest: "/opt/benchmark/workers.yaml"
-      tags: [client-code]
     - name: Install benchmark systemd service
       template:
         src: "templates/benchmark-worker.service"
         dest: "/etc/systemd/system/benchmark-worker.service"
-      tags: [client-code]
     - systemd:
         state: restarted
         daemon_reload: yes
         name: "benchmark-worker"
-      tags: [client-code]
     - name: Wait benchmark worker to be active
       service_facts:
       register: benchmark_worker_service
       until: benchmark_worker_service.ansible_facts.services['benchmark-worker.service'].state == 'running'
       retries: 10
       delay: 5
-      tags: [client-code]
 
 
 - name:  Hosts addresses
