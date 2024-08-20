@@ -19,25 +19,31 @@ due to performance and security concerns.
 
 ### Quick Start
 1. (Optional) set environment variables for data storage
-    ```
-    export $DATA_PATH=/tmp/telemetry
+    ``` Shell
+    export DATA_PATH=/tmp/telemetry
     ```
 2. start services
-    ```
+    ``` Shell 
     ./install.sh start
     ```
-3. direct to Grafana UI to view default dashboard
+3. add following configurations to server/broker configuration file
+    ``` Properties
+    s3.telemetry.metrics.enable=true
+    s3.telemetry.metrics.exporter.type=otlp
+    s3.telemetry.exporter.otlp.endpoint=http://${endpoint}:4317
     ```
-    http://${hostname}:3000
+4. start AutoMQ cluster
+5. direct to Grafana UI to view default dashboard
+    ``` 
+    http://${endpoint}:3000
     ```
-4. stop and clean up
-    ```
+6. stop and clean up
+    ``` Shell
     ./install.sh remove
     ```
    
-### Configuration for AutoMQ for Kafka
-1. add telemetry configuration to configuration file
-    ```
+### Configurations
+``` Properties
     # enable metrics recording
     s3.telemetry.metrics.enable=true
    
@@ -47,13 +53,7 @@ due to performance and security concerns.
     # or expose metrics for Prometheus backend to scrape
     # s3.telemetry.metrics.exporter.type=prometheus
     # s3.metrics.exporter.prom.host=127.0.0.1
-    # s3.metrics.exporter.prom.port=9090 
-   
-    # enable tracing
-    s3.telemetry.tracer.enable=true
-    s3.telemetry.tracer.span.scheduled.delay.ms=1000
-    s3.telemetry.tracer.span.max.queue.size=5120
-    s3.telemetry.tracer.span.max.batch.size=1024
+    # s3.metrics.exporter.prom.port=9090
    
     # OTLP backend endpoint (if using OTLP exporter)
     s3.telemetry.exporter.otlp.endpoint=http://${your_endpoint}
@@ -68,5 +68,4 @@ due to performance and security concerns.
    
     # Metrics report interval
     s3.telemetry.exporter.report.interval.ms=5000
-    ```
-2. start AutoMQ for Kafka and metrics and traces will be ready to view on Grafana
+```
