@@ -81,7 +81,7 @@ locals {
     Benchmark    = "Kafka_on_S3_${random_id.hash.hex}"
     automqVendor = "automq"
   }
-  cluster_id       = "Benchmark___mlCHGxHKcA"
+  cluster_id       = "M_benchmark_alicloud_A"
   server_kafka_ids = { for i in range(var.instance_cnt["server"]) : i => i + 1 }
   broker_kafka_ids = { for i in range(var.instance_cnt["broker"]) : i => var.instance_cnt["server"] + i + 1 }
 }

@@ -89,7 +89,7 @@ variable "access_key" {}
 variable "secret_key" {}
 
 locals {
-  cluster_id       = "Benchmark___mlCHGxHKcA"
+  cluster_id       = "M_benchmark_aws______A"
   server_kafka_ids = { for i in range(var.instance_cnt["server"]) : i => i + 1 }
   broker_kafka_ids = { for i in range(var.instance_cnt["broker"]) : i => var.instance_cnt["server"] + i + 1 }
 }
