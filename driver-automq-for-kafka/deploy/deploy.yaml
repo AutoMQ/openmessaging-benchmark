@@ -208,6 +208,8 @@
         pkg:
           - openjdk-17-jdk
           - libjemalloc2
+          - gcc
+          - make
         state: present
 
     - name: Install Tsar
