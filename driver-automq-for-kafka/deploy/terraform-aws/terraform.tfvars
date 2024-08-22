@@ -1,6 +1,6 @@
 public_key_path = "~/.ssh/kafka_on_s3_aws.pub"
 region          = "us-west-2"
-az              = "us-west-2a"
+az              = ["us-west-2a"]
 
 ami             = "ami-03f65b8614a860c29" // Ubuntu 22.04 LTS for x86_64
 user            = "ubuntu"
