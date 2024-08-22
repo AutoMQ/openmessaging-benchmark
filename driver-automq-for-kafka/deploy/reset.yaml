@@ -73,10 +73,6 @@
     - name: Remove WAL
       shell: "dd if=/dev/zero of={{ kafka_wal_path }} bs=1M count=1 oflag=direct"
       ignore_errors: yes
-    - name: Format Log Directories
-      shell: bin/kafka-storage.sh format --cluster-id {{ kafka_cluster_id }} --config config/kraft/kafka.properties --ignore-formatted
-      args:
-        chdir: "{{ base_store_path }}/kafka"
     - name: Clean cache
       shell: sync; echo 3 > /proc/sys/vm/drop_caches
 
@@ -106,10 +102,6 @@
     - name: Remove WAL
       shell: "dd if=/dev/zero of={{ kafka_wal_path }} bs=1M count=1 oflag=direct"
       ignore_errors: yes
-    - name: Format Log Directories
-      shell: bin/kafka-storage.sh format --cluster-id {{ kafka_cluster_id }} --config config/kraft/kafka.properties --ignore-formatted
-      args:
-        chdir: "{{ base_store_path }}/kafka"
     - name: Clean cache
       shell: sync; echo 3 > /proc/sys/vm/drop_caches
 
@@ -120,6 +112,10 @@
   connection: ssh
   become: true
   tasks:
+    - name: Format Log Directories
+      shell: bin/kafka-storage.sh format --cluster-id {{ kafka_cluster_id }} --config config/kraft/kafka.properties --ignore-formatted
+      args:
+        chdir: "{{ base_store_path }}/kafka"
     - name: Start Kafka server
       systemd:
         state: restarted
@@ -139,6 +135,10 @@
   connection: ssh
   become: true
   tasks:
+    - name: Format Log Directories
+      shell: bin/kafka-storage.sh format --cluster-id {{ kafka_cluster_id }} --config config/kraft/kafka.properties --ignore-formatted
+      args:
+        chdir: "{{ base_store_path }}/kafka"
     - name: Start Kafka broker
       systemd:
         state: restarted
