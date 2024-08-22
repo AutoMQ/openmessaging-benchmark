@@ -1,6 +1,6 @@
 public_key_path = "~/.ssh/kafka_on_s3_aws.pub"
 region          = "cn-hangzhou"
-az              = ["cn-hangzhou-k", "cn-hangzhou-j"]
+az              = ["cn-hangzhou-j", "cn-hangzhou-k"]
 
 ami             = "ubuntu_22_04_x64_20G_alibase_20231221.vhd"
 user            = "root"
