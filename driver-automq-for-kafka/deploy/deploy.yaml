@@ -194,14 +194,6 @@
             telemetry_ip: "{{ groups.get('telemetry') | map('extract', hostvars, 'private_ip') | first | default('') }}"
         - set_fact:
             quorum_servers: "{{ server_ids | zip(server_addrs) | map('join', '@') | join(',') }}"
-        - set_fact:
-            process_roles: "broker"
-            listeners: "PLAINTEXT://{{ private_ip }}:9092"
-            when: "'broker' in group_names"
-        - set_fact:
-            process_roles: "broker,controller"
-            listeners: "PLAINTEXT://{{ private_ip }}:9092,CONTROLLER://{{ private_ip }}:9093"
-            when: "'server' in group_names"
 
     - name: Install dependencies
       apt:
@@ -223,6 +215,34 @@
         - command: make install
           args:
             chdir: "/tmp/tsar"
+
+
+- name: Prepare Kafka servers
+  tags: [prepare]
+  any_errors_fatal: true
+  hosts: server
+  connection: ssh
+  become: true
+  tasks:
+    - name: Set Kafka facts
+      tags: always
+      set_fact:
+        process_roles: "broker,controller"
+        listeners: "PLAINTEXT://{{ private_ip }}:9092,CONTROLLER://{{ private_ip }}:9093"
+
+
+- name: Prepare Kafka brokers
+  tags: [prepare]
+  any_errors_fatal: true
+  hosts: broker
+  connection: ssh
+  become: true
+  tasks:
+    - name: Set Kafka facts
+      tags: always
+      set_fact:
+        process_roles: "broker"
+        listeners: "PLAINTEXT://{{ private_ip }}:9092"
 
 
 - name: Install Kafka
