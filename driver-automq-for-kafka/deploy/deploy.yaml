@@ -21,7 +21,7 @@
   - set_fact:
       # Global configs
       base_store_path: "/data"
-      kafka_package: "/tmp/kafka-3.8.0.tgz"
+      kafka_package: "/tmp/kafka-3.9.0.tgz"
       kafka_version: "1.2"
       kafka_heap_size: "6g"
       kafka_direct_memory_size: "6g"
