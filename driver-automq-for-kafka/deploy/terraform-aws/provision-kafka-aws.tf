@@ -23,7 +23,7 @@ Path to the SSH public key to be used for authentication.
 Ensure this keypair is added to your local SSH agent so provisioners can
 connect.
 
-Example: ~/.ssh/kafka_on_s3_aws.pub
+Example: ~/.ssh/automq_for_kafka.pub
 DESCRIPTION
 }
 
@@ -32,7 +32,7 @@ resource "random_id" "hash" {
 }
 
 variable "key_name" {
-  default     = "kafka_on_s3_benchmark_key"
+  default     = "automq_for_kafka_benchmark_key"
   description = "Desired name prefix for the AWS key pair"
 }
 
@@ -99,17 +99,17 @@ resource "aws_vpc" "benchmark_vpc" {
   cidr_block = "10.0.0.0/16"
 
   tags = {
-    Name      = "Kafka_on_S3_Benchmark_VPC_${random_id.hash.hex}"
-    Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+    Name      = "automq_for_kafka_benchmark_vpc_${random_id.hash.hex}"
+    Benchmark = "automq_for_kafka_${random_id.hash.hex}"
   }
 }
 
 # Create an internet gateway to give our subnet access to the outside world
-resource "aws_internet_gateway" "kafka_on_s3" {
+resource "aws_internet_gateway" "automq_for_kafka" {
   vpc_id = aws_vpc.benchmark_vpc.id
 
   tags = {
-    Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+    Benchmark = "automq_for_kafka_${random_id.hash.hex}"
   }
 }
 
@@ -117,7 +117,7 @@ resource "aws_internet_gateway" "kafka_on_s3" {
 resource "aws_route" "internet_access" {
   route_table_id         = aws_vpc.benchmark_vpc.main_route_table_id
   destination_cidr_block = "0.0.0.0/0"
-  gateway_id             = aws_internet_gateway.kafka_on_s3.id
+  gateway_id             = aws_internet_gateway.automq_for_kafka.id
 }
 
 # Create a subnet to launch our instances into
@@ -129,12 +129,12 @@ resource "aws_subnet" "benchmark_subnet" {
   availability_zone       = element(var.az, count.index)
 
   tags = {
-    Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+    Benchmark = "automq_for_kafka_${random_id.hash.hex}"
   }
 }
 
 resource "aws_security_group" "benchmark_security_group" {
-  name   = "kafka_on_s3_${random_id.hash.hex}"
+  name   = "automq_for_kafka_${random_id.hash.hex}"
   vpc_id = aws_vpc.benchmark_vpc.id
 
   # SSH access from anywhere
@@ -170,8 +170,8 @@ resource "aws_security_group" "benchmark_security_group" {
   }
 
   tags = {
-    Name      = "Kafka_on_S3_Benchmark_SecurityGroup_${random_id.hash.hex}"
-    Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+    Name      = "automq_for_kafka_benchmark_security_group_${random_id.hash.hex}"
+    Benchmark = "automq_for_kafka_${random_id.hash.hex}"
   }
 }
 
@@ -180,12 +180,12 @@ resource "aws_key_pair" "auth" {
   public_key = file(var.public_key_path)
 
   tags = {
-    Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+    Benchmark = "automq_for_kafka_${random_id.hash.hex}"
   }
 }
 
 resource "aws_iam_role" "benchmark_role_s3" {
-  name = "kafka_on_s3_benchmark_role_s3_${random_id.hash.hex}"
+  name = "automq_for_kafka_benchmark_role_s3_${random_id.hash.hex}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -201,7 +201,7 @@ resource "aws_iam_role" "benchmark_role_s3" {
   })
 
   inline_policy {
-    name = "kafka_on_s3_benchmark_policy_${random_id.hash.hex}"
+    name = "automq_for_kafka_benchmark_policy_${random_id.hash.hex}"
 
     policy = jsonencode({
       Version = "2012-10-17"
@@ -228,19 +228,19 @@ resource "aws_iam_role" "benchmark_role_s3" {
   }
 
   tags = {
-    Name      = "Kafka_on_S3_Benchmark_IAM_Role_${random_id.hash.hex}"
-    Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+    Name      = "automq_for_kafka_benchmark_iam_role_${random_id.hash.hex}"
+    Benchmark = "automq_for_kafka_${random_id.hash.hex}"
   }
 }
 
 resource "aws_iam_instance_profile" "benchmark_instance_profile_s3" {
-  name = "kafka_on_s3_benchmark_instance_profile_s3_${random_id.hash.hex}"
+  name = "automq_for_kafka_benchmark_instance_profile_s3_${random_id.hash.hex}"
 
   role = aws_iam_role.benchmark_role_s3.name
 
   tags = {
-    Name      = "Kafka_on_S3_Benchmark_IAM_InstanceProfile_${random_id.hash.hex}"
-    Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+    Name      = "automq_for_kafka_benchmark_iam_instanceprofile_${random_id.hash.hex}"
+    Benchmark = "automq_for_kafka_${random_id.hash.hex}"
   }
 }
 
@@ -267,8 +267,8 @@ resource "aws_instance" "server" {
     volume_type = "gp3"
     volume_size = 16
     tags = {
-      Name            = "Kafka_on_S3_Benchmark_EBS_root_server_${count.index}_${random_id.hash.hex}"
-      Benchmark       = "Kafka_on_S3_${random_id.hash.hex}"
+      Name            = "automq_for_kafka_benchmark_ebs_root_server_${count.index}_${random_id.hash.hex}"
+      Benchmark       = "automq_for_kafka_${random_id.hash.hex}"
       automqVendor    = "automq"
       automqClusterID = local.cluster_id
     }
@@ -280,8 +280,8 @@ resource "aws_instance" "server" {
     volume_size = var.ebs_volume_size
     iops        = var.ebs_iops
     tags = {
-      Name            = "Kafka_on_S3_Benchmark_EBS_data_server_${count.index}_${random_id.hash.hex}"
-      Benchmark       = "Kafka_on_S3_${random_id.hash.hex}"
+      Name            = "automq_for_kafka_benchmark_ebs_data_server_${count.index}_${random_id.hash.hex}"
+      Benchmark       = "automq_for_kafka_${random_id.hash.hex}"
       automqNodeID    = local.server_kafka_ids[count.index]
       automqVendor    = "automq"
       automqClusterID = local.cluster_id
@@ -292,8 +292,8 @@ resource "aws_instance" "server" {
 
   monitoring = var.monitoring
   tags = {
-    Name            = "Kafka_on_S3_Benchmark_EC2_server_${count.index}_${random_id.hash.hex}"
-    Benchmark       = "Kafka_on_S3_${random_id.hash.hex}"
+    Name            = "automq_for_kafka_benchmark_ec2_server_${count.index}_${random_id.hash.hex}"
+    Benchmark       = "automq_for_kafka_${random_id.hash.hex}"
     nodeID          = local.server_kafka_ids[count.index]
     automqVendor    = "automq"
     automqClusterID = local.cluster_id
@@ -323,8 +323,8 @@ resource "aws_instance" "broker" {
     volume_type = "gp3"
     volume_size = 16
     tags = {
-      Name            = "Kafka_on_S3_Benchmark_EBS_root_broker_${count.index}_${random_id.hash.hex}"
-      Benchmark       = "Kafka_on_S3_${random_id.hash.hex}"
+      Name            = "automq_for_kafka_benchmark_ebs_root_broker_${count.index}_${random_id.hash.hex}"
+      Benchmark       = "automq_for_kafka_${random_id.hash.hex}"
       automqVendor    = "automq"
       automqClusterID = local.cluster_id
     }
@@ -336,8 +336,8 @@ resource "aws_instance" "broker" {
     volume_size = var.ebs_volume_size
     iops        = var.ebs_iops
     tags = {
-      Name                  = "Kafka_on_S3_Benchmark_EBS_data_broker_${count.index}_${random_id.hash.hex}"
-      Benchmark             = "Kafka_on_S3_${random_id.hash.hex}"
+      Name                  = "automq_for_kafka_benchmark_ebs_data_broker_${count.index}_${random_id.hash.hex}"
+      Benchmark             = "automq_for_kafka_${random_id.hash.hex}"
       automqNodeID          = local.broker_kafka_ids[count.index]
       automqFailoverEnabled = "true"
       automqVendor          = "automq"
@@ -349,8 +349,8 @@ resource "aws_instance" "broker" {
 
   monitoring = var.monitoring
   tags = {
-    Name            = "Kafka_on_S3_Benchmark_EC2_broker_${count.index}_${random_id.hash.hex}"
-    Benchmark       = "Kafka_on_S3_${random_id.hash.hex}"
+    Name            = "automq_for_kafka_benchmark_ec2_broker_${count.index}_${random_id.hash.hex}"
+    Benchmark       = "automq_for_kafka_${random_id.hash.hex}"
     nodeID          = local.broker_kafka_ids[count.index]
     automqVendor    = "automq"
     automqClusterID = local.cluster_id
@@ -380,25 +380,25 @@ resource "aws_instance" "client" {
     volume_type = "gp3"
     volume_size = 64
     tags = {
-      Name      = "Kafla_on_S3_Benchmark_EBS_root_client_${count.index}_${random_id.hash.hex}"
-      Benchmark = "Kafka_on_S3_${random_id.hash.hex}_client"
+      Name      = "automq_for_kafka_benchmark_ebs_root_client_${count.index}_${random_id.hash.hex}"
+      Benchmark = "automq_for_kafka_${random_id.hash.hex}_client"
     }
   }
 
   monitoring = var.monitoring
   tags = {
-    Name      = "Kafka_on_S3_Benchmark_EC2_client_${count.index}_${random_id.hash.hex}"
-    Benchmark = "Kafka_on_S3_${random_id.hash.hex}_client"
+    Name      = "automq_for_kafka_benchmark_ec2_client_${count.index}_${random_id.hash.hex}"
+    Benchmark = "automq_for_kafka_${random_id.hash.hex}_client"
   }
 }
 
 resource "aws_s3_bucket" "benchmark_bucket" {
-  bucket        = "kafka-on-s3-benchmark-${random_id.hash.hex}"
+  bucket        = "automq-for-kafka-benchmark-${random_id.hash.hex}"
   force_destroy = true
 
   tags = {
-    Name      = "Kafka_on_S3_Benchmark_S3_${random_id.hash.hex}"
-    Benchmark = "Kafka_on_S3_${random_id.hash.hex}"
+    Name      = "automq_for_kafka_benchmark_s3_${random_id.hash.hex}"
+    Benchmark = "automq_for_kafka_${random_id.hash.hex}"
   }
 }
 
