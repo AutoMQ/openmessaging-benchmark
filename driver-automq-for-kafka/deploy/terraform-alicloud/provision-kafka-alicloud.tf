@@ -25,7 +25,7 @@ Path to the SSH public key to be used for authentication.
 Ensure this keypair is added to your local SSH agent so provisioners can
 connect.
 
-Example: ~/.ssh/kafka_on_s3_aws.pub
+Example: ~/.ssh/automq_for_kafka.pub
 DESCRIPTION
 }
 
@@ -34,8 +34,8 @@ resource "random_id" "hash" {
 }
 
 variable "key_name" {
-  default     = "kafka_on_s3_benchmark_key"
-  description = "Desired name prefix for the AWS key pair"
+  default     = "automq_for_kafka_benchmark_key"
+  description = "Desired name prefix for the Alibaba Cloud key pair"
 }
 
 variable "region" {}
@@ -78,7 +78,7 @@ variable "secret_key" {}
 
 locals {
   alicloud_tags = {
-    Benchmark    = "Kafka_on_S3_${random_id.hash.hex}"
+    Benchmark    = "automq_for_kafka_${random_id.hash.hex}"
     automqVendor = "automq"
   }
   cluster_id       = "M_benchmark_alicloud_A"
@@ -87,8 +87,8 @@ locals {
 }
 
 resource "alicloud_resource_manager_resource_group" "benchmark_resource_group" {
-  resource_group_name = "Kafka-on-S3-Benchmark-${random_id.hash.hex}"
-  display_name        = "Kafka-on-S3-Benchmark-${random_id.hash.hex}"
+  resource_group_name = "automq-for-kafka-benchmark-${random_id.hash.hex}"
+  display_name        = "automq-for-kafka-benchmark-${random_id.hash.hex}"
 }
 
 # Create a VPC to launch our instances into
@@ -96,7 +96,7 @@ resource "alicloud_vpc" "benchmark_vpc" {
   cidr_block = "10.0.0.0/16"
 
   resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
-  vpc_name          = "Kafka_on_S3_Benchmark_VPC_${random_id.hash.hex}"
+  vpc_name          = "automq_for_kafka_benchmark_vpc_${random_id.hash.hex}"
   tags              = local.alicloud_tags
 }
 
@@ -106,7 +106,7 @@ resource "alicloud_vpc_ipv4_gateway" "benchmark_gateway" {
   enabled = true
 
   resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
-  ipv4_gateway_name = "Kafka_on_S3_Benchmark_Gateway_${random_id.hash.hex}"
+  ipv4_gateway_name = "automq_for_kafka_benchmark_gateway_${random_id.hash.hex}"
   tags              = local.alicloud_tags
 }
 
@@ -115,7 +115,7 @@ resource "alicloud_route_table" "benchmark_route_table" {
   vpc_id         = alicloud_vpc.benchmark_vpc.id
   associate_type = "Gateway"
 
-  route_table_name = "Kafka_on_S3_Benchmark_Route_Table_${random_id.hash.hex}"
+  route_table_name = "automq_for_kafka_benchmark_route_table_${random_id.hash.hex}"
   tags             = local.alicloud_tags
 }
 
@@ -139,7 +139,7 @@ resource "alicloud_vswitch" "benchmark_vswitch" {
   cidr_block = cidrsubnet(alicloud_vpc.benchmark_vpc.cidr_block, 8, count.index)
   zone_id    = element(var.az, count.index)
 
-  vswitch_name = "Kafka_on_S3_Benchmark_Vswitch_${random_id.hash.hex}"
+  vswitch_name = "automq_for_kafka_benchmark_vswitch_${random_id.hash.hex}"
   tags         = local.alicloud_tags
 }
 
@@ -148,7 +148,7 @@ resource "alicloud_security_group" "benchmark_security_group" {
   vpc_id = alicloud_vpc.benchmark_vpc.id
 
   resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
-  name              = "Kafka_on_S3_Benchmark_SG_${random_id.hash.hex}"
+  name              = "automq_for_kafka_benchmark_sg_${random_id.hash.hex}"
   tags              = local.alicloud_tags
 }
 
@@ -193,7 +193,7 @@ resource "alicloud_key_pair" "benchmark_key_pair" {
 }
 
 resource "alicloud_ram_policy" "benchmark_policy" {
-  policy_name     = "Kafka-on-S3-Benchmark-Policy-${random_id.hash.hex}"
+  policy_name     = "automq-for-kafka-benchmark-policy-${random_id.hash.hex}"
   policy_document = <<EOF
   {
     "Version": "1",
@@ -226,7 +226,7 @@ resource "alicloud_ram_policy" "benchmark_policy" {
 }
 
 resource "alicloud_ram_role" "benchmark_role" {
-  name     = "Kafka-on-S3-Benchmark-Role-${random_id.hash.hex}"
+  name     = "automq-for-kafka-benchmark-role-${random_id.hash.hex}"
   document = <<EOF
   {
     "Statement": [
@@ -257,7 +257,7 @@ resource "alicloud_ecs_disk" "server_data_disk" {
   category          = var.ebs_category
   performance_level = var.ebs_performance_level
   size              = var.ebs_volume_size
-  disk_name         = "Kafka_on_S3_Benchmark_EBS_data_server_${count.index}_${random_id.hash.hex}"
+  disk_name         = "automq_for_kafka_benchmark_ebs_data_server_${count.index}_${random_id.hash.hex}"
   resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
   tags = merge(local.alicloud_tags, {
     automqNodeID    = local.server_kafka_ids[count.index]
@@ -279,12 +279,12 @@ resource "alicloud_instance" "server" {
   system_disk_category          = "cloud_essd"
   system_disk_performance_level = "PL0"
   system_disk_size              = 20
-  system_disk_name              = "Kafka_on_S3_Benchmark_EBS_root_server_${count.index}_${random_id.hash.hex}"
+  system_disk_name              = "automq_for_kafka_benchmark_ebs_root_server_${count.index}_${random_id.hash.hex}"
 
   role_name = alicloud_ram_role.benchmark_role.name
 
   resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
-  instance_name     = "Kafka_on_S3_Benchmark_ECS_server_${count.index}_${random_id.hash.hex}"
+  instance_name     = "automq_for_kafka_benchmark_ecs_server_${count.index}_${random_id.hash.hex}"
   tags = merge(local.alicloud_tags, {
     nodeID          = local.server_kafka_ids[count.index]
     automqClusterID = local.cluster_id
@@ -306,7 +306,7 @@ resource "alicloud_ecs_disk" "broker_data_disk" {
   category          = var.ebs_category
   performance_level = var.ebs_performance_level
   size              = var.ebs_volume_size
-  disk_name         = "Kafka_on_S3_Benchmark_EBS_data_broker_${count.index}_${random_id.hash.hex}"
+  disk_name         = "automq_for_kafka_benchmark_ebs_data_broker_${count.index}_${random_id.hash.hex}"
   resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
   tags = merge(local.alicloud_tags, {
     automqNodeID          = local.broker_kafka_ids[count.index]
@@ -329,12 +329,12 @@ resource "alicloud_instance" "broker" {
   system_disk_category          = "cloud_essd"
   system_disk_performance_level = "PL0"
   system_disk_size              = 20
-  system_disk_name              = "Kafka_on_S3_Benchmark_EBS_root_broker_${count.index}_${random_id.hash.hex}"
+  system_disk_name              = "automq_for_kafka_benchmark_ebs_root_broker_${count.index}_${random_id.hash.hex}"
 
   role_name = alicloud_ram_role.benchmark_role.name
 
   resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
-  instance_name     = "Kafka_on_S3_Benchmark_ECS_broker_${count.index}_${random_id.hash.hex}"
+  instance_name     = "automq_for_kafka_benchmark_ecs_broker_${count.index}_${random_id.hash.hex}"
   tags = merge(local.alicloud_tags, {
     nodeID          = local.broker_kafka_ids[count.index]
     automqClusterID = local.cluster_id
@@ -364,17 +364,17 @@ resource "alicloud_instance" "client" {
   system_disk_category          = "cloud_essd"
   system_disk_performance_level = "PL0"
   system_disk_size              = 32
-  system_disk_name              = "Kafka_on_S3_Benchmark_EBS_root_client_${count.index}_${random_id.hash.hex}"
+  system_disk_name              = "automq_for_kafka_benchmark_ebs_root_client_${count.index}_${random_id.hash.hex}"
 
   resource_group_id = alicloud_resource_manager_resource_group.benchmark_resource_group.id
-  instance_name     = "Kafka_on_S3_Benchmark_ECS_client_${count.index}_${random_id.hash.hex}"
+  instance_name     = "automq_for_kafka_benchmark_ecs_client_${count.index}_${random_id.hash.hex}"
   tags              = local.alicloud_tags
   volume_tags       = local.alicloud_tags
 }
 
 
 resource "alicloud_oss_bucket" "benchmark_bucket" {
-  bucket        = "kafka-on-s3-benchmark-${random_id.hash.hex}"
+  bucket        = "automq-for-kafka-benchmark-${random_id.hash.hex}"
   force_destroy = true
 
   tags = local.alicloud_tags
