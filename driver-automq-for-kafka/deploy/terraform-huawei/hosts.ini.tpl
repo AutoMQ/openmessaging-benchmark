@@ -20,9 +20,9 @@ ${ instance.public_ip } ansible_user=${ ssh_user } private_ip=${ instance.networ
 
 [all:vars]
 cloud_provider=huaweicloud
-s3_endpoint=https://obs.${ oss_region }.myhuaweicloud.com
-s3_region=${ oss_region }
-s3_bucket=${ oss_bucket }
+s3_endpoint=https://obs.${ obs_region }.myhuaweicloud.com
+s3_region=${ obs_region }
+s3_bucket=${ obs_bucket }
 cluster_id=${ cluster_id }
 access_key=${ access_key }
 secret_key=${ secret_key }
