@@ -19,8 +19,10 @@ terraform {
   }
 }
 
+data "tencentcloud_user_info" "user_info" {}
+
 resource "random_id" "hash" {
-  byte_length = 8
+  byte_length = 2
 }
 
 variable "public_key_path" {
@@ -128,11 +130,35 @@ resource "tencentcloud_security_group_rule_set" "benchmark_security_group_rule_s
 resource "tencentcloud_key_pair" "benchmark_key_pair" {
   public_key = file(var.public_key_path)
 
-  key_name = "automq_for_kafka_benchmark_key_pair_${random_id.hash.hex}"
+  key_name = "benchmark_key_pair_${random_id.hash.hex}"
   tags     = local.tags
 }
 
 resource "tencentcloud_cam_role" "benchmark_role" {
+  document = <<EOF
+{
+  "version": "2.0",
+  "statement": [
+    {
+      "action": [
+        "name/sts:AssumeRole"
+      ],
+      "effect": "allow",
+      "principal": {
+        "service": [
+          "cvm.qcloud.com"
+        ]
+      }
+    }
+  ]
+}
+EOF
+
+  name = "automq_for_kafka_benchmark_role_${random_id.hash.hex}"
+  tags = local.tags
+}
+
+resource "tencentcloud_cam_policy" "benchmark_policy" {
   document = <<EOF
 {
   "version": "2.0",
@@ -152,7 +178,7 @@ resource "tencentcloud_cam_role" "benchmark_role" {
      ],
       "effect": "allow",
       "resource": [
-        "qcs::cos:${var.region}:uid/${data.tencentcloud_caller_identity.current.user_id}:${tencentcloud_cos_bucket.benchmark_bucket.bucket}/*"
+        "qcs::cos:${var.region}:*:${tencentcloud_cos_bucket.benchmark_bucket.bucket}/*"
       ]
     },
     {
@@ -162,15 +188,19 @@ resource "tencentcloud_cam_role" "benchmark_role" {
       ],
       "effect": "allow",
       "resource": [
-        "qcs::cos:${var.region}:uid/${data.tencentcloud_caller_identity.current.user_id}:${tencentcloud_cos_bucket.benchmark_bucket.bucket}"
+        "qcs::cos:${var.region}:*:${tencentcloud_cos_bucket.benchmark_bucket.bucket}"
       ]
     }
   ]
 }
 EOF
 
-  name = "automq_for_kafka_benchmark_role_${random_id.hash.hex}"
-  tags = local.tags
+  name = "automq_for_kafka_benchmark_policy_${random_id.hash.hex}"
+}
+
+resource "tencentcloud_cam_role_policy_attachment" "benchmark_role_policy_attachment" {
+  role_id   = tencentcloud_cam_role.benchmark_role.id
+  policy_id = tencentcloud_cam_policy.benchmark_policy.id
 }
 
 resource "tencentcloud_instance" "server" {
@@ -187,7 +217,7 @@ resource "tencentcloud_instance" "server" {
   internet_charge_type       = "TRAFFIC_POSTPAID_BY_HOUR"
   internet_max_bandwidth_out = 64
 
-  system_disk_type = "CLOUD_SSD"
+  system_disk_type = "CLOUD_BSSD"
   system_disk_size = 20
 
   data_disks {
@@ -219,7 +249,7 @@ resource "tencentcloud_instance" "broker" {
   internet_charge_type       = "TRAFFIC_POSTPAID_BY_HOUR"
   internet_max_bandwidth_out = 64
 
-  system_disk_type = "CLOUD_SSD"
+  system_disk_type = "CLOUD_BSSD"
   system_disk_size = 20
 
   data_disks {
@@ -251,7 +281,7 @@ resource "tencentcloud_instance" "client" {
   internet_charge_type       = "TRAFFIC_POSTPAID_BY_HOUR"
   internet_max_bandwidth_out = 64
 
-  system_disk_type = "CLOUD_SSD"
+  system_disk_type = "CLOUD_BSSD"
   system_disk_size = 20
 
   cam_role_name = tencentcloud_cam_role.benchmark_role.name
@@ -261,7 +291,7 @@ resource "tencentcloud_instance" "client" {
 }
 
 resource "tencentcloud_cos_bucket" "benchmark_bucket" {
-  bucket      = "automq-for-kafka-benchmark-${random_id.hash.hex}"
+  bucket      = "benchmark-${random_id.hash.hex}-${data.tencentcloud_user_info.user_info.app_id}"
   acl         = "private"
   force_clean = true
 
