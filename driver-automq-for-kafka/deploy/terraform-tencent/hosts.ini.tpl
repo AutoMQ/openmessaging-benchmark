@@ -20,7 +20,7 @@ ${ instance.public_ip } ansible_user=${ ssh_user } private_ip=${ instance.privat
 
 [all:vars]
 cloud_provider=aliyun
-s3_endpoint=https://${ cos_endpoint }
+s3_endpoint=https://cos.${ cos_region }.myqcloud.com
 s3_region=${ cos_region }
 s3_bucket=${ cos_bucket }
 cluster_id=${ cluster_id }

@@ -327,7 +327,6 @@ resource "local_file" "hosts_ini" {
 
       ssh_user = var.user,
 
-      cos_endpoint = tencentcloud_cos_bucket.benchmark_bucket.cos_bucket_url,
       cos_region   = var.region,
       cos_bucket   = tencentcloud_cos_bucket.benchmark_bucket.bucket,
       cluster_id   = local.cluster_id,
