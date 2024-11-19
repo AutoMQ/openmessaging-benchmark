@@ -313,8 +313,8 @@ resource "local_file" "hosts_ini" {
 
       ssh_user = var.user,
 
-      oss_region = var.region,
-      oss_bucket = huaweicloud_obs_bucket.benchmark_bucket.bucket,
+      obs_region = var.region,
+      obs_bucket = huaweicloud_obs_bucket.benchmark_bucket.bucket,
       cluster_id = local.cluster_id,
 
       access_key = var.access_key,
