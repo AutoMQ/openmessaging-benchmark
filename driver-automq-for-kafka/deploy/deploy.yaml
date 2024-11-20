@@ -164,6 +164,35 @@
       reboot:
 
 
+- name: Install common dependencies
+  tags: [prepare]
+  any_errors_fatal: true
+  hosts: [server, broker, client]
+  connection: ssh
+  become: true
+  tasks:
+    - name: Install dependencies
+      apt:
+        pkg:
+          - openjdk-17-jdk
+          - libjemalloc2
+          - gcc
+          - make
+        state: present
+
+    - name: Install Tsar
+      block:
+        - git:
+            repo: "https://gitee.com/mirrors/Tsar.git"
+            dest: "/tmp/tsar"
+        - command: make
+          args:
+            chdir: "/tmp/tsar"
+        - command: make install
+          args:
+            chdir: "/tmp/tsar"
+
+
 - name: Prepare Kafka servers and brokers
   tags: [prepare]
   any_errors_fatal: true
@@ -194,27 +223,6 @@
             telemetry_ip: "{{ groups.get('telemetry') | map('extract', hostvars, 'private_ip') | first | default('') }}"
         - set_fact:
             quorum_servers: "{{ server_ids | zip(server_addrs) | map('join', '@') | join(',') }}"
-
-    - name: Install dependencies
-      apt:
-        pkg:
-          - openjdk-17-jdk
-          - libjemalloc2
-          - gcc
-          - make
-        state: present
-
-    - name: Install Tsar
-      block:
-        - git:
-            repo: "https://gitee.com/mirrors/Tsar.git"
-            dest: "/tmp/tsar"
-        - command: make
-          args:
-            chdir: "/tmp/tsar"
-        - command: make install
-          args:
-            chdir: "/tmp/tsar"
 
 
 - name: Prepare Kafka servers
@@ -256,7 +264,6 @@
       apt:
         pkg:
           - chrony
-          - openjdk-17-jdk
           - tuned
         state: present
 
