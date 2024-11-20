@@ -19,6 +19,8 @@ instance_cnt = {
 
 instance_bandwidth_Gbps = 1.5
 
+spot = true
+
 cbs_disk_type = "CLOUD_HSSD"
 cbs_disk_size = 20
 
