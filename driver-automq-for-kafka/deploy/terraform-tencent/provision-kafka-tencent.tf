@@ -257,6 +257,10 @@ resource "tencentcloud_instance" "broker" {
   internet_charge_type       = "TRAFFIC_POSTPAID_BY_HOUR"
   internet_max_bandwidth_out = 64
 
+  instance_charge_type = var.spot ? "SPOTPAID" : "POSTPAID_BY_HOUR"
+  spot_instance_type = "ONE-TIME"
+  spot_max_price = "0.5"
+
   system_disk_type = "CLOUD_BSSD"
   system_disk_size = 20
 
@@ -288,6 +292,10 @@ resource "tencentcloud_instance" "client" {
   allocate_public_ip         = true
   internet_charge_type       = "TRAFFIC_POSTPAID_BY_HOUR"
   internet_max_bandwidth_out = 64
+
+  instance_charge_type = var.spot ? "SPOTPAID" : "POSTPAID_BY_HOUR"
+  spot_instance_type = "ONE-TIME"
+  spot_max_price = "0.5"
 
   system_disk_type = "CLOUD_BSSD"
   system_disk_size = 20
