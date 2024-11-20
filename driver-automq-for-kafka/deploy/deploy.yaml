@@ -164,6 +164,35 @@
       reboot:
 
 
+- name: Install common dependencies
+  tags: [prepare]
+  any_errors_fatal: true
+  hosts: [server, broker, client]
+  connection: ssh
+  become: true
+  tasks:
+    - name: Install dependencies
+      apt:
+        pkg:
+          - openjdk-17-jdk
+          - libjemalloc2
+          - gcc
+          - make
+        state: present
+
+    - name: Install Tsar
+      block:
+        - git:
+            repo: "https://gitee.com/mirrors/Tsar.git"
+            dest: "/tmp/tsar"
+        - command: make
+          args:
+            chdir: "/tmp/tsar"
+        - command: make install
+          args:
+            chdir: "/tmp/tsar"
+
+
 - name: Prepare Kafka servers and brokers
   tags: [prepare]
   any_errors_fatal: true
@@ -195,27 +224,6 @@
         - set_fact:
             quorum_servers: "{{ server_ids | zip(server_addrs) | map('join', '@') | join(',') }}"
 
-    - name: Install dependencies
-      apt:
-        pkg:
-          - openjdk-17-jdk
-          - libjemalloc2
-          - gcc
-          - make
-        state: present
-
-    - name: Install Tsar
-      block:
-        - git:
-            repo: "https://gitee.com/mirrors/Tsar.git"
-            dest: "/tmp/tsar"
-        - command: make
-          args:
-            chdir: "/tmp/tsar"
-        - command: make install
-          args:
-            chdir: "/tmp/tsar"
-
 
 - name: Prepare Kafka servers
   tags: [prepare]
@@ -243,6 +251,21 @@
       set_fact:
         process_roles: "broker"
         listeners: "PLAINTEXT://{{ private_ip }}:9092"
+
+
+- name: Prepare Benchmark client
+  tags: [prepare]
+  any_errors_fatal: true
+  hosts: [client]
+  connection: ssh
+  become: true
+  tasks:
+    - name: Install dependencies
+      apt:
+        pkg:
+          - chrony
+          - tuned
+        state: present
 
 
 - name: Install Kafka
@@ -290,22 +313,6 @@
     until: kafka_service.ansible_facts.services['kafka.service'].state == 'running'
     retries: 10
     delay: 5
-
-
-- name: Prepare Benchmark client
-  tags: [prepare]
-  any_errors_fatal: true
-  hosts: [client]
-  connection: ssh
-  become: true
-  tasks:
-    - name: Install dependencies
-      apt:
-        pkg:
-          - chrony
-          - openjdk-17-jdk
-          - tuned
-        state: present
 
 
 - name: Setup Benchmark client
