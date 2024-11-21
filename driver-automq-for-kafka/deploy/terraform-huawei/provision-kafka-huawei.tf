@@ -48,6 +48,10 @@ variable "instance_bandwidth_Gbps" {
   type = number
 }
 
+variable "spot" {
+  type = bool
+}
+
 variable "evs_volume_type" {
   type = string
 }
@@ -197,6 +201,10 @@ resource "huaweicloud_compute_instance" "server" {
     charge_mode = "traffic"
   }
 
+  charging_mode = var.spot ? "spot" : "postPaid"
+  spot_duration = 6
+  spot_duration_count = 2
+
   system_disk_type = "SSD"
   system_disk_size = 20
 
@@ -232,6 +240,10 @@ resource "huaweicloud_compute_instance" "broker" {
     charge_mode = "traffic"
   }
 
+  charging_mode = var.spot ? "spot" : "postPaid"
+  spot_duration = 6
+  spot_duration_count = 2
+
   system_disk_type = "SSD"
   system_disk_size = 20
 
@@ -266,6 +278,10 @@ resource "huaweicloud_compute_instance" "client" {
     size        = 64
     charge_mode = "traffic"
   }
+
+  charging_mode = var.spot ? "spot" : "postPaid"
+  spot_duration = 6
+  spot_duration_count = 2
 
   system_disk_type = "SSD"
   system_disk_size = 20

@@ -19,6 +19,8 @@ instance_cnt = {
 
 instance_bandwidth_Gbps = 2.4
 
+spot = true
+
 evs_volume_type = "SSD"
 evs_volume_size = 20
 
