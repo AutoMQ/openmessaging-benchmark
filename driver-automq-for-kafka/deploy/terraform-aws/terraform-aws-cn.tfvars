@@ -20,7 +20,7 @@ instance_cnt = {
 instance_bandwidth_Gbps = 0.781
 
 monitoring = true
-spot = false
+spot = true
 
 ebs_volume_type = "gp3"
 ebs_volume_size = 10

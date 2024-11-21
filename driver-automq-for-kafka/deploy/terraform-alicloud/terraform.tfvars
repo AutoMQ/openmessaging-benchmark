@@ -19,6 +19,8 @@ instance_cnt = {
 
 instance_bandwidth_Gbps = 2.0
 
+spot = true
+
 ebs_category = "cloud_essd"
 ebs_performance_level = "PL1"
 ebs_volume_size = 20
