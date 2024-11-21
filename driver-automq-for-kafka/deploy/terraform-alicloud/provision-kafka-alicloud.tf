@@ -60,6 +60,10 @@ variable "instance_bandwidth_Gbps" {
   type = number
 }
 
+variable "spot" {
+  type    = bool
+}
+
 variable "ebs_category" {
   type = string
 }
@@ -276,6 +280,8 @@ resource "alicloud_instance" "server" {
   internet_charge_type       = "PayByTraffic"
   internet_max_bandwidth_out = "32"
 
+  spot_strategy = var.spot ? "SpotAsPriceGo" : "NoSpot"
+
   system_disk_category          = "cloud_essd"
   system_disk_performance_level = "PL0"
   system_disk_size              = 20
@@ -326,6 +332,8 @@ resource "alicloud_instance" "broker" {
   internet_charge_type       = "PayByTraffic"
   internet_max_bandwidth_out = "32"
 
+  spot_strategy = var.spot ? "SpotAsPriceGo" : "NoSpot"
+
   system_disk_category          = "cloud_essd"
   system_disk_performance_level = "PL0"
   system_disk_size              = 20
@@ -360,6 +368,8 @@ resource "alicloud_instance" "client" {
 
   internet_charge_type       = "PayByTraffic"
   internet_max_bandwidth_out = "32"
+
+  spot_strategy = var.spot ? "SpotAsPriceGo" : "NoSpot"
 
   system_disk_category          = "cloud_essd"
   system_disk_performance_level = "PL0"
