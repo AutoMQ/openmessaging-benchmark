@@ -1,6 +1,6 @@
 public_key_path = "~/.ssh/automq_for_kafka.pub"
-region          = "ap-beijing"
-az              = ["ap-beijing-6", "ap-beijing-7", "ap-beijing-8"]
+region          = "ap-shanghai"
+az              = ["ap-shanghai-8", "ap-shanghai-5", "ap-shanghai-2"]
 
 ami             = "img-487zeit5" # Ubuntu Server 22.04 LTS 64bit
 user            = "ubuntu"
