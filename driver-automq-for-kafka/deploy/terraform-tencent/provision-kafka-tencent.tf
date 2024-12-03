@@ -322,12 +322,24 @@ output "server_ssh_host" {
   value = var.instance_cnt["server"] > 0 ? tencentcloud_instance.server[0].public_ip : null
 }
 
+output "server_ssh_hosts" {
+  value = tencentcloud_instance.server[*].public_ip
+}
+
 output "broker_ssh_host" {
   value = var.instance_cnt["broker"] > 0 ? tencentcloud_instance.broker[0].public_ip : null
 }
 
+output "broker_ssh_hosts" {
+  value = tencentcloud_instance.broker[*].public_ip
+}
+
 output "client_ssh_host" {
   value = var.instance_cnt["client"] > 0 ? tencentcloud_instance.client[0].public_ip : null
+}
+
+output "client_ssh_hosts" {
+  value = tencentcloud_instance.client[*].public_ip
 }
 
 resource "local_file" "hosts_ini" {
