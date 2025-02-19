@@ -236,7 +236,7 @@
       tags: always
       set_fact:
         process_roles: "broker,controller"
-        listeners: "PLAINTEXT://{{ private_ip }}:9092,CONTROLLER://{{ private_ip }}:9093"
+        listeners: "PLAINTEXT://{{ private_ip }}:9092,BROKER_SASL://{{ private_ip }}:9102,BROKER_SASL_SSL://{{ private_ip }}:9112,BROKER_MTLS://{{ private_ip }}:9122,CONTROLLER://{{ private_ip }}:9093"
 
 
 - name: Prepare Kafka brokers
@@ -250,7 +250,7 @@
       tags: always
       set_fact:
         process_roles: "broker"
-        listeners: "PLAINTEXT://{{ private_ip }}:9092"
+        listeners: "PLAINTEXT://{{ private_ip }}:9092,BROKER_SASL://{{ private_ip }}:9102,BROKER_SASL_SSL://{{ private_ip }}:9112,BROKER_MTLS://{{ private_ip }}:9122"
 
 
 - name: Prepare Benchmark client
