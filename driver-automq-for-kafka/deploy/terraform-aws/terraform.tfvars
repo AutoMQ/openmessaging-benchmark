@@ -1,8 +1,8 @@
 public_key_path = "~/.ssh/automq_for_kafka.pub"
-region          = "us-west-2"
-az              = ["us-west-2a"]
+region          = "us-east-1"
+az              = ["us-east-1a"]
 
-ami             = "ami-03f65b8614a860c29" // Ubuntu 22.04 LTS for x86_64
+ami             = "ami-0f9de6e2d2f067fca" // Ubuntu 22.04 LTS for x86_64
 user            = "ubuntu"
 
 instance_type = {
