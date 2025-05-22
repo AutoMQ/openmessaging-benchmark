@@ -215,6 +215,7 @@
             kafka_secret_key: "{{ hostvars[inventory_hostname]['secret_key'] }}"
             kafka_role_name: "{{ hostvars[inventory_hostname]['role_name'] }}"
             ec2_network_bandwidth: "{{ hostvars[inventory_hostname]['network_bandwidth'] }}"
+            s3_wal_enabled: "{{ hostvars[inventory_hostname]['s3_wal_enabled'] | default(false) | bool }}"
 
             node_id: "{{ hostvars[inventory_hostname]['kafka_id'] }}"
             server_ids: "{{ groups.get('server') | map('extract', hostvars, 'kafka_id') | list }}"
