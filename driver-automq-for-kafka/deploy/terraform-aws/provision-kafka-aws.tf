@@ -84,6 +84,11 @@ variable "aws_cn" {
   type = bool
 }
 
+variable "s3_wal_enabled" {
+  type = bool
+  default = false
+}
+
 variable "access_key" {}
 
 variable "secret_key" {}
@@ -274,17 +279,20 @@ resource "aws_instance" "server" {
     }
   }
 
-  ebs_block_device {
-    device_name = "/dev/sdf"
-    volume_type = var.ebs_volume_type
-    volume_size = var.ebs_volume_size
-    iops        = var.ebs_iops
-    tags = {
-      Name            = "automq_for_kafka_benchmark_ebs_data_server_${count.index}_${random_id.hash.hex}"
-      Benchmark       = "automq_for_kafka_${random_id.hash.hex}"
-      automqNodeID    = local.server_kafka_ids[count.index]
-      automqVendor    = "automq"
-      automqClusterID = local.cluster_id
+  dynamic "ebs_block_device" {
+    for_each = var.s3_wal_enabled ? [] : [1]
+    content {
+      device_name = "/dev/sdf"
+      volume_type = var.ebs_volume_type
+      volume_size = var.ebs_volume_size
+      iops        = var.ebs_iops
+      tags = {
+        Name            = "automq_for_kafka_benchmark_ebs_data_server_${count.index}_${random_id.hash.hex}"
+        Benchmark       = "automq_for_kafka_${random_id.hash.hex}"
+        automqNodeID    = local.server_kafka_ids[count.index]
+        automqVendor    = "automq"
+        automqClusterID = local.cluster_id
+      }
     }
   }
 
@@ -330,18 +338,20 @@ resource "aws_instance" "broker" {
     }
   }
 
-  ebs_block_device {
-    device_name = "/dev/sdf"
-    volume_type = var.ebs_volume_type
-    volume_size = var.ebs_volume_size
-    iops        = var.ebs_iops
-    tags = {
-      Name                  = "automq_for_kafka_benchmark_ebs_data_broker_${count.index}_${random_id.hash.hex}"
-      Benchmark             = "automq_for_kafka_${random_id.hash.hex}"
-      automqNodeID          = local.broker_kafka_ids[count.index]
-      automqFailoverEnabled = "true"
-      automqVendor          = "automq"
-      automqClusterID       = local.cluster_id
+  dynamic "ebs_block_device" {
+    for_each = var.s3_wal_enabled ? [] : [1]
+    content {
+      device_name = "/dev/sdf"
+      volume_type = var.ebs_volume_type
+      volume_size = var.ebs_volume_size
+      iops        = var.ebs_iops
+      tags = {
+        Name            = "automq_for_kafka_benchmark_ebs_data_broker_${count.index}_${random_id.hash.hex}"
+        Benchmark       = "automq_for_kafka_${random_id.hash.hex}"
+        automqNodeID    = local.broker_kafka_ids[count.index]
+        automqVendor    = "automq"
+        automqClusterID = local.cluster_id
+      }
     }
   }
 
@@ -471,6 +481,8 @@ resource "local_file" "hosts_ini" {
 
       # convert Gbps to Bps
       network_bandwidth = format("%.0f", var.instance_bandwidth_Gbps * 1024 * 1024 * 1024 / 8),
+
+      s3_wal_enabled = var.s3_wal_enabled,
     }
   )
   filename = "${path.module}/hosts.ini"
