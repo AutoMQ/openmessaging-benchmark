@@ -25,6 +25,8 @@
       kafka_version: "1.4"
       kafka_heap_size: "6g"
       kafka_direct_memory_size: "6g"
+      kafka_wal_cache_size: "2147483648"
+      kafka_block_cache_size: "1073741824"
       client_worker_heap_size: "8g"
       client_bench_heap_size: "4g"
   - set_fact:
